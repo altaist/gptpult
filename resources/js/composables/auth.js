@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue';
-import { usePage } from '@inertiajs/vue3';
-import { apiClient } from '@/utils/api';
+import { usePage, router } from '@inertiajs/vue3';
+import { apiClient } from './api';
 import { getStoredUser, loadFromLocalStorage, saveToLocalStorage } from '@/utils/localstorage';
 
 export const user = ref(null);
@@ -85,7 +85,7 @@ export const authLocalSaved = async (autoreg = false) => {
 // Выход из системы
 export const logout = async () => {
     try {
-        await apiClient.get(route('logout'));
+        await apiClient.post(route('logout'));
     } finally {
         logoutLocal();
         justLoggedOut = true; // Устанавливаем флаг выхода
