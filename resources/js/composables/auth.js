@@ -5,6 +5,7 @@ import { getStoredUser, loadFromLocalStorage, saveToLocalStorage } from '@/utils
 
 export const user = ref(null);
 export const isAuthenticated = computed(() => !!user.value);
+let justLoggedOut = false;
 
 // Основная функция авторизации
 export const authAndAutoReg = async () => {
@@ -13,6 +14,12 @@ export const authAndAutoReg = async () => {
 
 // Функция проверки и восстановления авторизации
 export const authLocalSaved = async (autoreg = false) => {
+    // Если только что вышли, не пытаемся авторизоваться
+    if (justLoggedOut) {
+        justLoggedOut = false;
+        return null;
+    }
+
     // 1. Проверка сессии через Inertia
     const userFromInertia = usePage().props.auth.user;
     if (userFromInertia) {
@@ -20,29 +27,26 @@ export const authLocalSaved = async (autoreg = false) => {
     }
 
     // 2. Проверка токена в localStorage
-    let token = loadFromLocalStorage('auth_token');
+    const token = loadFromLocalStorage('auto_auth_token');
+    
+    // 3. Если есть токен, пробуем авторизоваться
     if (token) {
         try {
             const response = await apiClient.post(route('login.auto'), { auth_token: token });
-            if (response.user) {
+            if (response && response.user) {
                 response.user.token = token;
                 return setUser(response.user);
             }
         } catch (error) {
-            console.error('Auto login failed:', error);
-            // Если автологин не удался, удаляем невалидный токен
-            localStorage.removeItem('auth_token');
-            token = null;
+            console.error('Login error:', error);
+            // Если токен неверный, удаляем его
+            if (error.status === 401) {
+                localStorage.removeItem('auto_auth_token');
+            }
         }
     }
 
-    // 3. Если нет токена, создаем новый
-    if (!token) {
-        token = createUserToken();
-        saveToLocalStorage('auth_token', token);
-    }
-
-    // 4. Автоматическая регистрация если нужно
+    // 4. Если нет токена или авторизация не удалась, пробуем зарегистрироваться
     if (autoreg) {
         try {
             const twaUser = getTwaUser();
@@ -54,17 +58,24 @@ export const authLocalSaved = async (autoreg = false) => {
                 }
             } : {};
 
+            // Создаем временный токен для регистрации
+            const tempToken = `${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+
             const response = await apiClient.post(route('register.auto'), {
-                auth_token: token,
+                auth_token: tempToken,
                 name: twaUser?.name || 'Guest',
                 data
             });
 
-            if (response.user) {
+            if (response && response.user) {
+                // Сохраняем токен, полученный от сервера
+                if (response.user.auth_token) {
+                    saveToLocalStorage('auto_auth_token', response.user.auth_token);
+                }
                 return setUser(response.user);
             }
         } catch (error) {
-            console.error('Auto registration failed:', error);
+            console.error('Registration error:', error);
         }
     }
 
@@ -72,11 +83,12 @@ export const authLocalSaved = async (autoreg = false) => {
 }
 
 // Выход из системы
-export const logout = async (removeToken = false) => {
+export const logout = async () => {
     try {
-        await apiClient.post(route('logout'));
+        await apiClient.get(route('logout'));
     } finally {
-        logoutLocal(removeToken);
+        logoutLocal();
+        justLoggedOut = true; // Устанавливаем флаг выхода
     }
 }
 
@@ -87,21 +99,9 @@ const setUser = (u) => {
 }
 
 // Локальный выход
-const logoutLocal = (removeToken = false) => {
+const logoutLocal = () => {
     user.value = null;
     localStorage.removeItem('user');
-    if (removeToken) {
-        localStorage.removeItem('auth_token');
-    }
-}
-
-// Создание токена пользователя
-const createUserToken = () => {
-    const twaUser = getTwaUser();
-    if (twaUser?.user?.id) {
-        return `${Date.now()}_${twaUser.user.id}`;
-    }
-    return `${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
 }
 
 // Получение данных пользователя TWA

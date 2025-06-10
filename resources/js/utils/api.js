@@ -1,72 +1,65 @@
 import axios from 'axios';
 import { ref, computed } from 'vue';
 
-// Базовая конфигурация axios
+// Создаем экземпляр axios с базовыми настройками
 const api = axios.create({
-    baseURL: process.env.VUE_APP_API_URL || '/api',
-    timeout: 30000,
+    baseURL: import.meta.env.VITE_APP_API_URL || '',
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
         'X-Requested-With': 'XMLHttpRequest'
     },
-    // Добавляем поддержку сессионных куки
     withCredentials: true
 });
 
 // Состояние загрузки для каждого запроса
 const loadingStates = ref(new Map());
 
-// Текущий токен авторизации
-const authToken = ref(localStorage.getItem('auth_token'));
-
-// Флаг использования токенов
-const useTokenAuth = ref(false);
-
-// Установка режима авторизации
-export const setAuthMode = (useToken = false) => {
-    useTokenAuth.value = useToken;
-    if (!useToken) {
-        removeAuthToken();
-    }
-};
-
-// Обновление токена
-export const setAuthToken = (token) => {
-    if (!useTokenAuth.value) return;
-    
-    authToken.value = token;
-    localStorage.setItem('auth_token', token);
-    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-};
-
-// Удаление токена
-export const removeAuthToken = () => {
-    authToken.value = null;
-    localStorage.removeItem('auth_token');
-    delete api.defaults.headers.common['Authorization'];
-};
-
-// Интерцептор для добавления токена
-api.interceptors.request.use(config => {
-    // Добавляем токен только если включен режим токенов
-    if (useTokenAuth.value && authToken.value) {
-        config.headers.Authorization = `Bearer ${authToken.value}`;
-    }
-    return config;
-});
-
-// Интерцептор для обработки ошибок
+// Перехватчик ответов
 api.interceptors.response.use(
-    response => response,
-    async error => {
-        if (error.response?.status === 401) {
-            if (useTokenAuth.value) {
-                removeAuthToken();
-            }
-            // Здесь можно добавить редирект на страницу логина
+    response => response.data,
+    error => {
+        const response = error.response;
+        
+        // Если нет ответа от сервера
+        if (!response) {
+            throw {
+                message: 'Нет соединения с сервером',
+                original: error
+            };
         }
-        return Promise.reject(error);
+
+        // Обработка ошибок авторизации
+        if (response.status === 401) {
+            throw {
+                message: response.data.message || 'Требуется авторизация',
+                original: error,
+                status: 401
+            };
+        }
+
+        // Обработка ошибок валидации
+        if (response.status === 422) {
+            throw {
+                message: 'Ошибка валидации',
+                errors: response.data.errors,
+                original: error
+            };
+        }
+
+        // Обработка ошибок сервера
+        if (response.status >= 500) {
+            throw {
+                message: 'Ошибка сервера',
+                original: error
+            };
+        }
+
+        // Обработка остальных ошибок
+        throw {
+            message: response.data.message || 'Произошла ошибка',
+            original: error
+        };
     }
 );
 
@@ -107,52 +100,13 @@ export const request = async (config) => {
 // Проверка наличия активных запросов
 export const isLoading = computed(() => loadingStates.value.size > 0);
 
-// Методы для работы с API
+// Создаем объект с методами для работы с API
 export const apiClient = {
-    get: (url, params = {}, useToken = false) => request({
-        method: 'get',
-        url,
-        params,
-        withCredentials: !useToken
-    }),
-
-    post: (url, data = {}, useToken = false) => request({
-        method: 'post',
-        url,
-        data,
-        withCredentials: !useToken
-    }),
-
-    put: (url, data = {}, useToken = false) => request({
-        method: 'put',
-        url,
-        data,
-        withCredentials: !useToken
-    }),
-
-    delete: (url, data = {}, useToken = false) => request({
-        method: 'delete',
-        url,
-        data,
-        withCredentials: !useToken
-    }),
-
-    // Метод для загрузки файлов
-    upload: (url, file, onProgress, useToken = false) => {
-        const formData = new FormData();
-        formData.append('file', file);
-
-        return request({
-            method: 'post',
-            url,
-            data: formData,
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            },
-            onUploadProgress: onProgress,
-            withCredentials: !useToken
-        });
-    }
+    get: (url, params = {}) => api.get(url, { params }),
+    post: (url, data = {}) => api.post(url, data),
+    put: (url, data = {}) => api.put(url, data),
+    delete: (url) => api.delete(url),
+    patch: (url, data = {}) => api.patch(url, data)
 };
 
 // Хук для работы с ошибками Laravel
@@ -187,8 +141,5 @@ export const useLaravelErrors = (error) => {
 export default {
     apiClient,
     isLoading,
-    setAuthToken,
-    removeAuthToken,
-    setAuthMode,
     useLaravelErrors
 }; 

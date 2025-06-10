@@ -7,7 +7,14 @@
         >
 
         <page-section title="Добро пожаловать!">
-            <lorem></lorem>
+            <div v-if="isAuthenticated">
+                <p>Привет, {{ user.name }}!</p>
+                <button @click="handleLogout" class="btn btn-primary">Выйти</button>
+            </div>
+            <div v-else>
+                <p>Вы не авторизованы</p>
+                <button @click="checkAuth" class="btn btn-primary">Авторизоваться</button>
+            </div>
         </page-section>
         
         <page-section title="О сервисе">
@@ -20,6 +27,9 @@
 </template>
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
+import { onMounted } from 'vue';
+import { checkAuth, isAuthenticated, user, logout } from '@/composables/auth';
+import { router } from '@inertiajs/vue3';
 
 defineProps({
 
@@ -29,4 +39,18 @@ const onMenuClick = (menuId) => {
     console.log(`Menu ${menuId}`);
 }
 
+// Проверка авторизации при загрузке компонента
+onMounted(async () => {
+    await checkAuth();
+});
+
+// Обработка выхода из системы
+const handleLogout = async () => {
+    try {
+        await logout(true);
+        router.visit('/');
+    } catch (error) {
+        console.error('Logout failed:', error);
+    }
+};
 </script>

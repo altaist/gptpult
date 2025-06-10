@@ -78,6 +78,10 @@ class AutoAuthController extends Controller
             'statistics' => []
         ]);
 
+        // Сохраняем токен в базе данных
+        $user->auth_token = $request->auth_token;
+        $user->save();
+
         Auth::login($user);
 
         return response()->json([

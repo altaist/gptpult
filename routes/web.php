@@ -27,6 +27,6 @@ Route::middleware('auth')->group(function () {
 // Маршруты для автоматической авторизации
 Route::post('/login/auto', [App\Http\Controllers\Auth\AutoAuthController::class, 'autoLogin'])->name('login.auto');
 Route::post('/register/auto', [App\Http\Controllers\Auth\AutoAuthController::class, 'autoRegister'])->name('register.auto');
-Route::post('/logout', [App\Http\Controllers\Auth\AutoAuthController::class, 'logout'])->name('logout');
+Route::match(['get', 'post'], '/logout', [App\Http\Controllers\Auth\AutoAuthController::class, 'logout'])->name('logout');
 
 require __DIR__.'/auth.php';
