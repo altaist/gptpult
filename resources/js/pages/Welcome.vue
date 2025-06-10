@@ -3,6 +3,7 @@
         title="ПРИЛОЖЕНИЕ"
         footer-text="Контакты"
         :left-btn-go-back="true"
+        :auto-auth="true"
         @click:footer:menu="onMenuClick"
         >
 
@@ -27,7 +28,6 @@
 </template>
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
-import { onMounted } from 'vue';
 import { checkAuth, isAuthenticated, user, logout } from '@/composables/auth';
 import { router } from '@inertiajs/vue3';
 
@@ -38,11 +38,6 @@ defineProps({
 const onMenuClick = (menuId) => {
     console.log(`Menu ${menuId}`);
 }
-
-// Проверка авторизации при загрузке компонента
-onMounted(async () => {
-    await checkAuth();
-});
 
 // Обработка выхода из системы
 const handleLogout = async () => {

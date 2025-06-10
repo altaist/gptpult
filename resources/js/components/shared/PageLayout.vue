@@ -29,7 +29,8 @@
 </template>
 <script setup>
 import PageContainer from '@/components/shared/PageContainer.vue';
-
+import { onMounted } from 'vue';
+import { checkAuth } from '@/composables/auth';
 
 const props = defineProps({
     title: {
@@ -44,7 +45,10 @@ const props = defineProps({
         type: Array,
         default: null
     },
-
+    autoAuth: {
+        type: Boolean,
+        default: false
+    },
     leftBtnIcon: {
         type: String,
         default: "fa-solid fa-home"
@@ -90,4 +94,9 @@ const localMenu = [
     }
 ];
 
+onMounted(async () => {
+    if (props.autoAuth) {
+        await checkAuth();
+    }
+});
 </script>

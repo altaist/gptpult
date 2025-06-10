@@ -4,12 +4,18 @@
             <div class="col" v-if="leftBtnIcon">
                 <btn :icon="leftBtnIcon" @click="onLeftBtnlick"/>
             </div>
-            <div class="col text-center"><page-title>{{title}}</page-title></div>
+            <div class="col text-center">
+                <page-title>{{title}}</page-title>
+                <div v-if="user" class="text-caption text-grey">
+                    {{ user.name }}
+                </div>
+            </div>
             <div class="col text-right" v-if="rightBtnIcon"><btn :icon="rightBtnIcon" @click="onRightBtnClick"/></div>
         </div>
     </div>
 </template>
 <script setup>
+import { user } from '@/composables/auth';
 
 const props = defineProps({
     title: {
