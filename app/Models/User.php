@@ -23,10 +23,14 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'auth_token',
+        'parent_id',
+        'role_id',
+        'status',
         'key',
         'person',
-        'statistic',
-        'settings'
+        'settings',
+        'statistics'
     ];
 
     /**
@@ -44,14 +48,11 @@ class User extends Authenticatable
      *
      * @return array<string, string>
      */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'person' => 'object',
-            'statistic' => 'object',
-            '' => 'object',
-        ];
-    }
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'person' => 'array',
+        'settings' => 'array',
+        'statistics' => 'array'
+    ];
 }

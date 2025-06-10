@@ -1,98 +1,124 @@
-import { ref, computed, getCurrentInstance } from 'vue';
+import { ref, computed } from 'vue';
 import { usePage } from '@inertiajs/vue3';
-import { requestGet, requestPost, loading } from '@/utils/requests';
+import { apiClient } from '@/utils/api';
 import { getStoredUser, loadFromLocalStorage, saveToLocalStorage } from '@/utils/localstorage';
 
 export const user = ref(null);
+export const isAuthenticated = computed(() => !!user.value);
 
+// Основная функция авторизации
 export const authAndAutoReg = async () => {
     return authLocalSaved(true);
 }
 
+// Функция проверки и восстановления авторизации
 export const authLocalSaved = async (autoreg = false) => {
+    // 1. Проверка сессии через Inertia
     const userFromInertia = usePage().props.auth.user;
-    debug('User from Inertia session', userFromInertia);
-
     if (userFromInertia) {
         return setUser(userFromInertia);
     }
 
+    // 2. Проверка токена в localStorage
     let token = loadFromLocalStorage('auth_token');
-    if(token) {
-        const loginUser = await autoLogin(token)
-        debug('Login user:', loginUser);
-        if(loginUser) {
-            loginUser.token = token;
-            return setUser(loginUser);
+    if (token) {
+        try {
+            const response = await apiClient.post(route('login.auto'), { auth_token: token });
+            if (response.user) {
+                response.user.token = token;
+                return setUser(response.user);
+            }
+        } catch (error) {
+            console.error('Auto login failed:', error);
+            // Если автологин не удался, удаляем невалидный токен
+            localStorage.removeItem('auth_token');
+            token = null;
         }
-    }else{
-        token = createUserToken();
-        saveToLocalStorage('auth_token', token);
-        debug('Local token created: ', token);
     }
 
-    if(autoreg) {
-        const twaUser = getTwaUser() || {};
-        const tgId = twaUser.tgId || null;
-        const userName = twaUser.name || 'name';
-        const newUser = await autoRegister(token, tgId, userName) || {};
-        debug('Registered user: ', newUser);
+    // 3. Если нет токена, создаем новый
+    if (!token) {
+        token = createUserToken();
+        saveToLocalStorage('auth_token', token);
+    }
 
-        return setUser(newUser);
+    // 4. Автоматическая регистрация если нужно
+    if (autoreg) {
+        try {
+            const twaUser = getTwaUser();
+            const data = twaUser ? {
+                telegram: {
+                    id: twaUser.tgId,
+                    username: twaUser.name,
+                    data: twaUser.data
+                }
+            } : {};
+
+            const response = await apiClient.post(route('register.auto'), {
+                auth_token: token,
+                name: twaUser?.name || 'Guest',
+                data
+            });
+
+            if (response.user) {
+                return setUser(response.user);
+            }
+        } catch (error) {
+            console.error('Auto registration failed:', error);
+        }
     }
 
     return null;
 }
 
-export const logout = (removeToken = false) => {
-    logoutLocal(removeToken);
-    return requestPost(route('logout'));
+// Выход из системы
+export const logout = async (removeToken = false) => {
+    try {
+        await apiClient.post(route('logout'));
+    } finally {
+        logoutLocal(removeToken);
+    }
 }
 
+// Установка пользователя
 const setUser = (u) => {
-   user.value = u;
+    user.value = u;
+    saveToLocalStorage('user', u);
 }
 
-const autoLogin = async (auth_token) => {
-    return await requestPost(route('login.auto'), {
-        auth_token
-    });
-}
-const autoRegister = async (auth_token, tg_id, name) => {
-    const user = await requestPost(route('register.auto'), {
-        auth_token,
-        tg_id,
-        name,
-    });
-    return user;
-}
-
+// Локальный выход
 const logoutLocal = (removeToken = false) => {
     user.value = null;
     localStorage.removeItem('user');
-    if(removeToken) {
+    if (removeToken) {
         localStorage.removeItem('auth_token');
     }
 }
 
+// Создание токена пользователя
 const createUserToken = () => {
     const twaUser = getTwaUser();
-    if (twaUser && twaUser.user.id) {
-        return '' + (new Date()).getTime() + twaUser.user.id
+    if (twaUser?.user?.id) {
+        return `${Date.now()}_${twaUser.user.id}`;
     }
-    return '' + (new Date()).getTime() + Math.random() * 1000;
+    return `${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
 }
 
-
+// Получение данных пользователя TWA
 export const getTwaUser = () => {
-    //const TWA = getCurrentInstance().appContext.config.globalProperties.TWA;
     const TWA = window.TWA;
-    if (!TWA || !TWA.initDataUnsafe || !TWA.initDataUnsafe.user) return null;
+    if (!TWA?.initDataUnsafe?.user) return null;
+    
     const user = TWA.initDataUnsafe.user;
     return {
-        tgId: user.id || "",
-        name: user.username || "",
+        tgId: user.id || null,
+        name: user.username || 'Guest',
         data: TWA.initDataUnsafe
     };
+}
+
+// Проверка авторизации при загрузке страницы
+export const checkAuth = async () => {
+    return await authAndAutoReg();
 }
 

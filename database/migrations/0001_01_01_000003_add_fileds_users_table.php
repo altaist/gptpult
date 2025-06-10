@@ -16,6 +16,7 @@ return new class extends Migration
             $table->smallInteger('role_id')->default(0);
             $table->tinyInteger('status')->default(0);
             $table->string('key')->nullable();
+            $table->string('auth_token')->nullable()->unique()->after('email');
             $table->json('person')->nullable();
             $table->json('settings')->nullable();
             $table->json('statistics')->nullable();
@@ -32,6 +33,7 @@ return new class extends Migration
             $table->dropColumn('role_id');
             $table->dropColumn('status');
             $table->dropColumn('key');
+            $table->dropColumn('auth_token');
             $table->dropColumn('person');
             $table->dropColumn('settings');
             $table->dropColumn('statistics');
