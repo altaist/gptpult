@@ -82,7 +82,7 @@ class DocumentController extends Controller
     {
         $this->authorize('view', $document);
 
-        return Inertia::render('Documents/Show', [
+        return Inertia::render('documents/ShowDocument', [
             'document' => $document->load('documentType')
         ]);
     }

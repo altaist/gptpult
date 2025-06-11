@@ -14,7 +14,7 @@ class NewDocumentController extends Controller
             return redirect()->route('login');
         }
 
-        return Inertia::render('NewDocument', [
+        return Inertia::render('documents/NewDocument', [
             'document_types' => DocumentType::all()
         ]);
     }
