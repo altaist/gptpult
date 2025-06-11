@@ -9,7 +9,7 @@ import {ProjectPlugin} from '@/plugins/project';
 
 import { Quasar } from 'quasar';
 import quasarOptions from './quasar_options';
-// import '@quasar/extras/material-icons/material-icons.css'
+import '@quasar/extras/material-icons/material-icons.css'
 import 'quasar/src/css/index.sass';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
