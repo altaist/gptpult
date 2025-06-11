@@ -5,7 +5,9 @@ import InputError from '@/_breeze/Components/InputError.vue';
 import InputLabel from '@/_breeze/Components/InputLabel.vue';
 import PrimaryButton from '@/_breeze/Components/PrimaryButton.vue';
 import TextInput from '@/_breeze/Components/TextInput.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm, router } from '@inertiajs/vue3';
+import { onMounted } from 'vue';
+import { checkAuth } from '@/composables/auth';
 
 defineProps({
     canResetPassword: {
@@ -27,6 +29,19 @@ const submit = () => {
         onFinish: () => form.reset('password'),
     });
 };
+
+const goToDashboard = () => {
+    router.visit(route('dashboard'));
+};
+
+onMounted(async () => {
+    try {
+        await checkAuth();
+        router.visit(route('dashboard'));
+    } catch (error) {
+        console.log('Требуется авторизация');
+    }
+});
 </script>
 
 <template>
@@ -88,6 +103,16 @@ const submit = () => {
                 <PrimaryButton class="ms-4" :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
                     Log in
                 </PrimaryButton>
+            </div>
+
+            <div class="flex items-center justify-center mt-4">
+                <button
+                    type="button"
+                    @click="goToDashboard"
+                    class="text-sm text-gray-600 hover:text-gray-900 underline"
+                >
+                    Перейти на главную
+                </button>
             </div>
         </form>
     </GuestLayout>
