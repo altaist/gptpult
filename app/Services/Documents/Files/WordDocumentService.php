@@ -3,6 +3,7 @@
 namespace App\Services\Documents\Files;
 
 use App\Models\Document;
+use App\Services\Files\FilesService;
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\IOFactory;
 use PhpOffice\PhpWord\SimpleType\Jc;
@@ -11,19 +12,21 @@ use PhpOffice\PhpWord\SimpleType\LineSpacingRule;
 class WordDocumentService
 {
     private PhpWord $phpWord;
+    private FilesService $filesService;
 
-    public function __construct()
+    public function __construct(FilesService $filesService)
     {
         $this->phpWord = new PhpWord();
+        $this->filesService = $filesService;
     }
 
     /**
      * Генерирует Word-документ из модели Document
      *
      * @param Document $document
-     * @return string Путь к сгенерированному файлу
+     * @return \App\Models\File
      */
-    public function generate(Document $document): string
+    public function generate(Document $document): \App\Models\File
     {
         // Настройка стилей
         $this->setupStyles();
@@ -44,7 +47,16 @@ class WordDocumentService
         $this->createReferences($document);
 
         // Сохранение документа
-        return $this->saveDocument($document);
+        $filePath = $this->saveDocument($document);
+
+        // Создание записи о файле
+        return $this->filesService->createFileFromPath(
+            $filePath,
+            $document->user,
+            $document->title . '.docx',
+            $document->id,
+            'documents'
+        );
     }
 
     private function setupStyles(): void
@@ -198,7 +210,7 @@ class WordDocumentService
 
     private function saveDocument(Document $document): string
     {
-        $filename = storage_path('app/public/documents/' . $document->id . '_' . time() . '.docx');
+        $filename = storage_path('app/temp/' . $document->id . '_' . time() . '.docx');
         
         // Создаем директорию, если она не существует
         if (!file_exists(dirname($filename))) {

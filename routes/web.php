@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\NewDocumentController;
+use App\Http\Controllers\FilesController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -34,6 +35,14 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/{document}', [DocumentController::class, 'update'])->name('update');
         Route::delete('/{document}', [DocumentController::class, 'destroy'])->name('destroy');
     });
+
+    // Маршруты для работы с файлами
+    Route::post('/files/upload', [FilesController::class, 'upload'])->name('files.upload');
+    Route::get('/files/{file}', [FilesController::class, 'show'])->name('files.show');
+    Route::get('/files/{file}/download', [FilesController::class, 'download'])->name('files.download');
+    Route::get('/files/{file}/view', [FilesController::class, 'view'])->name('files.view');
+    Route::put('/files/{file}', [FilesController::class, 'update'])->name('files.update');
+    Route::delete('/files/{file}', [FilesController::class, 'destroy'])->name('files.destroy');
 });
 
 // Страница создания документа (доступна всем, но с проверкой авторизации в компоненте)
