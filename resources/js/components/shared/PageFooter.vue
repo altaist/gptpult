@@ -1,5 +1,5 @@
 <template>
-    <div :class="['bg-white border full-width', 'q-mt-lg', isSticky ? 'fixed bottom' : '']">
+    <div :class="['bg-white border full-width', 'q-mt-lg', isSticky ? 'fixed bottom' : '']" v-if="false">
         <div class="full-width" v-if="menu && menu.length>0">
             <q-btn-group spread class="q-py-sm">
                 <q-btn 

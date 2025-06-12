@@ -6,9 +6,6 @@
             </div>
             <div class="col text-center">
                 <page-title>{{title}}</page-title>
-                <div v-if="user" class="text-caption text-grey">
-                    {{ user.name }}
-                </div>
             </div>
             <div class="col text-right" v-if="rightBtnIcon"><btn :icon="rightBtnIcon" @click="onRightBtnClick"/></div>
         </div>
