@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Document;
 use App\Models\DocumentType;
 use App\Services\Documents\DocumentService;
+use App\Services\Documents\Files\WordDocumentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -16,10 +17,14 @@ class DocumentController extends Controller
     use AuthorizesRequests;
 
     protected DocumentService $documentService;
+    protected WordDocumentService $wordDocumentService;
 
-    public function __construct(DocumentService $documentService)
-    {
+    public function __construct(
+        DocumentService $documentService,
+        WordDocumentService $wordDocumentService
+    ) {
         $this->documentService = $documentService;
+        $this->wordDocumentService = $wordDocumentService;
     }
 
     /**
@@ -182,5 +187,27 @@ class DocumentController extends Controller
             'message' => 'Документ успешно создан',
             'document' => $document
         ], 201);
+    }
+
+    /**
+     * Сгенерировать и скачать Word-документ
+     */
+    public function downloadWord(Document $document)
+    {
+        $this->authorize('view', $document);
+
+        try {
+            $file = $this->wordDocumentService->generate($document);
+
+            return response()->json([
+                'message' => 'Документ успешно сгенерирован',
+                'url' => $file->getPublicUrl(),
+                'filename' => $file->display_name
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Ошибка при генерации документа: ' . $e->getMessage()
+            ], 500);
+        }
     }
 } 

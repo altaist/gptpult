@@ -34,15 +34,20 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{document}/edit', [DocumentController::class, 'edit'])->name('edit');
         Route::put('/{document}', [DocumentController::class, 'update'])->name('update');
         Route::delete('/{document}', [DocumentController::class, 'destroy'])->name('destroy');
+        Route::post('/{document}/download-word', [DocumentController::class, 'downloadWord'])->name('download-word');
     });
 
     // Маршруты для работы с файлами
-    Route::post('/files/upload', [FilesController::class, 'upload'])->name('files.upload');
-    Route::get('/files/{file}', [FilesController::class, 'show'])->name('files.show');
-    Route::get('/files/{file}/download', [FilesController::class, 'download'])->name('files.download');
-    Route::get('/files/{file}/view', [FilesController::class, 'view'])->name('files.view');
-    Route::put('/files/{file}', [FilesController::class, 'update'])->name('files.update');
-    Route::delete('/files/{file}', [FilesController::class, 'destroy'])->name('files.destroy');
+    Route::get('/files/example', function () {
+        return Inertia::render('files/FileExample');
+    })->name('files.example')->middleware(['auth', 'web']);
+
+    Route::post('/files/upload', [FilesController::class, 'upload'])->name('files.upload')->middleware(['auth', 'web']);
+    Route::get('/files/{file}', [FilesController::class, 'show'])->name('files.show')->middleware(['auth', 'web']);
+    Route::get('/files/{file}/download', [FilesController::class, 'download'])->name('files.download')->middleware(['auth', 'web']);
+    Route::get('/files/{file}/view', [FilesController::class, 'view'])->name('files.view')->middleware(['auth', 'web']);
+    Route::put('/files/{file}', [FilesController::class, 'update'])->name('files.update')->middleware(['auth', 'web']);
+    Route::delete('/files/{file}', [FilesController::class, 'destroy'])->name('files.destroy')->middleware(['auth', 'web']);
 });
 
 // Страница создания документа (доступна всем, но с проверкой авторизации в компоненте)

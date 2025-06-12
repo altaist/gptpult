@@ -210,16 +210,17 @@ class WordDocumentService
 
     private function saveDocument(Document $document): string
     {
-        $filename = storage_path('app/temp/' . $document->id . '_' . time() . '.docx');
+        $filename = storage_path('app/public/' . $document->id . '_' . time() . '.docx');
         
         // Создаем директорию, если она не существует
         if (!file_exists(dirname($filename))) {
             mkdir(dirname($filename), 0755, true);
         }
         
+        // Сохраняем документ напрямую в файл
         $objWriter = IOFactory::createWriter($this->phpWord, 'Word2007');
         $objWriter->save($filename);
-        
+
         return $filename;
     }
 } 
