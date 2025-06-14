@@ -1,0 +1,4 @@
+CREATE DATABASE IF NOT EXISTS gptpult;
+CREATE USER IF NOT EXISTS 'gptpult'@'%' IDENTIFIED BY 'gptpult_password';
+GRANT ALL PRIVILEGES ON gptpult.* TO 'gptpult'@'%';
+FLUSH PRIVILEGES; 

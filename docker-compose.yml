@@ -11,6 +11,9 @@ services:
       - ./:/var/www
     networks:
       - gptpult-network
+    depends_on:
+      db:
+        condition: service_healthy
 
   nginx:
     image: nginx:alpine
@@ -23,20 +26,28 @@ services:
       - ./docker/nginx/conf.d:/etc/nginx/conf.d
     networks:
       - gptpult-network
+    depends_on:
+      - app
 
   db:
     image: mysql:8.0
     container_name: gptpult-db
     restart: unless-stopped
     environment:
-      MYSQL_DATABASE: ${DB_DATABASE}
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_DATABASE: gptpult
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_PASSWORD: gptpult_password
+      MYSQL_USER: gptpult
     volumes:
       - dbdata:/var/lib/mysql
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - gptpult-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_password"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
 
 networks:
   gptpult-network:

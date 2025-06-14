@@ -10,10 +10,27 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip \
     nodejs \
-    npm
+    npm \
+    libzip-dev \
+    libicu-dev \
+    libfreetype6-dev \
+    libjpeg62-turbo-dev \
+    libpng-dev \
+    libwebp-dev \
+    zlib1g-dev
 
 # Установка PHP расширений
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
+    && docker-php-ext-install -j$(nproc) \
+    pdo_mysql \
+    mbstring \
+    exif \
+    pcntl \
+    bcmath \
+    gd \
+    zip \
+    intl \
+    opcache
 
 # Установка Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -25,7 +42,7 @@ WORKDIR /var/www
 COPY . /var/www
 
 # Установка зависимостей PHP
-RUN composer install
+RUN composer install --no-interaction --no-dev --optimize-autoloader
 
 # Установка зависимостей Node.js
 RUN npm install
@@ -35,6 +52,9 @@ RUN npm run build
 
 # Установка прав
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
+
+# Настройка PHP
+COPY docker/php/local.ini /usr/local/etc/php/conf.d/local.ini
 
 EXPOSE 9000
 CMD ["php-fpm"] 
