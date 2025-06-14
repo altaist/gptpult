@@ -9,12 +9,12 @@
                         <div class="text-subtitle2">Тип документа</div>
                         <div>{{ document.document_type?.name }}</div>
                     </div>
-                    <div class="col-12 col-md-6">
+                    <!--div class="col-12 col-md-6">
                         <div class="text-subtitle2">Статус</div>
                         <q-chip :color="getStatusColor(document.status)">
                             {{ getStatusLabel(document.status) }}
                         </q-chip>
-                    </div>
+                    </div-->
                 </div>
             </q-card-section>
 

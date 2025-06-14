@@ -10,10 +10,6 @@ class NewDocumentController extends Controller
 {
     public function __invoke(Request $request)
     {
-        if (!$request->user()) {
-            return redirect()->route('login');
-        }
-
         return Inertia::render('documents/NewDocument', [
             'document_types' => DocumentType::all()
         ]);

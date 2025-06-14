@@ -14,11 +14,11 @@
                     :loading="isDownloading"
                     @click="downloadWord"
                 />
-                <q-btn
+                <!--q-btn
                     label="Редактировать"
                     color="primary"
                     :to="route('documents.edit', document.id)"
-                />
+                /-->
             </div>
         </div>
     </page-layout>
