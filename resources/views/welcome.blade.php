@@ -12,6 +12,17 @@
             font-family: 'Figtree', sans-serif;
             background-color: #f8f9fa;
         }
+        .navbar {
+            background: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .navbar-brand {
+            font-weight: 600;
+            font-size: 1.5rem;
+        }
         .hero-section {
             background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
             color: white;
@@ -44,14 +55,33 @@
             font-weight: 600;
             margin-bottom: 2rem;
         }
+        @media (max-width: 768px) {
+            .desktop-only {
+                display: none;
+            }
+        }
+        @media (min-width: 769px) {
+            .mobile-only {
+                display: none;
+            }
+        }
     </style>
 </head>
 <body>
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <span class="mobile-only">GPT Pult</span>
+                <span class="desktop-only">GPT Pult - ИИ для учебы</span>
+            </a>
+        </div>
+    </nav>
+
     <div class="hero-section text-center">
         <div class="container">
-            <h1 class="display-4 mb-4">Создай работу прямо сейчас</h1>
-            <p class="lead mb-5">Быстро, качественно и недорого</p>
-            <a href="/new" class="btn btn-primary btn-lg">Начать работу</a>
+            <h1 class="display-4 mb-4">Подготовься и сдай работу за час</h1>
+            <p class="lead mb-5">Пульт управления учебой</p>
+            <a href="/new" class="btn btn-primary btn-lg">Создать</a>
         </div>
     </div>
 
@@ -59,7 +89,7 @@
         <div class="row justify-content-center mb-5">
             <div class="col-md-8 text-center">
                 <h2 class="section-title">Почему выбирают нас?</h2>
-                <p class="lead">Сравните цены и убедитесь сами</p>
+                <p class="lead">Сравните варианты  и убедитесь сами</p>
             </div>
         </div>
 
@@ -67,18 +97,20 @@
             <div class="col-md-4 mb-4">
                 <div class="price-card text-center">
                     <h3>У фрилансеров</h3>
-                    <p class="display-4 mb-4">₽3000</p>
+                    <p class="display-4 mb-4">от ₽3000</p>
                     <ul class="list-unstyled">
                         <li>Долгое ожидание</li>
                         <li>Риск некачественной работы</li>
                         <li>Нет гарантий</li>
+                        <li>Фрилансер не даст знаний</li>
+                        <li>Не поможет защитить работу</li>
                     </ul>
                 </div>
             </div>
             <div class="col-md-4 mb-4">
                 <div class="price-card text-center">
                     <h3>Наш сервис</h3>
-                    <p class="display-4 mb-4">₽1500</p>
+                    <p class="display-4 mb-4">от ₽290</p>
                     <ul class="list-unstyled">
                         <li>Мгновенный результат</li>
                         <li>Гарантия качества</li>
