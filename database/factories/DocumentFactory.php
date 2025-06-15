@@ -81,6 +81,11 @@ class DocumentFactory extends Factory
                     ],
                 ],
             ],
+            'gpt_settings' => [
+                'service' => 'openai',
+                'model' => 'gpt-3.5-turbo',
+                'temperature' => 0.7,
+            ],
             'status' => $this->faker->randomElement(['draft', 'in_review', 'approved', 'rejected']),
         ];
     }

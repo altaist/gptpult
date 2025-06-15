@@ -203,6 +203,9 @@ class DocumentController extends Controller
         $document->structure = $structure;
         $document->save();
 
+        // Запускаем Job для генерации документа
+        \App\Jobs\StartGenerateDocument::dispatch($document);
+
         return response()->json([
             'message' => 'Документ успешно создан',
             'document' => $document
