@@ -87,8 +87,10 @@
             right: 0;
             bottom: 0;
             background: 
-                radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.05) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(96, 165, 250, 0.03) 0%, transparent 50%);
+                radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(96, 165, 250, 0.12) 0%, transparent 50%),
+                radial-gradient(circle at 40% 60%, rgba(147, 197, 253, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 70% 30%, rgba(59, 130, 246, 0.06) 0%, transparent 50%);
             z-index: 1;
         }
 
@@ -99,17 +101,193 @@
             left: -50%;
             width: 200%;
             height: 200%;
-            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%233b82f6' fill-opacity='0.02'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            background: 
+                url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%233b82f6' fill-opacity='0.06'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"),
+                url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2360a5fa' fill-opacity='0.04'%3E%3Crect x='58' y='58' width='4' height='4' rx='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
             animation: float 20s ease-in-out infinite;
             z-index: 1;
         }
 
-        @keyframes float {
+        /* Дополнительные декоративные элементы */
+        .hero-section .hero-bg-element {
+            position: absolute;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(147, 197, 253, 0.08));
+            z-index: 1;
+            animation: heroFloat 15s ease-in-out infinite;
+        }
+
+        .hero-section .hero-bg-element:nth-child(1) {
+            width: 200px;
+            height: 200px;
+            top: 10%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .hero-section .hero-bg-element:nth-child(2) {
+            width: 150px;
+            height: 150px;
+            top: 20%;
+            right: 15%;
+            animation-delay: -3s;
+            background: linear-gradient(135deg, rgba(96, 165, 250, 0.10), rgba(59, 130, 246, 0.06));
+        }
+
+        .hero-section .hero-bg-element:nth-child(3) {
+            width: 100px;
+            height: 100px;
+            bottom: 30%;
+            left: 8%;
+            animation-delay: -6s;
+            background: linear-gradient(135deg, rgba(147, 197, 253, 0.09), rgba(219, 234, 254, 0.06));
+        }
+
+        .hero-section .hero-bg-element:nth-child(4) {
+            width: 180px;
+            height: 180px;
+            bottom: 15%;
+            right: 20%;
+            animation-delay: -9s;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(96, 165, 250, 0.05));
+        }
+
+        .hero-section .hero-bg-element:nth-child(5) {
+            width: 120px;
+            height: 120px;
+            top: 50%;
+            left: 5%;
+            animation-delay: -12s;
+            background: linear-gradient(135deg, rgba(147, 197, 253, 0.11), rgba(59, 130, 246, 0.07));
+        }
+
+        .hero-section .hero-bg-element:nth-child(6) {
+            width: 80px;
+            height: 80px;
+            top: 70%;
+            right: 10%;
+            animation-delay: -15s;
+            background: linear-gradient(135deg, rgba(219, 234, 254, 0.12), rgba(147, 197, 253, 0.08));
+        }
+
+        /* Волновые элементы */
+        .hero-section .hero-wave {
+            position: absolute;
+            width: 100%;
+            height: 100px;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(59, 130, 246, 0.06), 
+                rgba(96, 165, 250, 0.04), 
+                rgba(147, 197, 253, 0.06), 
+                transparent
+            );
+            z-index: 1;
+            transform: skewY(-2deg);
+            animation: waveMove 12s ease-in-out infinite;
+        }
+
+        .hero-section .hero-wave:nth-child(7) {
+            top: 20%;
+            animation-delay: 0s;
+        }
+
+        .hero-section .hero-wave:nth-child(8) {
+            bottom: 30%;
+            animation-delay: -4s;
+            transform: skewY(2deg);
+        }
+
+        /* Геометрические фигуры */
+        .hero-section .hero-geometry {
+            position: absolute;
+            z-index: 1;
+            opacity: 0.8;
+        }
+
+        .hero-section .hero-geometry:nth-child(9) {
+            top: 15%;
+            right: 25%;
+            width: 0;
+            height: 0;
+            border-left: 30px solid transparent;
+            border-right: 30px solid transparent;
+            border-bottom: 40px solid rgba(59, 130, 246, 0.12);
+            animation: geometryRotate 20s linear infinite;
+        }
+
+        .hero-section .hero-geometry:nth-child(10) {
+            bottom: 25%;
+            left: 25%;
+            width: 60px;
+            height: 60px;
+            background: rgba(96, 165, 250, 0.10);
+            transform: rotate(45deg);
+            animation: geometryFloat 18s ease-in-out infinite;
+        }
+
+        .hero-section .hero-geometry:nth-child(11) {
+            top: 60%;
+            right: 8%;
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(59, 130, 246, 0.15);
+            border-radius: 50%;
+            animation: geometryPulse 14s ease-in-out infinite;
+        }
+
+        @keyframes heroFloat {
             0%, 100% {
-                transform: translateY(0px) rotate(0deg);
+                transform: translateY(0px) translateX(0px) scale(1);
+            }
+            25% {
+                transform: translateY(-20px) translateX(10px) scale(1.05);
             }
             50% {
-                transform: translateY(-20px) rotate(180deg);
+                transform: translateY(-10px) translateX(-15px) scale(0.95);
+            }
+            75% {
+                transform: translateY(-25px) translateX(5px) scale(1.02);
+            }
+        }
+
+        @keyframes waveMove {
+            0%, 100% {
+                transform: translateX(-100px) skewY(-2deg);
+                opacity: 0.3;
+            }
+            50% {
+                transform: translateX(100px) skewY(-2deg);
+                opacity: 0.7;
+            }
+        }
+
+        @keyframes geometryRotate {
+            0% {
+                transform: rotate(0deg) translateY(0px);
+            }
+            100% {
+                transform: rotate(360deg) translateY(-10px);
+            }
+        }
+
+        @keyframes geometryFloat {
+            0%, 100% {
+                transform: rotate(45deg) translateY(0px);
+            }
+            50% {
+                transform: rotate(45deg) translateY(-15px);
+            }
+        }
+
+        @keyframes geometryPulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 0.6;
+            }
+            50% {
+                transform: scale(1.2);
+                opacity: 0.8;
             }
         }
 
@@ -2093,6 +2271,19 @@
 
     <!-- Hero Section -->
     <section class="hero-section">
+        <!-- Декоративные элементы фона -->
+        <div class="hero-bg-element"></div>
+        <div class="hero-bg-element"></div>
+        <div class="hero-bg-element"></div>
+        <div class="hero-bg-element"></div>
+        <div class="hero-bg-element"></div>
+        <div class="hero-bg-element"></div>
+        <div class="hero-wave"></div>
+        <div class="hero-wave"></div>
+        <div class="hero-geometry"></div>
+        <div class="hero-geometry"></div>
+        <div class="hero-geometry"></div>
+        
         <div class="hero-container">
             <div class="container-fluid">
                 
