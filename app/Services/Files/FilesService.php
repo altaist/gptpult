@@ -100,19 +100,8 @@ class FilesService
         $mimeType = mime_content_type($filePath);
         $size = filesize($filePath);
 
-        // Генерируем уникальное имя файла
-        $uniqueName = $this->generateUniqueFileName($originalName);
-
-        // Определяем путь для сохранения
-        $baseDirectory = $this->baseDirectories['default'];
-        $relativePath = $baseDirectory . '/' . date('Y/m/d');
-        $fullPath = $relativePath . '/' . $uniqueName;
-
-        // Создаем директорию, если она не существует
-        Storage::disk('public')->makeDirectory($relativePath);
-
-        // Копируем файл
-        copy($filePath, storage_path('app/public/' . $fullPath));
+        // Получаем относительный путь от storage/app/public
+        $relativePath = str_replace(storage_path('app/public/'), '', $filePath);
 
         // Создаем запись в базе данных
         return File::create([
@@ -120,8 +109,8 @@ class FilesService
             'document_id' => $documentId,
             'name' => $originalName,
             'display_name' => $displayName ?? $originalName,
-            'unique_name' => $uniqueName,
-            'path' => $fullPath,
+            'unique_name' => basename($relativePath),
+            'path' => $relativePath,
             'size' => $size,
             'extension' => $extension,
             'mime_type' => $mimeType,
