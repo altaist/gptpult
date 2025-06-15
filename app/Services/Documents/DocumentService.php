@@ -21,6 +21,9 @@ class DocumentService
             'document_type_id' => $data['document_type_id'],
             'title' => $data['title'],
             'structure' => $data['structure'],
+            'content' => $data['content'] ?? null,
+            'pages_num' => $data['pages_num'] ?? null,
+            'gpt_settings' => $data['gpt_settings'] ?? null,
             'status' => $data['status'] ?? 'draft'
         ]);
     }
@@ -37,6 +40,9 @@ class DocumentService
         $document->update([
             'title' => $data['title'] ?? $document->title,
             'structure' => $data['structure'] ?? $document->structure,
+            'content' => $data['content'] ?? $document->content,
+            'pages_num' => $data['pages_num'] ?? $document->pages_num,
+            'gpt_settings' => $data['gpt_settings'] ?? $document->gpt_settings,
             'status' => $data['status'] ?? $document->status,
             'document_type_id' => $data['document_type_id'] ?? $document->document_type_id,
         ]);
@@ -302,6 +308,72 @@ class DocumentService
         $structure['theses'] = '';
         
         $document->update(['structure' => $structure]);
+        return $document->fresh();
+    }
+
+    /**
+     * Получить неструктурированное текстовое содержание из структуры
+     *
+     * @param Document $document
+     * @return string|null
+     */
+    public function getContentsText(Document $document): ?string
+    {
+        return $document->structure['contents-text'] ?? null;
+    }
+
+    /**
+     * Установить неструктурированное текстовое содержание в структуру
+     *
+     * @param Document $document
+     * @param string $text
+     * @return Document
+     */
+    public function setContentsText(Document $document, string $text): Document
+    {
+        $structure = $document->structure ?? [];
+        $structure['contents-text'] = $text;
+        
+        $document->update(['structure' => $structure]);
+        return $document->fresh();
+    }
+
+    /**
+     * Обновить содержание документа (поле content)
+     *
+     * @param Document $document
+     * @param string $content
+     * @return Document
+     */
+    public function updateContent(Document $document, string $content): Document
+    {
+        $document->update(['content' => $content]);
+        return $document->fresh();
+    }
+
+    /**
+     * Обновить количество страниц документа
+     *
+     * @param Document $document
+     * @param int $pagesNum
+     * @return Document
+     */
+    public function updatePagesNum(Document $document, int $pagesNum): Document
+    {
+        $document->update(['pages_num' => $pagesNum]);
+        return $document->fresh();
+    }
+
+    /**
+     * Обновить настройки GPT для документа
+     *
+     * @param Document $document
+     * @param array $gptSettings
+     * @return Document
+     */
+    public function updateGptSettings(Document $document, array $gptSettings): Document
+    {
+        $document->update(['gpt_settings' => $gptSettings]);
         return $document->fresh();
     }
 } 

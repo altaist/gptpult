@@ -57,6 +57,13 @@ class DocumentController extends Controller
             'references.*.author' => ['required', 'string', 'max:255'],
             'references.*.year' => ['required', 'string', 'max:4'],
             'references.*.url' => ['required', 'url', 'max:255'],
+            'content' => ['nullable', 'string'],
+            'pages_num' => ['nullable', 'integer', 'min:1', 'max:1000'],
+            'gpt_settings' => ['nullable', 'array'],
+            'gpt_settings.service' => ['nullable', 'string', 'in:openai,anthropic'],
+            'gpt_settings.model' => ['nullable', 'string'],
+            'gpt_settings.temperature' => ['nullable', 'numeric', 'min:0', 'max:2'],
+            'gpt_settings.max_tokens' => ['nullable', 'integer', 'min:1', 'max:8192'],
         ]);
 
         $structure = [
@@ -72,6 +79,9 @@ class DocumentController extends Controller
             'document_type_id' => $validated['document_type_id'],
             'title' => $validated['topic'], // Используем тему как заголовок по умолчанию
             'structure' => $structure,
+            'content' => $validated['content'] ?? null,
+            'pages_num' => $validated['pages_num'] ?? null,
+            'gpt_settings' => $validated['gpt_settings'] ?? null,
             'status' => 'draft'
         ]);
 
@@ -125,6 +135,13 @@ class DocumentController extends Controller
             'references.*.author' => ['required', 'string', 'max:255'],
             'references.*.year' => ['required', 'string', 'max:4'],
             'references.*.url' => ['required', 'url', 'max:255'],
+            'content' => ['nullable', 'string'],
+            'pages_num' => ['nullable', 'integer', 'min:1', 'max:1000'],
+            'gpt_settings' => ['nullable', 'array'],
+            'gpt_settings.service' => ['nullable', 'string', 'in:openai,anthropic'],
+            'gpt_settings.model' => ['nullable', 'string'],
+            'gpt_settings.temperature' => ['nullable', 'numeric', 'min:0', 'max:2'],
+            'gpt_settings.max_tokens' => ['nullable', 'integer', 'min:1', 'max:8192'],
         ]);
 
         $structure = [
@@ -138,7 +155,10 @@ class DocumentController extends Controller
         $this->documentService->update($document, [
             'document_type_id' => $validated['document_type_id'],
             'title' => $validated['topic'],
-            'structure' => $structure
+            'structure' => $structure,
+            'content' => $validated['content'] ?? null,
+            'pages_num' => $validated['pages_num'] ?? null,
+            'gpt_settings' => $validated['gpt_settings'] ?? null,
         ]);
 
         return redirect()
@@ -209,5 +229,63 @@ class DocumentController extends Controller
                 'message' => 'Ошибка при генерации документа: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Обновить настройки GPT для документа
+     */
+    public function updateGptSettings(Request $request, Document $document)
+    {
+        $this->authorize('update', $document);
+
+        $validated = $request->validate([
+            'service' => ['nullable', 'string', 'in:openai,anthropic'],
+            'model' => ['nullable', 'string'],
+            'temperature' => ['nullable', 'numeric', 'min:0', 'max:2'],
+            'max_tokens' => ['nullable', 'integer', 'min:1', 'max:8192'],
+        ]);
+
+        $this->documentService->updateGptSettings($document, $validated);
+
+        return response()->json([
+            'message' => 'Настройки GPT успешно обновлены',
+            'gpt_settings' => $document->fresh()->gpt_settings
+        ]);
+    }
+
+    /**
+     * Обновить содержание документа
+     */
+    public function updateContent(Request $request, Document $document)
+    {
+        $this->authorize('update', $document);
+
+        $validated = $request->validate([
+            'content' => ['required', 'string'],
+        ]);
+
+        $this->documentService->updateContent($document, $validated['content']);
+
+        return response()->json([
+            'message' => 'Содержание документа успешно обновлено'
+        ]);
+    }
+
+    /**
+     * Обновить количество страниц документа
+     */
+    public function updatePagesNum(Request $request, Document $document)
+    {
+        $this->authorize('update', $document);
+
+        $validated = $request->validate([
+            'pages_num' => ['required', 'integer', 'min:1', 'max:1000'],
+        ]);
+
+        $this->documentService->updatePagesNum($document, $validated['pages_num']);
+
+        return response()->json([
+            'message' => 'Количество страниц успешно обновлено'
+        ]);
     }
 } 

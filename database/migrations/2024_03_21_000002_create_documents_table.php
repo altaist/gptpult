@@ -14,6 +14,9 @@ return new class extends Migration
             $table->foreignId('document_type_id')->constrained()->onDelete('restrict');
             $table->string('title');
             $table->json('structure');
+            $table->text('content')->nullable();
+            $table->integer('pages_num')->nullable();
+            $table->json('gpt_settings')->nullable();
             $table->string('status')->default('draft');
             $table->softDeletes();
             $table->timestamps();

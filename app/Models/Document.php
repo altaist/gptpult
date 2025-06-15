@@ -17,11 +17,15 @@ class Document extends Model
         'document_type_id',
         'title',
         'structure',
+        'content',
+        'pages_num',
+        'gpt_settings',
         'status'
     ];
 
     protected $casts = [
-        'structure' => 'array'
+        'structure' => 'array',
+        'gpt_settings' => 'array'
     ];
 
     public function user()
@@ -57,4 +61,6 @@ class Document extends Model
     {
         return $this->files()->where('mime_type', $mimeType)->exists();
     }
+
+
 } 
