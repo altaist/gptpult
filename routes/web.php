@@ -11,6 +11,9 @@ use App\Http\Controllers\FilesController;
 Route::get('/', function () {
     return view('welcome');
 });
+Route::get('/v2', function () {
+    return view('v2');
+});
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
