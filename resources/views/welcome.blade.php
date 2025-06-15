@@ -11,6 +11,14 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
     <style>
+        @font-face {
+            font-family: 'Bowler';
+            src: url('{{ asset('fonts/Bowler.ttf') }}') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
         :root {
             --primary-color: #3b82f6;
             --primary-hover: #2563eb;
@@ -57,7 +65,7 @@
             font-weight: 800;
             font-size: 1.5rem;
             color: #3b82f6;
-            font-family: var(--heading-font);
+            font-family: 'Bowler', var(--heading-font);
         }
 
         /* Hero Section */
@@ -816,6 +824,7 @@
             border-radius: 50%;
             background: #e2e8f0;
             transition: all 0.3s ease;
+            cursor: pointer;
         }
 
         .step-dot.active {
@@ -1036,7 +1045,7 @@
             font-weight: 700;
             margin-bottom: 1rem;
             color: #3b82f6;
-            font-family: var(--heading-font);
+            font-family: 'Bowler', var(--heading-font);
         }
 
         .footer-text {
@@ -1096,7 +1105,7 @@
     <nav class="navbar navbar-expand-lg fixed-top">
         <div class="container">
             <a class="navbar-brand" href="#">
-                <i class="fas fa-robot me-2"></i>GPT Пульт
+                <i class="fas fa-tv me-2"></i>GPT Пульт
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -1250,7 +1259,6 @@
     <div class="container">
                 <div class="stats-title" data-aos="fade-up">
                     <h2>Мы в цифрах</h2>
-                    <p>Наши достижения говорят сами за себя</p>
             </div>
                 <div class="row">
                     <div class="col-lg-3 col-md-6 mb-4">
@@ -1491,7 +1499,7 @@
             <div class="row">
                 <div class="col-lg-4 mb-4">
                     <div class="footer-brand">
-                        <i class="fas fa-robot me-2"></i>GPT Пульт
+                        <i class="fas fa-tv me-2"></i>GPT Пульт
                     </div>
                     <p class="footer-text">
                         Революционная платформа для создания учебных работ с использованием 
@@ -1672,6 +1680,73 @@
                     btnTaskSolve.className = 'btn-hero-primary';
                 }
             });
+        });
+
+        // Step navigation functionality
+        const textworkSteps = [
+            { title: "Укажи тему и детали работы", desc: "Расскажи о своей работе подробно и загрузи методичку", badge: "Шаг 1 из 5", icon: "fas fa-file-alt" },
+            { title: "Выбери тип работы", desc: "Курсовая, диплом, реферат или эссе - выбери подходящий формат для твоей работы", badge: "Шаг 2 из 5", icon: "fas fa-list" },
+            { title: "Настрой параметры", desc: "Укажи количество страниц, стиль оформления и особые требования к работе", badge: "Шаг 3 из 5", icon: "fas fa-cog" },
+            { title: "Получи результат", desc: "Через несколько минут получи готовую уникальную работу с проверкой на плагиат", badge: "Шаг 4 из 5", icon: "fas fa-check-circle" },
+            { title: "Доработай при необходимости", desc: "Воспользуйся бесплатными правками или задай дополнительные вопросы ИИ", badge: "Шаг 5 из 5", icon: "fas fa-edit" }
+        ];
+
+        const tasksolveSteps = [
+            { title: "Опиши условие задачи", desc: "Выбери предмет и подробно опиши условие задачи", badge: "Шаг 1 из 3", icon: "fas fa-calculator" },
+            { title: "Получи решение", desc: "ИИ проанализирует задачу и предоставит детальное решение с объяснением каждого шага", badge: "Шаг 2 из 3", icon: "fas fa-brain" },
+            { title: "Изучи и примени", desc: "Разберись в решении, задай уточняющие вопросы и применяй полученные знания", badge: "Шаг 3 из 3", icon: "fas fa-graduation-cap" }
+        ];
+
+        function updateStepContent(tabType, stepIndex) {
+            const steps = tabType === 'textwork' ? textworkSteps : tasksolveSteps;
+            const step = steps[stepIndex];
+            const pane = document.getElementById(tabType);
+            
+            // Update content
+            pane.querySelector('.step-badge').textContent = step.badge;
+            pane.querySelector('.image-placeholder i').className = step.icon;
+            pane.querySelector('.step-content h3').textContent = step.title;
+            pane.querySelector('.step-content p').textContent = step.desc;
+            
+            // Update navigation buttons
+            const prevBtn = pane.querySelector('.step-nav-btn.prev');
+            const nextBtn = pane.querySelector('.step-nav-btn.next');
+            
+            prevBtn.disabled = stepIndex === 0;
+            nextBtn.disabled = stepIndex === steps.length - 1;
+            
+            // Update indicators
+            pane.querySelectorAll('.step-dot').forEach((dot, index) => {
+                dot.classList.toggle('active', index === stepIndex);
+            });
+        }
+
+        // Initialize step navigation
+        let currentSteps = { textwork: 0, tasksolve: 0 };
+
+        // Handle step navigation clicks
+        document.addEventListener('click', function(e) {
+            const target = e.target.closest('.step-nav-btn, .step-dot');
+            if (!target) return;
+            
+            const pane = target.closest('.tab-pane');
+            if (!pane) return;
+            
+            const tabType = pane.id;
+            const steps = tabType === 'textwork' ? textworkSteps : tasksolveSteps;
+            
+            if (target.classList.contains('step-nav-btn')) {
+                if (target.classList.contains('prev') && currentSteps[tabType] > 0) {
+                    currentSteps[tabType]--;
+                } else if (target.classList.contains('next') && currentSteps[tabType] < steps.length - 1) {
+                    currentSteps[tabType]++;
+                }
+            } else if (target.classList.contains('step-dot')) {
+                const dots = Array.from(pane.querySelectorAll('.step-dot'));
+                currentSteps[tabType] = dots.indexOf(target);
+            }
+            
+            updateStepContent(tabType, currentSteps[tabType]);
         });
     </script>
 </body>
