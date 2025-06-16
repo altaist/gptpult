@@ -9,12 +9,6 @@
                         <div class="text-subtitle2">Тип документа</div>
                         <div>{{ document.document_type?.name }}</div>
                     </div>
-                    <!--div class="col-12 col-md-6">
-                        <div class="text-subtitle2">Статус</div>
-                        <q-chip :color="getStatusColor(document.status)">
-                            {{ getStatusLabel(document.status) }}
-                        </q-chip>
-                    </div-->
                 </div>
             </q-card-section>
 
@@ -24,7 +18,7 @@
             </q-card-section>
         </q-card>
 
-        <document-contents-view 
+                <document-contents-view 
             v-if="document.structure?.contents"
             :contents="document.structure.contents"
         />
@@ -33,6 +27,7 @@
             :amount="399"
             @payment="handlePayment"
         />
+        
     </div>
 </template>
 
@@ -49,26 +44,6 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['payment']);
-
-const getStatusColor = (status) => {
-    const colors = {
-        draft: 'grey',
-        in_progress: 'orange',
-        completed: 'green',
-        archived: 'blue'
-    };
-    return colors[status] || 'grey';
-};
-
-const getStatusLabel = (status) => {
-    const labels = {
-        draft: 'Черновик',
-        in_progress: 'В работе',
-        completed: 'Завершен',
-        archived: 'В архиве'
-    };
-    return labels[status] || status;
-};
 
 const handlePayment = (amount) => {
     emit('payment', { documentId: props.document.id, amount });

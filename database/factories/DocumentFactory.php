@@ -159,4 +159,25 @@ class DocumentFactory extends Factory
             'status' => 'rejected',
         ]);
     }
+
+    /**
+     * Создать минимальный документ без фейковых данных
+     */
+    public function minimal(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'structure' => [
+                'topic' => $attributes['title'] ?? 'Новый документ',
+                'theses' => '',
+                'objectives' => [],
+                'contents' => [],
+                'references' => [],
+            ],
+            'gpt_settings' => [
+                'service' => 'openai',
+                'model' => 'gpt-3.5-turbo',
+                'temperature' => 0.7,
+            ],
+        ]);
+    }
 } 

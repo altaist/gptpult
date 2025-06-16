@@ -4,68 +4,54 @@
         :auto-auth="true"
     >
         <div class="q-pa-md">
-            <document-view :document="document" />
+            <!-- Если идет генерация - показываем ТОЛЬКО компонент генерации -->
+            <document-generation-status
+                v-if="isGenerating()"
+                :estimated-time="30"
+                :title="getStatusText()"
+                @timeout="handleGenerationTimeout"
+            />
 
-            <!-- Статус документа и кнопки управления -->
-            <div class="q-mt-md">
-                <q-card class="q-mb-md">
-                    <q-card-section>
-                        <div class="row items-center justify-between">
-                            <div class="col">
-                                <div class="text-h6">Статус генерации</div>
-                                <div class="row items-center q-gutter-sm q-mt-sm">
-                                    <q-icon 
-                                        :name="getStatusIcon()" 
-                                        :color="getStatusColor()"
-                                        size="sm"
-                                    />
-                                    <span class="text-body1">{{ getStatusText() }}</span>
-                                    <q-linear-progress 
-                                        v-if="isGenerating()" 
-                                        indeterminate 
-                                        :color="getStatusColor()" 
-                                        class="q-ml-sm"
-                                        style="width: 200px"
-                                    />
-                                </div>
-                                <div v-if="documentStatus?.progress" class="q-mt-sm">
-                                    <q-linear-progress 
-                                        :value="documentStatus.progress.completion_percentage / 100"
-                                        color="positive"
-                                        size="8px"
-                                    />
-                                    <div class="text-caption q-mt-xs">
-                                        Завершено: {{ documentStatus.progress.completion_percentage }}%
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="col-auto">
-                                <div class="row q-gutter-sm">
-                                    <!-- Кнопка полной генерации -->
-                                    <q-btn
-                                        v-if="canStartFullGeneration()"
-                                        label="Полная генерация"
-                                        color="secondary"
-                                        icon="autorenew"
-                                        :loading="isStartingFullGeneration"
-                                        @click="startFullGeneration"
-                                    />
-                                    
-                                    <!-- Кнопка скачивания -->
-                                    <q-btn
-                                        label="Скачать Word"
-                                        color="primary"
-                                        icon="download"
-                                        :loading="isDownloading"
-                                        @click="downloadWord"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </q-card-section>
-                </q-card>
-            </div>
+            <!-- Если генерация НЕ идет - показываем документ и панель статуса -->
+            <template v-else>
+                <document-view :document="document" />
+
+                <!-- Панель статуса документа -->
+                <document-status-panel
+                    :document-status="documentStatus"
+                    :status-text="getStatusText()"
+                    :is-generating="isGenerating()"
+                    :can-start-full-generation="canStartFullGeneration()"
+                    :is-pre-generation-complete="isPreGenerationComplete()"
+                    :is-full-generation-complete="isFullGenerationComplete()"
+                    :has-failed="hasFailed()"
+                    :is-approved="isApproved()"
+                    class="q-mt-md"
+                >
+                    <!-- Кнопки действий -->
+                    <template #actions="{ canStartFullGeneration, isPreGenerationComplete, isFullGenerationComplete }">
+                        <!-- Кнопка полной генерации -->
+                        <q-btn
+                            v-if="canStartFullGeneration"
+                            label="Полная генерация"
+                            color="secondary"
+                            icon="autorenew"
+                            :loading="isStartingFullGeneration"
+                            @click="startFullGeneration"
+                        />
+                        
+                        <!-- Кнопка скачивания -->
+                        <q-btn
+                            v-if="isPreGenerationComplete || isFullGenerationComplete"
+                            label="Скачать Word"
+                            color="primary"
+                            icon="download"
+                            :loading="isDownloading"
+                            @click="downloadWord"
+                        />
+                    </template>
+                </document-status-panel>
+            </template>
         </div>
     </page-layout>
 </template>
@@ -75,6 +61,8 @@ import { defineProps, ref } from 'vue';
 import { useQuasar } from 'quasar';
 import PageLayout from '@/components/shared/PageLayout.vue';
 import DocumentView from '@/modules/gpt/components/DocumentView.vue';
+import DocumentStatusPanel from '@/modules/gpt/components/DocumentStatusPanel.vue';
+import DocumentGenerationStatus from '@/modules/gpt/components/DocumentGenerationStatus.vue';
 import { useDocumentStatus } from '@/composables/documentStatus';
 import { apiClient } from '@/composables/api';
 import { router } from '@inertiajs/vue3';
@@ -95,7 +83,10 @@ const {
     status: documentStatus,
     isGenerating,
     canStartFullGeneration,
+    isPreGenerationComplete,
     isFullGenerationComplete,
+    hasFailed,
+    isApproved,
     getStatusText,
     startPolling,
     stopPolling
@@ -103,6 +94,13 @@ const {
     () => props.document.id,
     {
         autoStart: true,
+        onComplete: (status) => {
+            $q.notify({
+                type: 'positive',
+                message: 'Базовая генерация документа завершена!',
+                position: 'top'
+            });
+        },
         onFullComplete: (status) => {
             $q.notify({
                 type: 'positive',
@@ -120,22 +118,7 @@ const {
     }
 );
 
-// Методы для работы с интерфейсом
-const getStatusIcon = () => {
-    // Используем данные из API, если доступны
-    if (documentStatus.value?.status_icon) {
-        return documentStatus.value.status_icon;
-    }
-    return 'radio_button_unchecked';
-};
 
-const getStatusColor = () => {
-    // Используем данные из API, если доступны
-    if (documentStatus.value?.status_color) {
-        return documentStatus.value.status_color;
-    }
-    return 'grey';
-};
 
 // Запуск полной генерации
 const startFullGeneration = async () => {
@@ -186,5 +169,11 @@ const downloadWord = async () => {
     } finally {
         isDownloading.value = false;
     }
+};
+
+// Обработчик события таймаута компонента генерации
+const handleGenerationTimeout = () => {
+    // Ничего не делаем - просто ловим событие
+    console.log('Время ожидания генерации истекло, но продолжаем отслеживание через useDocumentStatus');
 };
 </script> 

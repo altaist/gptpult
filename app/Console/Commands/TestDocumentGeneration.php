@@ -48,16 +48,19 @@ class TestDocumentGeneration extends Command
 
         $this->info('Создаю тестовый документ...');
 
-        // Создаем документ
+        // Создаем документ с тестовыми данными
         $document = Document::factory()->create([
             'user_id' => $userId,
             'document_type_id' => $documentType->id,
             'title' => $topic,
-            'structure' => [
-                'topic' => $topic,
-            ],
             'status' => 'draft',
         ]);
+
+        // Обновляем topic в структуре
+        $structure = $document->structure;
+        $structure['topic'] = $topic;
+        $document->structure = $structure;
+        $document->save();
 
         $this->info("Документ создан с ID: {$document->id}");
         $this->info("Название: {$document->title}");

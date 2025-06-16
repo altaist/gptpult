@@ -60,7 +60,10 @@ class DocumentGenerationController extends Controller
             'document_id' => $document->id,
             'status' => $statusEnum->value,
             'status_label' => $statusEnum->getLabel(),
+            'status_color' => $statusEnum->getColor(),
+            'status_icon' => $statusEnum->getIcon(),
             'is_generating' => $statusEnum->isGenerating(),
+            'is_final' => $statusEnum->isFinal(),
             'can_start_full_generation' => $statusEnum->canStartFullGeneration(),
             'is_fully_generated' => $statusEnum->isFullyGenerated(),
             'progress' => [

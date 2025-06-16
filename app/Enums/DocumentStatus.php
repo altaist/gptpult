@@ -78,6 +78,9 @@ enum DocumentStatus: string
     public function isFinal(): bool
     {
         return in_array($this, [
+            self::PRE_GENERATED,
+            self::FULL_GENERATED,
+            self::IN_REVIEW,
             self::APPROVED,
             self::REJECTED,
             self::PRE_GENERATION_FAILED,

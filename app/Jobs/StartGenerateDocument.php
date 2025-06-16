@@ -40,8 +40,10 @@ class StartGenerateDocument implements ShouldQueue
                 'job_id' => $this->job->getJobId()
             ]);
 
-            // Обновляем статус документа на "pre_generating"
-            $this->document->update(['status' => DocumentStatus::PRE_GENERATING]);
+            // Обновляем статус документа на "pre_generating" (если еще не установлен)
+            if ($this->document->status !== DocumentStatus::PRE_GENERATING) {
+                $this->document->update(['status' => DocumentStatus::PRE_GENERATING]);
+            }
 
             // Получаем настройки GPT из документа
             $gptSettings = $this->document->gpt_settings ?? [];

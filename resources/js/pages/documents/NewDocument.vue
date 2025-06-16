@@ -37,70 +37,9 @@
                         type="submit"
                         color="primary"
                         :loading="isLoading"
-                        :disable="createdDocument !== null"
                     />
                 </div>
             </q-form>
-
-            <!-- Отображение статуса генерации -->
-            <div v-if="createdDocument" class="q-mt-lg">
-                <q-card class="q-pa-md">
-                    <q-card-section>
-                        <div class="text-h6">{{ createdDocument.title }}</div>
-                        <div class="text-subtitle2 text-grey-7">ID: {{ createdDocument.id }}</div>
-                    </q-card-section>
-
-                    <q-card-section>
-                        <div class="row items-center q-gutter-sm">
-                            <q-icon 
-                                :name="getStatusIcon()" 
-                                :color="getStatusColor()"
-                                size="sm"
-                            />
-                            <span class="text-body1">
-                                Статус: {{ getStatusText() }}
-                            </span>
-                        </div>
-
-                        <!-- Прогресс-бар для генерации -->
-                        <q-linear-progress 
-                            v-if="isGenerating()" 
-                            indeterminate 
-                            color="primary" 
-                            class="q-mt-sm"
-                        />
-                    </q-card-section>
-
-                    <!-- Действия -->
-                    <q-card-actions align="right">
-                        <q-btn
-                            v-if="isPreGenerationComplete()"
-                            label="Перейти к документу"
-                            color="primary"
-                            @click="goToDocument"
-                        />
-                        <q-btn
-                            v-if="isFullGenerationComplete()"
-                            label="Просмотр готового документа"
-                            color="green"
-                            @click="goToDocument"
-                        />
-                        <q-btn
-                            v-if="isApproved()"
-                            label="Просмотр утвержденного документа"
-                            color="green-10"
-                            @click="goToDocument"
-                        />
-                        <q-btn
-                            v-if="hasFailed()"
-                            label="Попробовать снова"
-                            color="negative"
-                            outline
-                            @click="retryGeneration"
-                        />
-                    </q-card-actions>
-                </q-card>
-            </div>
         </div>
     </page-layout>
 </template>
@@ -110,7 +49,6 @@ import { ref } from 'vue';
 import { router } from '@inertiajs/vue3';
 import PageLayout from '@/components/shared/PageLayout.vue';
 import { apiClient, isLoading, useLaravelErrors } from '@/composables/api';
-import { useDocumentStatus } from '@/composables/documentStatus';
 
 const props = defineProps({
     document_types: {
@@ -125,47 +63,8 @@ const form = ref({
     document_type_id: null,
     topic: ''
 });
-const createdDocument = ref(null);
 
 const { hasError, getError } = useLaravelErrors();
-
-// Создаем трекер статуса документа
-const documentStatusTracker = useDocumentStatus(
-    () => createdDocument.value?.id,
-    {
-        autoStart: false,
-        onComplete: (status) => {
-            console.log('Базовая генерация завершена!', status);
-            // Автоматическая переадресация на просмотр документа
-            router.visit(route('documents.show', status.document_id));
-        },
-        onFullComplete: (status) => {
-            console.log('Полная генерация завершена!', status);
-        },
-        onApproved: (status) => {
-            console.log('Документ утвержден! Переадресация...', status);
-            // Автоматическая переадресация на просмотр документа
-            router.visit(route('documents.show', status.document_id));
-        },
-        onError: (err) => {
-            console.error('Ошибка при генерации:', err);
-        }
-    }
-);
-
-// Деструктурируем нужные методы и свойства
-const {
-    status: documentStatus,
-    isGenerating,
-    isPreGenerationComplete,
-    isFullGenerationComplete,
-    canStartFullGeneration,
-    hasFailed,
-    isApproved,
-    getStatusText,
-    startPolling,
-    stopPolling
-} = documentStatusTracker;
 
 const onSubmit = async () => {
     try {
@@ -178,12 +77,9 @@ const onSubmit = async () => {
 
         const response = await apiClient.post(route('documents.quick-create'), data);
         
-        // После успешного создания сохраняем документ и начинаем отслеживание
+        // После успешного создания сразу переходим к просмотру документа
         if (response && response.document && response.document.id) {
-            createdDocument.value = response.document;
-            
-            // Начинаем отслеживать статус генерации
-            startPolling();
+            router.visit(route('documents.show', response.document.id));
         } else {
             throw new Error('Неверный формат ответа от сервера');
         }
@@ -191,48 +87,5 @@ const onSubmit = async () => {
         error.value = err.message || 'Произошла ошибка при создании документа';
         console.error('Ошибка при создании документа:', err);
     }
-};
-
-// Методы для работы с интерфейсом
-const getStatusIcon = () => {
-    // Используем данные из API, если доступны
-    if (documentStatus.value?.status_icon) {
-        return documentStatus.value.status_icon;
-    }
-    
-    // Fallback для совместимости
-    if (isGenerating()) return 'sync';
-    if (isPreGenerationComplete()) return 'check_circle';
-    if (isFullGenerationComplete()) return 'task_alt';
-    if (isApproved()) return 'verified';
-    if (hasFailed()) return 'error';
-    return 'radio_button_unchecked';
-};
-
-const getStatusColor = () => {
-    // Используем данные из API, если доступны
-    if (documentStatus.value?.status_color) {
-        return documentStatus.value.status_color;
-    }
-    
-    // Fallback для совместимости
-    if (isGenerating()) return 'primary';
-    if (isPreGenerationComplete()) return 'positive';
-    if (isFullGenerationComplete()) return 'green';
-    if (isApproved()) return 'green-10';
-    if (hasFailed()) return 'negative';
-    return 'grey';
-};
-
-const goToDocument = () => {
-    if (createdDocument.value?.id) {
-        router.visit(route('documents.show', createdDocument.value.id));
-    }
-};
-
-const retryGeneration = () => {
-    // Очищаем текущий документ и позволяем создать новый
-    createdDocument.value = null;
-    stopPolling();
 };
 </script> 

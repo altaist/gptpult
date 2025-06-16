@@ -21,6 +21,10 @@ export function useDocumentStatus(documentId, options = {}) {
     const config = { ...defaultOptions, ...options }
     
     let pollTimer = null
+    let hasCalledComplete = false // Флаг для предотвращения повторных вызовов
+    let hasCalledFullComplete = false
+    let hasCalledApproved = false
+    let isInitialLoad = true // Флаг первоначальной загрузки
     
     /**
      * Проверить статус документа
@@ -44,26 +48,33 @@ export function useDocumentStatus(documentId, options = {}) {
                 config.onStatusChange(response, previousStatus)
             }
             
-            // Вызываем callback при завершении базовой генерации
-            if (config.onComplete && response.status === 'pre_generated') {
+            // Вызываем callback при завершении базовой генерации (только один раз и не при первой загрузке)
+            if (config.onComplete && response.status === 'pre_generated' && !hasCalledComplete && !isInitialLoad) {
+                hasCalledComplete = true
                 config.onComplete(response)
                 // Не останавливаем опрос - может быть запущена полная генерация
             }
             
-            // Вызываем callback при завершении полной генерации
-            if (config.onFullComplete && response.status === 'full_generated') {
+            // Вызываем callback при завершении полной генерации (только один раз и не при первой загрузке)
+            if (config.onFullComplete && response.status === 'full_generated' && !hasCalledFullComplete && !isInitialLoad) {
+                hasCalledFullComplete = true
                 config.onFullComplete(response)
                 stopPolling() // Останавливаем опрос при полной генерации
             }
             
-            // Вызываем callback при утверждении
-            if (config.onApproved && response.status === 'approved') {
+            // Вызываем callback при утверждении (только один раз и не при первой загрузке)
+            if (config.onApproved && response.status === 'approved' && !hasCalledApproved && !isInitialLoad) {
+                hasCalledApproved = true
                 config.onApproved(response)
                 stopPolling() // Останавливаем опрос при утверждении
             }
             
+            // Отмечаем, что первоначальная загрузка завершена
+            isInitialLoad = false
+            
             // Останавливаем опрос для финальных статусов
             if (response.is_final) {
+                console.log('Статус документа финальный, останавливаем опрос:', response.status)
                 stopPolling()
             }
             
@@ -89,6 +100,12 @@ export function useDocumentStatus(documentId, options = {}) {
         }
         
         if (pollTimer) return // Уже запущен
+        
+        // Сбрасываем флаги при новом запуске опроса
+        hasCalledComplete = false
+        hasCalledFullComplete = false
+        hasCalledApproved = false
+        isInitialLoad = true
         
         checkStatus() // Первая проверка сразу
         

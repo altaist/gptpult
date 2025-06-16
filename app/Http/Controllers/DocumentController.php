@@ -189,21 +189,32 @@ class DocumentController extends Controller
         $validated = $request->validate([
             'document_type_id' => ['required', 'exists:document_types,id'],
             'topic' => ['required', 'string', 'max:255'],
+            'test' => ['nullable', 'boolean'], // Параметр для тестирования с фейковыми данными
         ]);
 
-        // Создаем документ через фабрику
-        $document = Document::factory()->create([
-            'user_id' => Auth::id(),
-            'document_type_id' => $validated['document_type_id'],
-            'title' => $validated['topic'],
-            'status' => 'draft', // Устанавливаем начальный статус draft
-        ]);
+        // Если передан параметр test, создаем с фейковыми данными из фабрики
+        if ($request->boolean('test')) {
+            $document = Document::factory()->create([
+                'user_id' => Auth::id(),
+                'document_type_id' => $validated['document_type_id'],
+                'title' => $validated['topic'],
+                'status' => 'pre_generating', // Сразу устанавливаем статус генерации
+            ]);
 
-        // Обновляем topic в структуре
-        $structure = $document->structure;
-        $structure['topic'] = $validated['topic'];
-        $document->structure = $structure;
-        $document->save();
+            // Обновляем topic в структуре фабрики
+            $structure = $document->structure;
+            $structure['topic'] = $validated['topic'];
+            $document->structure = $structure;
+            $document->save();
+        } else {
+            // Создаем минимальный документ только с переданными данными
+            $document = Document::factory()->minimal()->create([
+                'user_id' => Auth::id(),
+                'document_type_id' => $validated['document_type_id'],
+                'title' => $validated['topic'],
+                'status' => 'pre_generating', // Сразу устанавливаем статус генерации
+            ]);
+        }
 
         // Запускаем Job для генерации документа
         \App\Jobs\StartGenerateDocument::dispatch($document);
