@@ -68,6 +68,12 @@
             font-family: 'Bowler', var(--heading-font);
         }
 
+        .logo-img {
+            height: 32px;
+            width: auto;
+            object-fit: contain;
+        }
+
         /* Hero Section */
         .hero-section {
             min-height: 100vh;
@@ -1105,7 +1111,7 @@
     <nav class="navbar navbar-expand-lg fixed-top">
         <div class="container">
             <a class="navbar-brand" href="#">
-                <i class="fas fa-tv me-2"></i>GPT Пульт
+                <img src="{{ asset('logo.png') }}" alt="GPT Пульт" class="logo-img me-2">GPT Пульт
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
