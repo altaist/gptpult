@@ -86,7 +86,77 @@ class DocumentFactory extends Factory
                 'model' => 'gpt-3.5-turbo',
                 'temperature' => 0.7,
             ],
-            'status' => $this->faker->randomElement(['draft', 'in_review', 'approved', 'rejected']),
+            'status' => 'draft',
         ];
+    }
+
+    /**
+     * Создать документ в состоянии генерации
+     */
+    public function preGenerating(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => 'pre_generating',
+        ]);
+    }
+
+    /**
+     * Создать документ с готовой структурой
+     */
+    public function preGenerated(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => 'pre_generated',
+        ]);
+    }
+
+    /**
+     * Создать документ в процессе полной генерации
+     */
+    public function fullGenerating(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => 'full_generating',
+        ]);
+    }
+
+    /**
+     * Создать полностью сгенерированный документ
+     */
+    public function fullGenerated(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => 'full_generated',
+        ]);
+    }
+
+    /**
+     * Создать документ на проверке
+     */
+    public function inReview(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => 'in_review',
+        ]);
+    }
+
+    /**
+     * Создать утвержденный документ
+     */
+    public function approved(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => 'approved',
+        ]);
+    }
+
+    /**
+     * Создать отклоненный документ
+     */
+    public function rejected(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => 'rejected',
+        ]);
     }
 } 

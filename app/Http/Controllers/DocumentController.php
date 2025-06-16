@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\DocumentStatus;
 use App\Models\Document;
 use App\Models\DocumentType;
 use App\Services\Documents\DocumentService;
@@ -195,6 +196,7 @@ class DocumentController extends Controller
             'user_id' => Auth::id(),
             'document_type_id' => $validated['document_type_id'],
             'title' => $validated['topic'],
+            'status' => 'draft', // Устанавливаем начальный статус draft
         ]);
 
         // Обновляем topic в структуре
@@ -210,6 +212,36 @@ class DocumentController extends Controller
             'message' => 'Документ успешно создан',
             'document' => $document
         ], 201);
+    }
+
+    /**
+     * Проверить статус документа
+     */
+    public function checkStatus(Document $document)
+    {
+        $this->authorize('view', $document);
+
+        $statusEnum = $document->status;
+
+        return response()->json([
+            'document_id' => $document->id,
+            'status' => $statusEnum->value,
+            'status_label' => $statusEnum->getLabel(),
+            'status_color' => $statusEnum->getColor(),
+            'status_icon' => $statusEnum->getIcon(),
+            'is_final' => $statusEnum->isFinal(),
+            'is_generating' => $statusEnum->isGenerating(),
+            'can_start_full_generation' => $statusEnum->canStartFullGeneration(),
+            'is_fully_generated' => $statusEnum->isFullyGenerated(),
+            'title' => $document->title,
+            'updated_at' => $document->updated_at,
+            'has_contents' => !empty($document->structure['contents']),
+            'has_objectives' => !empty($document->structure['objectives']),
+            'has_detailed_contents' => !empty($document->structure['detailed_contents']),
+            'has_introduction' => !empty($document->structure['introduction']),
+            'has_conclusion' => !empty($document->structure['conclusion']),
+            'structure_complete' => !empty($document->structure['contents']) && !empty($document->structure['objectives'])
+        ]);
     }
 
     /**

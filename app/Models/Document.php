@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\DocumentStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -25,7 +26,8 @@ class Document extends Model
 
     protected $casts = [
         'structure' => 'array',
-        'gpt_settings' => 'array'
+        'gpt_settings' => 'array',
+        'status' => DocumentStatus::class
     ];
 
     public function user()

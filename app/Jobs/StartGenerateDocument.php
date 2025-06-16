@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\DocumentStatus;
 use App\Events\GptRequestCompleted;
 use App\Events\GptRequestFailed;
 use App\Models\Document;
@@ -39,8 +40,8 @@ class StartGenerateDocument implements ShouldQueue
                 'job_id' => $this->job->getJobId()
             ]);
 
-            // Обновляем статус документа на "processing"
-            $this->document->update(['status' => 'processing']);
+            // Обновляем статус документа на "pre_generating"
+            $this->document->update(['status' => DocumentStatus::PRE_GENERATING]);
 
             // Получаем настройки GPT из документа
             $gptSettings = $this->document->gpt_settings ?? [];
@@ -77,7 +78,7 @@ class StartGenerateDocument implements ShouldQueue
             // Сохраняем изменения
             $this->document->update([
                 'structure' => $structure,
-                'status' => 'completed'
+                'status' => DocumentStatus::PRE_GENERATED
             ]);
 
             Log::channel('queue')->info('Документ успешно сгенерирован', [
@@ -112,7 +113,7 @@ class StartGenerateDocument implements ShouldQueue
             ]);
 
             $this->document->update([
-                'status' => 'failed'
+                'status' => DocumentStatus::PRE_GENERATION_FAILED
             ]);
 
             // Создаем фиктивный GptRequest для события ошибки
@@ -141,7 +142,7 @@ class StartGenerateDocument implements ShouldQueue
         ]);
 
         $this->document->update([
-            'status' => 'failed'
+            'status' => DocumentStatus::PRE_GENERATION_FAILED
         ]);
 
         // Создаем фиктивный GptRequest для события ошибки

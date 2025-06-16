@@ -5,6 +5,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\DocumentGenerationController;
 use App\Http\Controllers\NewDocumentController;
 use App\Http\Controllers\FilesController;
 
@@ -29,10 +30,15 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/', [DocumentController::class, 'quickCreate'])->name('quick-create');
         Route::get('/', [DocumentController::class, 'index'])->name('index');
         Route::get('/{document}', [DocumentController::class, 'show'])->name('show');
+        Route::get('/{document}/status', [DocumentController::class, 'checkStatus'])->name('status');
         Route::get('/{document}/edit', [DocumentController::class, 'edit'])->name('edit');
         Route::put('/{document}', [DocumentController::class, 'update'])->name('update');
         Route::delete('/{document}', [DocumentController::class, 'destroy'])->name('destroy');
         Route::post('/{document}/download-word', [DocumentController::class, 'downloadWord'])->name('download-word');
+        
+        // Маршруты для полной генерации
+        Route::post('/{document}/generate-full', [DocumentGenerationController::class, 'startFullGeneration'])->name('generate-full');
+        Route::get('/{document}/generation-progress', [DocumentGenerationController::class, 'getGenerationProgress'])->name('generation-progress');
     });
 
     // Маршруты для работы с файлами
