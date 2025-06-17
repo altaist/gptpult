@@ -22,34 +22,37 @@ class OrderController extends Controller
     }
 
     /**
-     * Обработать заказ для документа
+     * Обработать заказ (с документом или без документа)
      *
      * @param Request $request
-     * @param Document $document
-     * @return \Illuminate\Http\RedirectResponse
+     * @param Document|null $document
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function processOrder(Request $request, Document $document)
+    public function processOrder(Request $request, ?Document $document = null)
     {
-                try {
+        try {
             $user = Auth::user();
+            $amount = $request->input('amount');
+            $orderData = $request->input('order_data', []);
 
-            // Проверяем права доступа к документу
-            if ($document->user_id !== $user->id) {
+            // Если передан документ, проверяем права доступа
+            if ($document && $document->user_id !== $user->id) {
                 return response()->json([
                     'error' => 'У вас нет доступа к этому документу'
                 ], 403);
             }
 
-            // Создаем заказ для документа
-            $order = $this->orderService->createOrderForDocument($user, $document);
+            // Создаем заказ (с документом или без него)
+            $order = $this->orderService->createOrder($user, $document, $amount, $orderData);
 
             // Загружаем отношение document для использования в PaymentProcessHelper
-            $order->load('document');
+            if ($document) {
+                $order->load('document');
+            }
 
             // Создаем ссылку для оплаты
             $paymentUrl = $this->paymentHelper->createPaymentLink($order);
 
-            // Переадресация на страницу оплаты через Inertia
             return response()->json([
                 'redirect' => $paymentUrl
             ]);
@@ -57,7 +60,7 @@ class OrderController extends Controller
         } catch (Exception $e) {
             // Логируем детальную информацию об ошибке
             Log::error('Ошибка при создании заказа', [
-                'document_id' => $document->id,
+                'document_id' => $document?->id,
                 'user_id' => Auth::id(),
                 'error_message' => $e->getMessage(),
                 'error_trace' => $e->getTraceAsString(),
@@ -69,5 +72,14 @@ class OrderController extends Controller
                 'error' => 'Ошибка при создании заказа: ' . $e->getMessage()
             ], 422);
         }
+    }
+
+    /**
+     * Создать заказ без документа
+     * @deprecated Используйте processOrder без параметра document
+     */
+    public function processOrderWithoutDocument(Request $request)
+    {
+        return $this->processOrder($request, null);
     }
 } 

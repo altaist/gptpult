@@ -1,6 +1,6 @@
 <template>
     <page-layout
-        title="Просмотр документа"
+        title="GPT PULT"
         :is-sticky="true"
         :auto-auth="true"
     >

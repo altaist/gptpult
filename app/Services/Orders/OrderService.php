@@ -17,14 +17,56 @@ class OrderService
     const DEFAULT_PRICE = 290.00;
 
     /**
-     * Создать заказ для документа
+     * Создать заказ (с документом или без него)
      *
      * @param User $user
-     * @param Document $document
+     * @param Document|null $document
      * @param float|null $amount
      * @param array $orderData
      * @return Order
      * @throws Exception
+     */
+    public function createOrder(
+        User $user, 
+        ?Document $document = null, 
+        ?float $amount = null, 
+        array $orderData = []
+    ): Order {
+        // Если передан документ, проверяем права доступа
+        if ($document && $document->user_id !== $user->id) {
+            throw new Exception('Документ не принадлежит данному пользователю');
+        }
+
+        return DB::transaction(function () use ($user, $document, $amount, $orderData) {
+            // Если есть документ, загружаем documentType
+            if ($document) {
+                $document->load('documentType');
+            }
+            
+            $baseOrderData = ['created_at' => now()->toISOString()];
+            
+            // Добавляем данные документа, если он есть
+            if ($document) {
+                $baseOrderData = array_merge($baseOrderData, [
+                    'document_title' => $document->title,
+                    'document_type' => $document->documentType?->name ?? 'Неизвестно',
+                ]);
+            }
+            
+            $order = Order::create([
+                'user_id' => $user->id,
+                'document_id' => $document?->id,
+                'amount' => $amount ?? self::DEFAULT_PRICE,
+                'order_data' => array_merge($baseOrderData, $orderData)
+            ]);
+
+            return $order;
+        });
+    }
+
+    /**
+     * Создать заказ для документа
+     * @deprecated Используйте createOrder($user, $document, $amount, $orderData)
      */
     public function createOrderForDocument(
         User $user, 
@@ -32,31 +74,19 @@ class OrderService
         ?float $amount = null, 
         array $orderData = []
     ): Order {
-        // Проверяем, принадлежит ли документ пользователю
-        if ($document->user_id !== $user->id) {
-            throw new Exception('Документ не принадлежит данному пользователю');
-        }
-        
-        // Удаляем проверку на существование заказа
-        // Теперь всегда создается новый заказ
+        return $this->createOrder($user, $document, $amount, $orderData);
+    }
 
-        return DB::transaction(function () use ($user, $document, $amount, $orderData) {
-            // Загружаем documentType чтобы избежать N+1 запросов
-            $document->load('documentType');
-            
-            $order = Order::create([
-                'user_id' => $user->id,
-                'document_id' => $document->id,
-                'amount' => $amount ?? self::DEFAULT_PRICE,
-                'order_data' => array_merge([
-                    'document_title' => $document->title,
-                    'document_type' => $document->documentType?->name ?? 'Неизвестно',
-                    'created_at' => now()->toISOString()
-                ], $orderData)
-            ]);
-
-            return $order;
-        });
+    /**
+     * Создать заказ без документа
+     * @deprecated Используйте createOrder($user, null, $amount, $orderData)
+     */
+    public function createOrderWithoutDocument(
+        User $user,
+        ?float $amount = null,
+        array $orderData = []
+    ): Order {
+        return $this->createOrder($user, null, $amount, $orderData);
     }
 
     /**

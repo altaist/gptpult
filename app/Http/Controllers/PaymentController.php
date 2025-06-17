@@ -44,13 +44,33 @@ class PaymentController extends Controller
                 ]
             );
 
-            // Перенаправляем на страницу документа
-            return redirect()->route('documents.show', $order->document_id)
-                ->with('success', 'Оплата успешно завершена');
+            // Если заказ связан с документом, перенаправляем на страницу документа
+            if ($order->document_id) {
+                return redirect()->route('documents.show', $order->document_id)
+                    ->with('success', 'Оплата успешно завершена');
+            }
+
+            // Если заказ без документа, перенаправляем на страницу заказа или дашборд
+            return redirect()->route('dashboard')
+                ->with('success', 'Баланс успешно пополнен');
 
         } catch (Exception $e) {
-            return redirect()->route('documents.show', $order->document_id ?? null)
+            // Определяем куда перенаправить в случае ошибки
+            $redirectRoute = $order && $order->document_id 
+                ? route('documents.show', $order->document_id)
+                : route('dashboard');
+
+            return redirect($redirectRoute)
                 ->with('error', 'Ошибка при обработке платежа: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Обработать завершение оплаты для заказа без документа
+     * @deprecated Используйте handlePaymentComplete
+     */
+    public function handlePaymentCompleteWithoutDocument(Request $request, int $orderId)
+    {
+        return $this->handlePaymentComplete($request, $orderId);
     }
 } 

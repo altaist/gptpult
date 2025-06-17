@@ -55,7 +55,7 @@ class PaymentService
                 'status' => $autoComplete ? 'completed' : 'pending',
                 'payment_data' => array_merge([
                     'order_amount' => $order->amount,
-                    'document_title' => $order->document->title ?? 'Неизвестно',
+                    'document_title' => $order->document ? $order->document->title : null,
                     'payment_method' => 'balance',
                     'created_at' => now()->toISOString()
                 ], $paymentData)
@@ -66,7 +66,7 @@ class PaymentService
                 $this->transitionService->creditUser(
                     $order->user,
                     $amount,
-                    "Платеж #{$payment->id} за документ \"{$order->document->title}\""
+                    $order->document ? "Платеж #{$payment->id} за документ \"{$order->document->title}\"" : "Платеж #{$payment->id} за заказ #{$order->id}"
                 );
                 $order->update(['status' => OrderStatus::PAID]);
             }

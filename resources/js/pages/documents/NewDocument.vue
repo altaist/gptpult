@@ -1,9 +1,15 @@
 <template>
     <page-layout
-        title="Новый документ"
+        title="GPT PULT"
         :auto-auth="true"
     >
-        <div class="q-pa-md">
+        <div class="q-pa-xl">
+            <div class="text-center q-mb-xl">
+                <p class="text-h6 text-grey-7 q-mb-none">
+                    Создать документ очень легко - просто напишите название, а мы сделаем остальное
+                </p>
+            </div>
+            
             <q-form @submit="onSubmit" class="q-gutter-md">
                 <q-select
                     v-model="form.document_type_id"

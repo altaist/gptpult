@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->foreignId('document_id')->constrained()->onDelete('cascade');
+            $table->foreignId('document_id')->nullable()->constrained()->onDelete('cascade');
             $table->json('order_data')->nullable()->comment('Данные заказа в JSON формате');
             $table->decimal('amount', 10, 2)->default(0)->comment('Сумма заказа');
             $table->string('status')->default('new')->comment('Статус заказа: new, paid, decline, closed (enum)');

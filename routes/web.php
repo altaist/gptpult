@@ -63,6 +63,8 @@ Route::middleware(['auth'])->group(function () {
 
     // Маршруты для заказов
     Route::post('/orders/{document}/process', [OrderController::class, 'processOrder'])->name('orders.process');
+    // Универсальный маршрут для заказа без документа
+    Route::post('/orders/process', [OrderController::class, 'processOrder'])->name('orders.process-without-document');
 
 });
 
@@ -79,5 +81,8 @@ Route::get('/logout', [App\Http\Controllers\Auth\AutoAuthController::class, 'log
 // Маршруты для платежей
 Route::get('/payment/complete/{orderId}', [PaymentController::class, 'handlePaymentComplete'])
     ->name('payment.complete');
+// Обратная совместимость для заказов без документа
+Route::get('/payment/complete-without-document/{orderId}', [PaymentController::class, 'handlePaymentComplete'])
+    ->name('payment.complete-without-document');
 
 require __DIR__.'/auth.php';

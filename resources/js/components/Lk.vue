@@ -22,7 +22,7 @@ const viewDocument = (documentId) => {
 
 // Функция для создания нового задания
 const createNewTask = () => {
-  router.visit('/documents/create')
+  router.visit('/new')
 }
 
 // Функция для получения цвета статуса
@@ -44,7 +44,14 @@ const getStatusLabel = (status) => {
     'in_progress': 'В обработке',
     'completed': 'Готов', 
     'rejected': 'Отклонено',
-    'pending': 'Ожидает'
+    'pending': 'Ожидает',
+    'pre_generated': 'Сгенерирован',
+    'generating': 'Генерируется',
+    'error': 'Ошибка',
+    'new': 'Новый',
+    'paid': 'Оплачен',
+    'processing': 'Обрабатывается',
+    'ready': 'Готов к скачиванию'
   }
   return statusLabels[status] || status
 }
@@ -52,6 +59,35 @@ const getStatusLabel = (status) => {
 // Функция для форматирования даты
 const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString('ru-RU')
+}
+
+// Функция для пополнения баланса
+const topUpBalance = async () => {
+  try {
+    const response = await fetch('/orders/process', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+      },
+      body: JSON.stringify({
+        order_data: {
+          description: "Пополнение баланса",
+          purpose: "balance_top_up"
+        }
+      })
+    })
+    
+    const data = await response.json()
+    
+    if (data.redirect) {
+      window.location.href = data.redirect
+    } else if (data.error) {
+      console.error('Ошибка при создании заказа:', data.error)
+    }
+  } catch (error) {
+    console.error('Ошибка при пополнении баланса:', error)
+  }
 }
 </script>
 
@@ -63,6 +99,15 @@ const formatDate = (dateString) => {
         <div class="balance-content">
           <div class="balance-text">
             <div class="text-h6 text-grey-8">Баланс</div>
+            <q-btn
+              flat
+              dense
+              color="primary"
+              label="Пополнить"
+              size="sm"
+              @click="topUpBalance"
+              class="q-mt-xs"
+            />
           </div>
           <div class="balance-divider"></div>
           <div class="balance-amount">

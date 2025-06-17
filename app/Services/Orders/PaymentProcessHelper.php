@@ -20,7 +20,7 @@ class PaymentProcessHelper
         return route('payment.test', [
             'order_id' => $order->id,
             'amount' => $order->amount,
-            'description' => "Оплата за документ: {$order->document->title}"
+            'description' => $order->document ? ("Оплата за документ: {$order->document->title}") : ("Оплата заказа #{$order->id}")
         ]);
     }
 } 
