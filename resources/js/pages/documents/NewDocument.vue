@@ -42,7 +42,10 @@
                         label="Создать документ"
                         type="submit"
                         color="primary"
+                        size="lg"
+                        icon="autorenew"
                         :loading="isLoading"
+                        class="q-px-xl q-py-md"
                     />
                 </div>
             </q-form>

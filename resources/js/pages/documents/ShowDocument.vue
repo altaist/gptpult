@@ -15,7 +15,16 @@
 
             <!-- Если генерация НЕ идет -->
             <template v-else>
-                <document-view :document="document" />
+                <document-view 
+                    :document="document"
+                    :document-status="documentStatus"
+                    :status-text="getStatusText()"
+                    :is-generating="isGenerating()"
+                    :is-pre-generation-complete="isPreGenerationComplete()"
+                    :is-full-generation-complete="isFullGenerationComplete()"
+                    :has-failed="hasFailed()"
+                    :is-approved="isApproved()"
+                />
 
                 <!-- Если не хватает баланса — панель оплаты -->
                 <DocumentPaymentPanel
@@ -25,38 +34,32 @@
                     class="q-mt-md"
                 />
 
-                <!-- Если хватает баланса — панель генерации и статуса -->
-                <document-status-panel
+                <!-- Если хватает баланса — панель кнопок действий -->
+                <div
                     v-else
-                    :document-status="documentStatus"
-                    :status-text="getStatusText()"
-                    :is-generating="isGenerating()"
-                    :can-start-full-generation="canStartFullGeneration()"
-                    :is-pre-generation-complete="isPreGenerationComplete()"
-                    :is-full-generation-complete="isFullGenerationComplete()"
-                    :has-failed="hasFailed()"
-                    :is-approved="isApproved()"
-                    class="q-mt-md"
+                    class="q-mt-md text-center"
                 >
-                    <template #actions="{ canStartFullGeneration, isPreGenerationComplete, isFullGenerationComplete }">
-                        <q-btn
-                            v-if="canStartFullGeneration"
-                            label="Полная генерация"
-                            color="secondary"
-                            icon="autorenew"
-                            :loading="isStartingFullGeneration"
-                            @click="startFullGeneration"
-                        />
-                        <q-btn
-                            v-if="isPreGenerationComplete || isFullGenerationComplete"
-                            label="Скачать Word"
-                            color="primary"
-                            icon="download"
-                            :loading="isDownloading"
-                            @click="downloadWord"
-                        />
-                    </template>
-                </document-status-panel>
+                    <q-btn
+                        v-if="canStartFullGeneration()"
+                        label="Завершить создание документа"
+                        color="primary"
+                        size="lg"
+                        icon="autorenew"
+                        :loading="isStartingFullGeneration"
+                        @click="startFullGeneration"
+                        class="q-px-xl q-py-md"
+                    />
+                    <q-btn
+                        v-if="isPreGenerationComplete() || isFullGenerationComplete()"
+                        label="Скачать Word"
+                        color="primary"
+                        size="lg"
+                        icon="download"
+                        :loading="isDownloading"
+                        @click="downloadWord"
+                        class="q-px-xl q-py-md"
+                    />
+                </div>
             </template>
         </div>
     </page-layout>

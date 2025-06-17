@@ -220,6 +220,12 @@ class DocumentController extends Controller
                 'title' => $validated['topic'],
                 'status' => 'pre_generating', // Сразу устанавливаем статус генерации
             ]);
+
+            // Обновляем topic в структуре документа
+            $structure = $document->structure ?? [];
+            $structure['topic'] = $validated['topic'];
+            $document->structure = $structure;
+            $document->save();
         }
 
         // Запускаем Job для генерации документа
