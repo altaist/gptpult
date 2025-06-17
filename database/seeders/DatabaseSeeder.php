@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\UserRole;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -13,11 +14,23 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // Запускаем сидеры для справочных данных
+        $this->call([
+            DocumentTypeSeeder::class,
+        ]);
 
+        // Создаем администратора
         User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+            'name' => 'Администратор',
+            'email' => 'admin@example.com',
+            'role_id' => UserRole::ADMIN,
+        ]);
+
+        // Создаем обычного пользователя
+        User::factory()->create([
+            'name' => 'Обычный пользователь',
+            'email' => 'user@example.com',
+            'role_id' => UserRole::USER,
         ]);
     }
 }

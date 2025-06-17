@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\UserRole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -53,6 +54,7 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'role_id' => UserRole::class,
         'person' => 'array',
         'settings' => 'array',
         'statistics' => 'array'
@@ -80,5 +82,21 @@ class User extends Authenticatable
     public function transitions(): HasMany
     {
         return $this->hasMany(Transition::class);
+    }
+
+    /**
+     * Проверка роли администратора
+     */
+    public function isAdmin(): bool
+    {
+        return $this->role_id === UserRole::ADMIN;
+    }
+
+    /**
+     * Проверка роли обычного пользователя
+     */
+    public function isUser(): bool
+    {
+        return $this->role_id === UserRole::USER;
     }
 }
