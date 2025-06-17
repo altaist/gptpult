@@ -1,5 +1,5 @@
 <template>
-    <div :class="['bg-white border full-width', 'q-mt-lg', isSticky ? 'fixed bottom' : '']" v-if="false">
+    <div :class="['page-footer bg-white border full-width', 'q-mt-lg', isSticky ? 'footer-sticky' : '']" v-if="false">
         <div class="full-width" v-if="menu && menu.length>0">
             <q-btn-group spread class="q-py-sm">
                 <q-btn 
@@ -54,6 +54,14 @@ const emit = defineEmits(['click:left', 'click:center', 'click:right', 'click:me
 const onMenuClick = (menuId) => {
     emit('click:menu', menuId);
 }
-
-
 </script>
+
+<style scoped>
+.footer-sticky {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 999;
+}
+</style>

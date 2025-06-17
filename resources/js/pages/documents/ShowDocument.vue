@@ -1,6 +1,7 @@
 <template>
     <page-layout
         title="Просмотр документа"
+        :is-sticky="true"
         :auto-auth="true"
     >
         <div class="q-pa-md">

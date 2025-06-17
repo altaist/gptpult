@@ -1,14 +1,20 @@
 <template>
-    <div>
+    <div class="page-layout">
         <page-header
             :title="title"
-
+            :is-sticky="true"
+            :left-btn-icon="leftBtnIcon"
+            :left-btn-route="leftBtnRoute"
+            :left-btn-go-back="leftBtnGoBack"
+            :right-btn-icon="rightBtnIcon"
+            :right-btn-route="rightBtnRoute"
 
             @click:left="emit('click:header:left')"
             @click:right="emit('click:header:right')"
+            @click:title="emit('click:header:title')"
             />
 
-        <page-container class="q-px-md" style="margin-bottom: 100px;">    
+        <page-container class="page-content q-px-md">    
             <slot/>
         </page-container>
 
@@ -47,7 +53,7 @@ const props = defineProps({
     },
     leftBtnIcon: {
         type: String,
-        default: "fa-solid fa-home"
+        default: "fa-solid fa-arrow-left"
     },
     leftBtnRoute: {
         type: String
@@ -62,7 +68,7 @@ const props = defineProps({
     },
     rightBtnRoute: {
         type: String,
-        default: 'dashboard'
+        default: '/lk'
     },
 });
 
@@ -96,3 +102,18 @@ onMounted(async () => {
     }
 });
 </script>
+
+<style scoped>
+.page-layout {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.page-content {
+    flex: 1;
+    margin-bottom: 100px;
+    position: relative;
+    z-index: 1;
+}
+</style>

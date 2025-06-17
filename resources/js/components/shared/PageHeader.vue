@@ -1,11 +1,11 @@
 <template>
-    <div class="q-pa-md sticky top bg-white border">
+    <div class="page-header q-pa-md bg-white border">
         <div class="row items-center">
             <div class="col" v-if="leftBtnIcon">
                 <btn :icon="leftBtnIcon" @click="onLeftBtnlick"/>
             </div>
             <div class="col text-center">
-                <page-title>{{title}}</page-title>
+                <page-title @page-title-click="emit('click:title')">{{title}}</page-title>
             </div>
             <div class="col text-right" v-if="rightBtnIcon"><btn :icon="rightBtnIcon" @click="onRightBtnClick"/></div>
         </div>
@@ -13,6 +13,8 @@
 </template>
 <script setup>
 import { user } from '@/composables/auth';
+import Btn from '@/components/shared/Btn.vue';
+import PageTitle from '@/components/shared/PageTitle.vue';
 
 const props = defineProps({
     title: {
@@ -66,3 +68,12 @@ const onRightBtnClick = () => {
 }
 
 </script>
+
+<style scoped>
+.page-header {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    width: 100%;
+}
+</style>
