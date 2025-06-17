@@ -263,7 +263,8 @@ class DocumentController extends Controller
             'has_detailed_contents' => !empty($document->structure['detailed_contents']),
             'has_introduction' => !empty($document->structure['introduction']),
             'has_conclusion' => !empty($document->structure['conclusion']),
-            'structure_complete' => !empty($document->structure['contents']) && !empty($document->structure['objectives'])
+            'structure_complete' => !empty($document->structure['contents']) && !empty($document->structure['objectives']),
+            'document' => $document->load('documentType') // Добавляем полные данные документа
         ]);
     }
 

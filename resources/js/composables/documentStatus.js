@@ -3,6 +3,7 @@ import { apiClient } from './api'
 
 export function useDocumentStatus(documentId, options = {}) {
     const status = ref(null)
+    const document = ref(null) // Добавляем реактивные данные документа
     const isLoading = ref(false)
     const error = ref(null)
     const lastUpdated = ref(null)
@@ -12,6 +13,7 @@ export function useDocumentStatus(documentId, options = {}) {
         pollInterval: 3000, // 3 секунды
         autoStart: true,
         onStatusChange: null,
+        onDocumentUpdate: null, // Новый callback для обновления документа
         onComplete: null,
         onFullComplete: null,
         onApproved: null,
@@ -40,12 +42,19 @@ export function useDocumentStatus(documentId, options = {}) {
             const response = await apiClient.get(route('documents.status', currentDocumentId))
             
             const previousStatus = status.value?.status
+            const previousDocument = document.value
             status.value = response
+            document.value = response.document // Обновляем данные документа
             lastUpdated.value = new Date()
             
             // Вызываем callback при изменении статуса
             if (config.onStatusChange && previousStatus !== response.status) {
                 config.onStatusChange(response, previousStatus)
+            }
+            
+            // Вызываем callback при обновлении документа
+            if (config.onDocumentUpdate && JSON.stringify(previousDocument) !== JSON.stringify(response.document)) {
+                config.onDocumentUpdate(response.document, previousDocument)
             }
             
             // Вызываем callback при завершении базовой генерации (только один раз и не при первой загрузке)
@@ -232,6 +241,7 @@ export function useDocumentStatus(documentId, options = {}) {
     return {
         // Данные
         status,
+        document, // Добавляем реактивные данные документа
         isLoading,
         error,
         lastUpdated,

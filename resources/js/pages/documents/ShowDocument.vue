@@ -16,7 +16,7 @@
             <!-- Если генерация НЕ идет -->
             <template v-else>
                 <document-view 
-                    :document="document"
+                    :document="currentDocument"
                     :document-status="documentStatus"
                     :status-text="getStatusText()"
                     :is-generating="isGenerating()"
@@ -30,21 +30,20 @@
                 <DocumentPaymentPanel
                     v-if="canPay"
                     :amount="orderPrice"
-                    :document="document"
+                    :document="currentDocument"
                     class="q-mt-md"
                 />
 
                 <!-- Если хватает баланса — панель кнопок действий -->
                 <div
                     v-else
-                    class="q-mt-md text-center"
+                    class="q-mt-md text-center q-gutter-md"
                 >
                     <q-btn
                         v-if="canStartFullGeneration()"
                         label="Завершить создание документа"
                         color="primary"
                         size="lg"
-                        icon="autorenew"
                         :loading="isStartingFullGeneration"
                         @click="startFullGeneration"
                         class="q-px-xl q-py-md"
@@ -54,7 +53,6 @@
                         label="Скачать Word"
                         color="primary"
                         size="lg"
-                        icon="download"
                         :loading="isDownloading"
                         @click="downloadWord"
                         class="q-px-xl q-py-md"
@@ -99,9 +97,13 @@ const props = defineProps({
 
 const canPay = computed(() => props.balance < props.orderPrice);
 
+// Реактивная ссылка на документ для обновления
+const currentDocument = ref(props.document);
+
 // Трекер статуса документа
 const {
     status: documentStatus,
+    document: updatedDocument,
     isGenerating,
     canStartFullGeneration,
     isPreGenerationComplete,
@@ -128,6 +130,11 @@ const {
                 message: 'Полная генерация документа завершена!',
                 position: 'top'
             });
+        },
+        onDocumentUpdate: (newDocument, oldDocument) => {
+            // Обновляем текущий документ когда приходят новые данные
+            currentDocument.value = newDocument;
+            console.log('Документ обновлен:', newDocument);
         },
         onError: (err) => {
             $q.notify({
