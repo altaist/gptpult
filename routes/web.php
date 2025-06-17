@@ -9,6 +9,9 @@ use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\DocumentGenerationController;
 use App\Http\Controllers\NewDocumentController;
 use App\Http\Controllers\FilesController;
+use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PaymentTestController;
+use App\Http\Controllers\PaymentController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -57,8 +60,14 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/files/{file}/view', [FilesController::class, 'view'])->name('files.view')->middleware(['auth', 'web']);
     Route::put('/files/{file}', [FilesController::class, 'update'])->name('files.update')->middleware(['auth', 'web']);
     Route::delete('/files/{file}', [FilesController::class, 'destroy'])->name('files.destroy')->middleware(['auth', 'web']);
+
+    // Маршруты для заказов
+    Route::post('/orders/{document}/process', [OrderController::class, 'processOrder'])->name('orders.process');
+
 });
 
+// Тестовая страница оплаты
+Route::get('/payment/test', [PaymentTestController::class, 'show'])->name('payment.test');
 // Страница создания документа (доступна всем, но с проверкой авторизации в компоненте)
 Route::get('/new', NewDocumentController::class)->name('documents.new');
 
@@ -66,5 +75,9 @@ Route::get('/new', NewDocumentController::class)->name('documents.new');
 Route::post('/login/auto', [App\Http\Controllers\Auth\AutoAuthController::class, 'autoLogin'])->name('login.auto');
 Route::post('/register/auto', [App\Http\Controllers\Auth\AutoAuthController::class, 'autoRegister'])->name('register.auto');
 Route::get('/logout', [App\Http\Controllers\Auth\AutoAuthController::class, 'logout'])->name('logout');
+
+// Маршруты для платежей
+Route::get('/payment/complete/{orderId}', [PaymentController::class, 'handlePaymentComplete'])
+    ->name('payment.complete');
 
 require __DIR__.'/auth.php';

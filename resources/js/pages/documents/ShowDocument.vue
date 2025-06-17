@@ -13,12 +13,21 @@
                 @timeout="handleGenerationTimeout"
             />
 
-            <!-- Если генерация НЕ идет - показываем документ и панель статуса -->
+            <!-- Если генерация НЕ идет -->
             <template v-else>
                 <document-view :document="document" />
 
-                <!-- Панель статуса документа -->
+                <!-- Если не хватает баланса — панель оплаты -->
+                <DocumentPaymentPanel
+                    v-if="canPay"
+                    :amount="orderPrice"
+                    :document="document"
+                    class="q-mt-md"
+                />
+
+                <!-- Если хватает баланса — панель генерации и статуса -->
                 <document-status-panel
+                    v-else
                     :document-status="documentStatus"
                     :status-text="getStatusText()"
                     :is-generating="isGenerating()"
@@ -29,9 +38,7 @@
                     :is-approved="isApproved()"
                     class="q-mt-md"
                 >
-                    <!-- Кнопки действий -->
                     <template #actions="{ canStartFullGeneration, isPreGenerationComplete, isFullGenerationComplete }">
-                        <!-- Кнопка полной генерации -->
                         <q-btn
                             v-if="canStartFullGeneration"
                             label="Полная генерация"
@@ -40,8 +47,6 @@
                             :loading="isStartingFullGeneration"
                             @click="startFullGeneration"
                         />
-                        
-                        <!-- Кнопка скачивания -->
                         <q-btn
                             v-if="isPreGenerationComplete || isFullGenerationComplete"
                             label="Скачать Word"
@@ -58,7 +63,7 @@
 </template>
 
 <script setup>
-import { defineProps, ref } from 'vue';
+import { defineProps, ref, computed } from 'vue';
 import { useQuasar } from 'quasar';
 import PageLayout from '@/components/shared/PageLayout.vue';
 import DocumentView from '@/modules/gpt/components/DocumentView.vue';
@@ -67,6 +72,7 @@ import DocumentGenerationStatus from '@/modules/gpt/components/DocumentGeneratio
 import { useDocumentStatus } from '@/composables/documentStatus';
 import { apiClient } from '@/composables/api';
 import { router } from '@inertiajs/vue3';
+import DocumentPaymentPanel from '@/modules/gpt/components/DocumentPaymentPanel.vue';
 
 const $q = useQuasar();
 const isDownloading = ref(false);
@@ -76,8 +82,19 @@ const props = defineProps({
     document: {
         type: Object,
         required: true
+    },
+    balance: {
+        type: Number,
+        required: true,
+        default: 0
+    },
+    orderPrice: {
+        type: Number,
+        required: true
     }
 });
+
+const canPay = computed(() => props.balance < props.orderPrice);
 
 // Трекер статуса документа
 const {
@@ -118,8 +135,6 @@ const {
         }
     }
 );
-
-
 
 // Запуск полной генерации
 const startFullGeneration = async () => {

@@ -31,8 +31,8 @@ class LkController extends Controller
                 ];
             });
 
-        // Пример баланса (в реальном приложении получать из модели пользователя или отдельной таблицы)
-        $balance = $user->balance ?? 15000;
+        // Получаем реальный баланс пользователя из поля balance_rub
+        $balance = $user->balance_rub ?? 0;
 
         return Inertia::render('Lk', [
             'balance' => $balance,

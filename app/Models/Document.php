@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Document extends Model
 {
@@ -64,5 +65,12 @@ class Document extends Model
         return $this->files()->where('mime_type', $mimeType)->exists();
     }
 
+    /**
+     * Отношение к заказам
+     */
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
 
 } 

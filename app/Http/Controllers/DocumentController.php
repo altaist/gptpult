@@ -98,8 +98,14 @@ class DocumentController extends Controller
     {
         $this->authorize('view', $document);
 
+        $order = $document->orders()->latest()->first();
+        $orderPrice = (float) ($order?->amount ?? \App\Services\Orders\OrderService::DEFAULT_PRICE);
+        $balance = $document->user->balance_rub ?? 0;
+
         return Inertia::render('documents/ShowDocument', [
-            'document' => $document->load('documentType')
+            'document' => $document->load('documentType'),
+            'balance' => $balance,
+            'orderPrice' => $orderPrice
         ]);
     }
 

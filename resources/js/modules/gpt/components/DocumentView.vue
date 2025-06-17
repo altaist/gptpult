@@ -18,23 +18,16 @@
             </q-card-section>
         </q-card>
 
-                <document-contents-view 
+        <document-contents-view 
             v-if="document.structure?.contents"
             :contents="document.structure.contents"
         />
-
-        <document-payment-panel
-            :amount="399"
-            @payment="handlePayment"
-        />
-        
     </div>
 </template>
 
 <script setup>
-import { defineProps, defineEmits } from 'vue';
+import { defineProps } from 'vue';
 import DocumentContentsView from './DocumentContentsView.vue';
-import DocumentPaymentPanel from './DocumentPaymentPanel.vue';
 
 const props = defineProps({
     document: {
@@ -42,18 +35,11 @@ const props = defineProps({
         required: true
     }
 });
-
-const emit = defineEmits(['payment']);
-
-const handlePayment = (amount) => {
-    emit('payment', { documentId: props.document.id, amount });
-};
 </script>
 
 <style scoped>
 .document-view {
     max-width: 1200px;
     margin: 0 auto;
-    padding-bottom: 80px; /* Добавляем отступ для панели оплаты */
 }
 </style> 

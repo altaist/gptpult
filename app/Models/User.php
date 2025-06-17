@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -28,6 +29,7 @@ class User extends Authenticatable
         'role_id',
         'status',
         'key',
+        'balance_rub',
         'person',
         'settings',
         'statistics'
@@ -55,4 +57,28 @@ class User extends Authenticatable
         'settings' => 'array',
         'statistics' => 'array'
     ];
+
+    /**
+     * Отношение к заказам
+     */
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    /**
+     * Отношение к платежам
+     */
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    /**
+     * Отношение к транзакциям баланса
+     */
+    public function transitions(): HasMany
+    {
+        return $this->hasMany(Transition::class);
+    }
 }

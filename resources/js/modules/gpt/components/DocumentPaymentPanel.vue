@@ -15,16 +15,27 @@
                     />
                 </div>
             </div>
+            
+            <!-- Сообщение об ошибке -->
+            <div v-if="errorMessage" class="text-negative q-mt-sm">
+                <q-icon name="error" class="q-mr-xs" />
+                {{ errorMessage }}
+            </div>
         </q-card-section>
     </q-card>
 </template>
 
 <script setup>
 import { ref } from 'vue';
+import { apiClient } from '@/composables/api';
 
 const props = defineProps({
     amount: {
         type: Number,
+        required: true
+    },
+    document: {
+        type: Object,
         required: true
     }
 });
@@ -32,6 +43,7 @@ const props = defineProps({
 const emit = defineEmits(['payment']);
 
 const loading = ref(false);
+const errorMessage = ref('');
 
 const formatPrice = (price) => {
     return new Intl.NumberFormat('ru-RU').format(price);
@@ -40,9 +52,17 @@ const formatPrice = (price) => {
 const handlePayment = async () => {
     try {
         loading.value = true;
-        emit('payment', props.amount);
+        errorMessage.value = '';
+
+        const response = await apiClient.post(route('orders.process', props.document.id));
+
+        if (response.redirect) {
+            window.location.href = response.redirect;
+        } else {
+            errorMessage.value = 'Во время обработки произошла ошибка, мы разбираемся с этой проблемой';
+        }
     } catch (error) {
-        console.error('Ошибка при оплате:', error);
+        errorMessage.value = error.message || 'Во время обработки произошла ошибка, мы разбираемся с этой проблемой';
     } finally {
         loading.value = false;
     }
