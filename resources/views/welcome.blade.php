@@ -1125,7 +1125,9 @@
         </div>
     </div>
     </nav>
-
+    <a href="https://freekassa.net" target="_blank" rel="noopener noreferrer">
+        <img src="https://cdn.freekassa.net/banners/big-dark-1.png" title="Прием платежей на сайте">
+    </a>
     <!-- Hero Section -->
     <section class="hero-section">
         <div class="hero-container">
