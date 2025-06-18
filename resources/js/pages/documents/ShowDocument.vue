@@ -24,6 +24,8 @@
                     :is-full-generation-complete="getIsFullGenerationComplete()"
                     :has-failed="hasFailed()"
                     :is-approved="isApproved()"
+                    :editable="canEdit"
+                    @updated="handleDocumentUpdate"
                 />
 
                 <!-- Если не хватает баланса — панель оплаты -->
@@ -41,8 +43,8 @@
                 > 
                     <!-- Кнопка возобновления отслеживания для документов в процессе генерации -->
                     <q-btn
-                        v-if="canResumeTracking() && !isPollingActive"
-                        label="Возобновить отслеживание"
+                        v-if="false && canResumeTracking() && !isPollingActive"
+                        label="Продолжить генерацию"
                         color="primary"
                         outline
                         @click="resumeTracking"
@@ -51,7 +53,7 @@
                     
                     <!-- Кнопка остановки отслеживания -->
                     <q-btn
-                        v-if="isPollingActive"
+                        v-if="false"
                         label="Остановить отслеживание"
                         color="grey"
                         outline
@@ -330,6 +332,22 @@ const downloadWord = async () => {
     } finally {
         isDownloading.value = false;
     }
+};
+
+// Определяем можно ли редактировать документ
+const canEdit = computed(() => {
+    const status = currentDocument.value?.status;
+    // Разрешаем редактирование для статусов draft, pre_generated, full_generated
+    return ['draft', 'pre_generated', 'full_generated'].includes(status);
+});
+
+// Обработчик обновления документа из компонента DocumentView
+const handleDocumentUpdate = () => {
+    // Можно добавить логику для перезагрузки данных документа
+    console.log('Документ был обновлен через редактирование');
+    
+    // Обновляем текущий документ, получив свежие данные
+    window.location.reload();
 };
 
 // Обработчик события таймаута компонента генерации

@@ -1,6 +1,17 @@
 <template>
     <div class="document-contents">
-        <div class="text-h6 q-mb-md">Содержание</div>
+        <div class="flex items-center justify-between q-mb-md">
+            <div class="text-h6">Содержание</div>
+            <q-btn 
+                v-if="editable"
+                icon="edit" 
+                flat 
+                round 
+                size="sm" 
+                @click="$emit('edit-contents', contents)"
+                class="q-ml-auto"
+            />
+        </div>
         
         <q-list bordered separator>
             <template v-for="(topic, index) in contents" :key="index">
@@ -32,15 +43,22 @@
 </template>
 
 <script setup>
-import { defineProps } from 'vue';
+import { defineProps, defineEmits } from 'vue';
 
 const props = defineProps({
     contents: {
         type: Array,
         required: true,
         default: () => []
+    },
+    
+    editable: {
+        type: Boolean,
+        default: false
     }
 });
+
+const emit = defineEmits(['edit-contents']);
 </script>
 
 <style scoped>

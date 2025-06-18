@@ -356,4 +356,85 @@ class DocumentController extends Controller
             'message' => 'Количество страниц успешно обновлено'
         ]);
     }
+
+    /**
+     * Обновить тему документа
+     */
+    public function updateTopic(Request $request, Document $document)
+    {
+        $this->authorize('update', $document);
+
+        $validated = $request->validate([
+            'topic' => ['required', 'string', 'max:255'],
+        ]);
+
+        $this->documentService->updateTopic($document, $validated['topic']);
+
+        return response()->json([
+            'message' => 'Тема документа успешно обновлена',
+            'topic' => $validated['topic']
+        ]);
+    }
+
+    /**
+     * Обновить цели документа
+     */
+    public function updateObjectives(Request $request, Document $document)
+    {
+        $this->authorize('update', $document);
+
+        $validated = $request->validate([
+            'objectives' => ['required', 'array'],
+            'objectives.*' => ['string', 'max:255'],
+        ]);
+
+        $this->documentService->updateObjectives($document, $validated['objectives']);
+
+        return response()->json([
+            'message' => 'Цели документа успешно обновлены',
+            'objectives' => $validated['objectives']
+        ]);
+    }
+
+    /**
+     * Обновить тезисы документа
+     */
+    public function updateTheses(Request $request, Document $document)
+    {
+        $this->authorize('update', $document);
+
+        $validated = $request->validate([
+            'theses' => ['required', 'string'],
+        ]);
+
+        $this->documentService->updateTheses($document, $validated['theses']);
+
+        return response()->json([
+            'message' => 'Тезисы документа успешно обновлены',
+            'theses' => $validated['theses']
+        ]);
+    }
+
+    /**
+     * Обновить содержание документа
+     */
+    public function updateContents(Request $request, Document $document)
+    {
+        $this->authorize('update', $document);
+
+        $validated = $request->validate([
+            'contents' => ['required', 'array'],
+            'contents.*.title' => ['required', 'string', 'max:255'],
+            'contents.*.subtopics' => ['nullable', 'array'],
+            'contents.*.subtopics.*.title' => ['required', 'string', 'max:255'],
+            'contents.*.subtopics.*.content' => ['nullable', 'string'],
+        ]);
+
+        $this->documentService->updateContents($document, $validated['contents']);
+
+        return response()->json([
+            'message' => 'Содержание документа успешно обновлено',
+            'contents' => $validated['contents']
+        ]);
+    }
 } 

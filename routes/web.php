@@ -44,6 +44,12 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/{document}', [DocumentController::class, 'destroy'])->name('destroy');
         Route::post('/{document}/download-word', [DocumentController::class, 'downloadWord'])->name('download-word');
         
+        // Маршруты для редактирования отдельных частей структуры
+        Route::patch('/{document}/topic', [DocumentController::class, 'updateTopic'])->name('update-topic');
+        Route::patch('/{document}/objectives', [DocumentController::class, 'updateObjectives'])->name('update-objectives');
+        Route::patch('/{document}/theses', [DocumentController::class, 'updateTheses'])->name('update-theses');
+        Route::patch('/{document}/contents', [DocumentController::class, 'updateContents'])->name('update-contents');
+        
         // Маршруты для полной генерации
         Route::post('/{document}/generate-full', [DocumentGenerationController::class, 'startFullGeneration'])->name('generate-full');
         Route::get('/{document}/generation-progress', [DocumentGenerationController::class, 'getGenerationProgress'])->name('generation-progress');
