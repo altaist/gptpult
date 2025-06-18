@@ -29,13 +29,16 @@ class DocumentGenerationController extends Controller
         }
 
         try {
+            // Устанавливаем статус "полная генерация" перед запуском Job
+            $document->update(['status' => DocumentStatus::FULL_GENERATING]);
+
             // Запускаем Job для полной генерации
             StartFullGenerateDocument::dispatch($document);
 
             return response()->json([
                 'message' => 'Полная генерация документа запущена',
                 'document_id' => $document->id,
-                'status' => 'full_generating'
+                'status' => DocumentStatus::FULL_GENERATING->value
             ]);
 
         } catch (\Exception $e) {

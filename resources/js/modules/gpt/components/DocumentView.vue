@@ -1,6 +1,6 @@
 <template>
     <div class="document-view">
-        <div class="text-h5 q-mb-md">{{ document.topic }}</div>
+        <div class="text-h5 q-mb-md">{{ document.topic || document.title }}</div>
         
         <!-- Отдельная карточка для темы -->
         <q-card v-if="document.structure?.topic" class="q-mb-md">
@@ -16,7 +16,7 @@
                 <div class="row q-col-gutter-md">
                     <div class="col-6">
                         <div class="text-subtitle2">Тип документа</div>
-                        <div>{{ document.document_type?.name }}</div>
+                        <div>{{ document.document_type?.name || 'Не указан' }}</div>
                     </div>
                     <div class="col-6">
                         <div class="text-subtitle2">Статус</div>
@@ -88,35 +88,6 @@ const props = defineProps({
         default: false
     }
 });
-
-// Методы для получения иконки и цвета статуса
-const getStatusIcon = () => {
-    // Используем данные из API, если доступны
-    if (props.documentStatus?.status_icon) {
-        return props.documentStatus.status_icon;
-    }
-    
-    // Fallback для совместимости
-    if (props.isPreGenerationComplete) return 'check_circle';
-    if (props.isFullGenerationComplete) return 'task_alt';
-    if (props.isApproved) return 'verified';
-    if (props.hasFailed) return 'error';
-    return 'radio_button_unchecked';
-};
-
-const getStatusColor = () => {
-    // Используем данные из API, если доступны
-    if (props.documentStatus?.status_color) {
-        return props.documentStatus.status_color;
-    }
-    
-    // Fallback для совместимости
-    if (props.isPreGenerationComplete) return 'positive';
-    if (props.isFullGenerationComplete) return 'green';
-    if (props.isApproved) return 'green-10';
-    if (props.hasFailed) return 'negative';
-    return 'grey';
-};
 </script>
 
 <style scoped>

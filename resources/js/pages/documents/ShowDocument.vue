@@ -5,23 +5,23 @@
         :auto-auth="true"
     >
         <div class="q-pa-md">
-            <!-- Если идет генерация - показываем ТОЛЬКО компонент генерации -->
+            <!-- Если идет автозагрузка или отслеживание И генерация -->
             <document-generation-status
-                v-if="isGenerating()"
+                v-if="(shouldAutoload || isPollingActive) && getIsGenerating()"
                 :estimated-time="30"
-                :title="getStatusText()"
+                :title="getDisplayStatusText()"
                 @timeout="handleGenerationTimeout"
             />
 
-            <!-- Если генерация НЕ идет -->
+            <!-- Если генерация НЕ идет или нет автозагрузки -->
             <template v-else>
                 <document-view 
                     :document="currentDocument"
                     :document-status="documentStatus"
-                    :status-text="getStatusText()"
-                    :is-generating="isGenerating()"
+                    :status-text="getDisplayStatusText()"
+                    :is-generating="getIsGenerating()"
                     :is-pre-generation-complete="isPreGenerationComplete()"
-                    :is-full-generation-complete="isFullGenerationComplete()"
+                    :is-full-generation-complete="getIsFullGenerationComplete()"
                     :has-failed="hasFailed()"
                     :is-approved="isApproved()"
                 />
@@ -38,19 +38,30 @@
                 <div
                     v-else
                     class="q-mt-md text-center q-gutter-md"
-                >
-                    <!-- Кнопка для запуска отслеживания статуса если autoload не активен -->
+                > 
+                    <!-- Кнопка возобновления отслеживания для документов в процессе генерации -->
                     <q-btn
-                        v-if="!shouldAutoload && !isGenerating()"
-                        label="Обновить документ"
+                        v-if="canResumeTracking() && !isPollingActive"
+                        label="Возобновить отслеживание"
                         color="primary"
                         outline
-                        @click="startPolling"
+                        @click="resumeTracking"
                         class="q-px-lg q-py-sm"
                     />
                     
+                    <!-- Кнопка остановки отслеживания -->
                     <q-btn
-                        v-if="canStartFullGeneration()"
+                        v-if="isPollingActive"
+                        label="Остановить отслеживание"
+                        color="grey"
+                        outline
+                        @click="stopTracking"
+                        class="q-px-lg q-py-sm"
+                    />
+                    
+                    <!-- Кнопка запуска полной генерации -->
+                    <q-btn
+                        v-if="getCanStartFullGeneration()"
                         label="Завершить создание документа"
                         color="primary"
                         size="lg"
@@ -58,8 +69,10 @@
                         @click="startFullGeneration"
                         class="q-px-xl q-py-md"
                     />
+                    
+                    <!-- Кнопка скачивания Word - ТОЛЬКО для full_generated -->
                     <q-btn
-                        v-if="isPreGenerationComplete() || isFullGenerationComplete()"
+                        v-if="getIsFullGenerationComplete()"
                         label="Скачать Word"
                         color="primary"
                         size="lg"
@@ -88,6 +101,7 @@ import DocumentPaymentPanel from '@/modules/gpt/components/DocumentPaymentPanel.
 const $q = useQuasar();
 const isDownloading = ref(false);
 const isStartingFullGeneration = ref(false);
+const isPollingActive = ref(false); // Флаг активного отслеживания
 
 const props = defineProps({
     document: {
@@ -144,6 +158,7 @@ const {
                 message: 'Полная генерация документа завершена!',
                 position: 'top'
             });
+            isPollingActive.value = false; // Останавливаем флаг отслеживания
         },
         onDocumentUpdate: (newDocument, oldDocument) => {
             // Обновляем текущий документ когда приходят новые данные
@@ -156,9 +171,108 @@ const {
                 message: 'Ошибка при отслеживании статуса: ' + err.message,
                 position: 'top'
             });
+            isPollingActive.value = false; // Останавливаем флаг отслеживания при ошибке
         }
     }
 );
+
+// Устанавливаем флаг отслеживания при автозагрузке
+if (shouldAutoload) {
+    isPollingActive.value = true;
+}
+
+// Функция для проверки возможности возобновления отслеживания
+const canResumeTracking = () => {
+    const status = currentDocument.value?.status;
+    return status === 'pre_generating' || status === 'full_generating';
+};
+
+// Функция возобновления отслеживания
+const resumeTracking = () => {
+    startPolling();
+    isPollingActive.value = true;
+    $q.notify({
+        type: 'info',
+        message: 'Отслеживание статуса возобновлено',
+        position: 'top'
+    });
+};
+
+// Функция остановки отслеживания
+const stopTracking = () => {
+    stopPolling();
+    isPollingActive.value = false;
+    $q.notify({
+        type: 'info',
+        message: 'Отслеживание статуса остановлено',
+        position: 'top'
+    });
+};
+
+// Функция для получения корректного статуса документа
+const getDisplayStatusText = () => {
+    // Если есть статус из API (при автообновлении), используем его
+    if (documentStatus.value) {
+        return getStatusText();
+    }
+    
+    // Если есть status_label из контроллера, используем его
+    if (currentDocument.value?.status_label) {
+        return currentDocument.value.status_label;
+    }
+    
+    // Если нет автообновления, используем статус из изначальных данных документа
+    if (currentDocument.value?.status) {
+        // Мапинг статусов для отображения
+        const statusMap = {
+            'draft': 'Черновик',
+            'pre_generating': 'Генерируется структура...',
+            'pre_generated': 'Структура готова',
+            'pre_generation_failed': 'Ошибка генерации структуры',
+            'full_generating': 'Генерируется содержимое...',
+            'full_generated': 'Полностью готов',
+            'full_generation_failed': 'Ошибка полной генерации',
+            'in_review': 'На проверке',
+            'approved': 'Утвержден',
+            'rejected': 'Отклонен'
+        };
+        
+        return statusMap[currentDocument.value.status] || currentDocument.value.status;
+    }
+    
+    return 'Неизвестно';
+};
+
+// Функции-обертки для работы без автообновления
+const getCanStartFullGeneration = () => {
+    // Если есть данные из API, используем их
+    if (documentStatus.value) {
+        return canStartFullGeneration();
+    }
+    
+    // Если нет автообновления, проверяем статус из исходных данных
+    return currentDocument.value?.status === 'pre_generated';
+};
+
+const getIsGenerating = () => {
+    // Если есть данные из API, используем их
+    if (documentStatus.value) {
+        return isGenerating();
+    }
+    
+    // Если нет автообновления, проверяем статус из исходных данных
+    return ['pre_generating', 'full_generating'].includes(currentDocument.value?.status);
+};
+
+const getIsFullGenerationComplete = () => {
+    // Если есть данные из API, используем их
+    if (documentStatus.value) {
+        return isFullGenerationComplete();
+    }
+    
+    // Если нет автообновления, проверяем статус из исходных данных
+    return currentDocument.value?.status === 'full_generated';
+};
 
 // Запуск полной генерации
 const startFullGeneration = async () => {
@@ -166,6 +280,13 @@ const startFullGeneration = async () => {
         isStartingFullGeneration.value = true;
         
         const response = await apiClient.post(route('documents.generate-full', props.document.id));
+        
+        // Обновляем статус документа локально для мгновенного отображения
+        currentDocument.value.status = 'full_generating';
+        currentDocument.value.status_label = 'Генерируется содержимое...';
+        
+        // Запускаем отслеживание статуса
+        resumeTracking();
         
         $q.notify({
             type: 'positive',
@@ -187,12 +308,12 @@ const startFullGeneration = async () => {
 const downloadWord = async () => {
     try {
         isDownloading.value = true;
-        const response = await axios.post(route('documents.download-word', props.document.id));
+        const response = await apiClient.post(route('documents.download-word', props.document.id));
         
         // Создаем ссылку для скачивания
         const link = document.createElement('a');
-        link.href = response.data.url;
-        link.download = response.data.filename;
+        link.href = response.url;
+        link.download = response.filename;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

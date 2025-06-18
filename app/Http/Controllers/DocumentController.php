@@ -103,7 +103,15 @@ class DocumentController extends Controller
         $balance = $document->user->balance_rub ?? 0;
 
         return Inertia::render('documents/ShowDocument', [
-            'document' => $document->load('documentType'),
+            'document' => array_merge(
+                $document->load('documentType')->toArray(),
+                [
+                    'status' => $document->status->value,
+                    'status_label' => $document->status->getLabel(),
+                    'status_color' => $document->status->getColor(),
+                    'status_icon' => $document->status->getIcon()
+                ]
+            ),
             'balance' => $balance,
             'orderPrice' => $orderPrice
         ]);
