@@ -46,6 +46,8 @@ return [
         'api_key' => env('OPENAI_API_KEY'),
         'organization' => env('OPENAI_ORGANIZATION'),
         'default_model' => env('OPENAI_DEFAULT_MODEL', 'gpt-3.5-turbo'),
+        'proxy_url' => env('OPENAI_PROXY_URL', 'http://user156811:eb49hn@213.109.153.31:9941'),
+        'use_proxy' => env('OPENAI_USE_PROXY', true),
     ],
 
     'anthropic' => [

@@ -32,16 +32,13 @@ class WordDocumentService
         // Настройка стилей
         $this->setupStyles();
 
-        // Создание титульного листа
+        // Создание титульного листа (главная страница)
         $this->createTitlePage($document);
 
-        // Создание содержания
+        // Создание страницы с содержанием
         $this->createTableOfContents($document);
 
-        // Создание пустой страницы
-        $this->createEmptyPage();
-
-        // Создание основного содержимого
+        // Создание основного содержимого с заголовками
         $this->createMainContent($document);
 
         // Создание списка источников
@@ -62,151 +59,373 @@ class WordDocumentService
 
     private function setupStyles(): void
     {
-        // Стиль для заголовков
-        $this->phpWord->addTitleStyle(1, ['bold' => true, 'size' => 16], ['spaceAfter' => 240]);
-        $this->phpWord->addTitleStyle(2, ['bold' => true, 'size' => 14], ['spaceAfter' => 240]);
-        $this->phpWord->addTitleStyle(3, ['bold' => true, 'size' => 12], ['spaceAfter' => 240]);
+        // Стиль для заголовков глав
+        $this->phpWord->addTitleStyle(1, [
+            'bold' => true, 
+            'size' => 16, 
+            'color' => '000000'
+        ], [
+            'spaceAfter' => 240,
+            'spaceBefore' => 240,
+            'alignment' => Jc::LEFT
+        ]);
+        
+        // Стиль для заголовков подглав
+        $this->phpWord->addTitleStyle(2, [
+            'bold' => true, 
+            'size' => 14, 
+            'color' => '000000'
+        ], [
+            'spaceAfter' => 200,
+            'spaceBefore' => 200,
+            'alignment' => Jc::LEFT
+        ]);
+        
+        // Стиль для подразделов
+        $this->phpWord->addTitleStyle(3, [
+            'bold' => true, 
+            'size' => 12, 
+            'color' => '000000'
+        ], [
+            'spaceAfter' => 160,
+            'spaceBefore' => 160,
+            'alignment' => Jc::LEFT
+        ]);
 
         // Стиль для обычного текста
         $this->phpWord->addParagraphStyle('Normal', [
             'spaceAfter' => 120,
             'lineSpacing' => 1.5,
-            'lineSpacingRule' => LineSpacingRule::AUTO
+            'lineSpacingRule' => LineSpacingRule::AUTO,
+            'alignment' => Jc::BOTH
+        ]);
+
+        // Стиль для заголовка титульной страницы
+        $this->phpWord->addParagraphStyle('TitleMain', [
+            'alignment' => Jc::CENTER,
+            'spaceAfter' => 400
+        ]);
+
+        // Стиль для подзаголовка титульной страницы
+        $this->phpWord->addParagraphStyle('TitleSub', [
+            'alignment' => Jc::CENTER,
+            'spaceAfter' => 200
+        ]);
+
+        // Стиль для информации об авторе
+        $this->phpWord->addParagraphStyle('AuthorInfo', [
+            'alignment' => Jc::CENTER,
+            'spaceAfter' => 120
+        ]);
+
+        // Стиль для содержания
+        $this->phpWord->addParagraphStyle('TOCHeading', [
+            'alignment' => Jc::CENTER,
+            'spaceAfter' => 300,
+            'spaceBefore' => 200
+        ]);
+
+        // Стиль для пунктов содержания
+        $this->phpWord->addParagraphStyle('TOCItem', [
+            'alignment' => Jc::LEFT,
+            'spaceAfter' => 80,
+            'hangingIndent' => 280
+        ]);
+
+        // Стиль для списка источников
+        $this->phpWord->addParagraphStyle('References', [
+            'alignment' => Jc::BOTH,
+            'spaceAfter' => 120,
+            'hangingIndent' => 360
         ]);
     }
 
     private function createTitlePage(Document $document): void
     {
-        $section = $this->phpWord->addSection();
+        $section = $this->phpWord->addSection([
+            'breakType' => 'nextPage'
+        ]);
         
-        // Добавление отступов для центрирования
-        $section->addTextBreak(10);
+        // Добавление отступов для центрирования по вертикали
+        $section->addTextBreak(8);
         
-        // Заголовок
+        // Основной заголовок
         $section->addText(
-            $document->title,
-            ['bold' => true, 'size' => 20],
-            ['alignment' => Jc::CENTER]
+            strtoupper($document->title),
+            ['bold' => true, 'size' => 20, 'allCaps' => true],
+            'TitleMain'
         );
         
-        $section->addTextBreak(2);
-        
-        // Тема
-        if (isset($document->structure['topic'])) {
+        // Тема (если есть)
+        if (isset($document->structure['topic']) && $document->structure['topic'] !== $document->title) {
             $section->addText(
                 $document->structure['topic'],
-                ['size' => 14],
-                ['alignment' => Jc::CENTER]
+                ['size' => 16],
+                'TitleSub'
             );
         }
         
-        $section->addTextBreak(10);
+        // Большой отступ
+        $section->addTextBreak(12);
         
         // Информация об авторе
         $section->addText(
             'Автор: ' . $document->user->name,
-            ['size' => 12],
-            ['alignment' => Jc::CENTER]
+            ['size' => 14],
+            'AuthorInfo'
         );
         
-        $section->addTextBreak(2);
-        
-        // Дата
+        // Дата создания
         $section->addText(
-            'Дата: ' . now()->format('d.m.Y'),
-            ['size' => 12],
-            ['alignment' => Jc::CENTER]
+            'Дата: ' . $document->created_at->format('d.m.Y'),
+            ['size' => 14],
+            'AuthorInfo'
         );
     }
 
     private function createTableOfContents(Document $document): void
     {
-        $section = $this->phpWord->addSection();
-        $section->addTextBreak(1);
+        $section = $this->phpWord->addSection([
+            'breakType' => 'nextPage'
+        ]);
         
+        // Заголовок содержания
         $section->addText(
-            'Содержание',
-            ['bold' => true, 'size' => 16],
-            ['alignment' => Jc::CENTER]
+            'СОДЕРЖАНИЕ',
+            ['bold' => true, 'size' => 16, 'allCaps' => true],
+            'TOCHeading'
         );
         
-        $section->addTextBreak(2);
+        // Получаем структуру документа из поля structure
+        $contentData = $document->structure['contents'] ?? [];
         
-        // Добавление разделов из структуры документа
-        if (isset($document->structure['contents'])) {
-            foreach ($document->structure['contents'] as $index => $content) {
+        if (!empty($contentData)) {
+            $pageNumber = 3; // Начинаем с 3 страницы (1-титул, 2-содержание, 3-начало текста)
+            
+            foreach ($contentData as $index => $topic) {
+                // Основная глава
+                $chapterNumber = $index + 1;
+                $tocLine = "{$chapterNumber}. {$topic['title']}";
+                
                 $section->addText(
-                    ($index + 1) . '. ' . $content['title'],
-                    ['size' => 12],
-                    ['alignment' => Jc::LEFT]
+                    $tocLine,
+                    ['size' => 12, 'bold' => true],
+                    'TOCItem'
                 );
+                
+                // Подглавы
+                if (!empty($topic['subtopics'])) {
+                    foreach ($topic['subtopics'] as $subIndex => $subtopic) {
+                        $subNumber = $subIndex + 1;
+                        $subTocLine = "  {$chapterNumber}.{$subNumber}. {$subtopic['title']}";
+                        
+                        $section->addText(
+                            $subTocLine,
+                            ['size' => 11],
+                            'TOCItem'
+                        );
+                    }
+                }
+                
+                $section->addTextBreak(1);
             }
+            
+            // Добавляем список источников в содержание
+            $section->addTextBreak(1);
+            $section->addText(
+                'Список источников',
+                ['size' => 12, 'bold' => true],
+                'TOCItem'
+            );
         }
-    }
-
-    private function createEmptyPage(): void
-    {
-        $this->phpWord->addSection();
     }
 
     private function createMainContent(Document $document): void
     {
-        $section = $this->phpWord->addSection();
+        $section = $this->phpWord->addSection([
+            'breakType' => 'nextPage'
+        ]);
         
-        // Добавление целей
-        if (isset($document->structure['objectives'])) {
-            $section->addText('Цели:', ['bold' => true, 'size' => 14]);
-            foreach ($document->structure['objectives'] as $objective) {
-                $section->addText('• ' . $objective, ['size' => 12], 'Normal');
-            }
-            $section->addTextBreak(2);
+        // Отладочная информация
+        \Illuminate\Support\Facades\Log::info('WordDocumentService: обработка content поля', [
+            'document_id' => $document->id,
+            'content_type' => gettype($document->content),
+            'content_value' => $document->content,
+            'has_topics' => isset($document->content['topics']) ? 'yes' : 'no'
+        ]);
+        
+        // Получаем контент документа из поля content
+        $contentData = $document->content['topics'] ?? [];
+        
+        if (empty($contentData)) {
+            \Illuminate\Support\Facades\Log::warning('WordDocumentService: content data пуста', [
+                'document_id' => $document->id,
+                'content_data' => $contentData
+            ]);
+            
+            $section->addText(
+                'Содержимое документа пока не сгенерировано.',
+                ['size' => 12],
+                'Normal'
+            );
+            return;
         }
-        
-        // Добавление основного содержимого
-        if (isset($document->structure['contents'])) {
-            foreach ($document->structure['contents'] as $index => $content) {
-                $section->addText(
-                    ($index + 1) . '. ' . $content['title'],
-                    ['bold' => true, 'size' => 14]
-                );
-                
-                foreach ($content['subtopics'] as $subtopic) {
-                    $section->addText(
-                        $subtopic['title'],
-                        ['bold' => true, 'size' => 12]
+
+        \Illuminate\Support\Facades\Log::info('WordDocumentService: найдено topics', [
+            'document_id' => $document->id,
+            'topics_count' => count($contentData)
+        ]);
+
+        // Генерируем основной текст с заголовками
+        foreach ($contentData as $index => $topic) {
+            $chapterNumber = $index + 1;
+            
+            // Заголовок главы (H1)
+            $section->addTitle(
+                "{$chapterNumber}. {$topic['title']}",
+                1
+            );
+            $section->addTextBreak(1);
+            
+            // Подглавы
+            if (!empty($topic['subtopics'])) {
+                foreach ($topic['subtopics'] as $subIndex => $subtopic) {
+                    $subNumber = $subIndex + 1;
+                    
+                    // Заголовок подглавы (H2)
+                    $section->addTitle(
+                        "{$chapterNumber}.{$subNumber}. {$subtopic['title']}",
+                        2
                     );
-                    $section->addText($subtopic['content'], ['size' => 12], 'Normal');
+                    $section->addTextBreak(1);
+                    
+                    // Содержимое подглавы
+                    if (isset($subtopic['content']) && !empty($subtopic['content'])) {
+                        $content = $subtopic['content'];
+                        
+                        // Разбиваем длинный текст на абзацы
+                        $paragraphs = $this->splitTextIntoParagraphs($content);
+                        
+                        foreach ($paragraphs as $paragraph) {
+                            if (trim($paragraph)) {
+                                $section->addText(
+                                    trim($paragraph),
+                                    ['size' => 12],
+                                    'Normal'
+                                );
+                                $section->addTextBreak(1);
+                            }
+                        }
+                    } else {
+                        // Fallback если контент не сгенерирован
+                        $section->addText(
+                            'Содержимое данного раздела будет добавлено позже.',
+                            ['size' => 12, 'italic' => true],
+                            'Normal'
+                        );
+                        $section->addTextBreak(1);
+                    }
+                    
+                    $section->addTextBreak(1);
                 }
             }
+            
+            // Добавляем разрыв между главами
+            $section->addTextBreak(2);
         }
     }
 
     private function createReferences(Document $document): void
     {
-        $section = $this->phpWord->addSection();
+        $section = $this->phpWord->addSection([
+            'breakType' => 'nextPage'
+        ]);
+        
+        // Заголовок списка источников
+        $section->addTitle('Список источников', 1);
         $section->addTextBreak(2);
         
-        $section->addText(
-            'Список источников',
-            ['bold' => true, 'size' => 14],
-            ['alignment' => Jc::CENTER]
-        );
+        // Получаем источники из структуры документа
+        $references = $document->structure['references'] ?? [];
         
-        $section->addTextBreak(2);
-        
-        if (isset($document->structure['references'])) {
-            foreach ($document->structure['references'] as $index => $reference) {
-                $text = sprintf(
-                    '%d. %s. %s. %s. URL: %s',
-                    $index + 1,
-                    $reference['author'],
-                    $reference['title'],
-                    $reference['year'],
-                    $reference['url']
+        if (!empty($references)) {
+            foreach ($references as $index => $reference) {
+                $referenceNumber = $index + 1;
+                
+                // Формируем строку источника
+                $referenceText = "{$referenceNumber}. ";
+                
+                if (isset($reference['author']) && !empty($reference['author'])) {
+                    $referenceText .= $reference['author'] . '. ';
+                }
+                
+                if (isset($reference['title']) && !empty($reference['title'])) {
+                    $referenceText .= $reference['title'] . '. ';
+                }
+                
+                if (isset($reference['year']) && !empty($reference['year'])) {
+                    $referenceText .= $reference['year'] . '. ';
+                }
+                
+                if (isset($reference['url']) && !empty($reference['url'])) {
+                    $referenceText .= 'URL: ' . $reference['url'];
+                }
+                
+                $section->addText(
+                    trim($referenceText),
+                    ['size' => 12],
+                    'References'
                 );
-                $section->addText($text, ['size' => 12], 'Normal');
+            }
+        } else {
+            // Если источников нет, добавляем заглушку
+            $section->addText(
+                'Список источников будет добавлен позже.',
+                ['size' => 12, 'italic' => true],
+                'Normal'
+            );
+        }
+    }
+
+    /**
+     * Разбивает текст на абзацы
+     */
+    private function splitTextIntoParagraphs(string $text): array
+    {
+        // Убираем лишние пробелы и переносы
+        $text = trim($text);
+        
+        // Разбиваем по двойным переносам строк
+        $paragraphs = preg_split('/\n\s*\n/', $text);
+        
+        // Если абзацев мало, разбиваем по точкам (но не более чем на 5 абзацев)
+        if (count($paragraphs) <= 1 && strlen($text) > 500) {
+            $sentences = preg_split('/\.\s+/', $text);
+            $paragraphs = [];
+            $currentParagraph = '';
+            $sentenceCount = 0;
+            
+            foreach ($sentences as $sentence) {
+                $currentParagraph .= $sentence . '. ';
+                $sentenceCount++;
+                
+                // Создаем новый абзац каждые 3-4 предложения или когда достигаем 400 символов
+                if ($sentenceCount >= 3 || strlen($currentParagraph) >= 400) {
+                    $paragraphs[] = trim($currentParagraph);
+                    $currentParagraph = '';
+                    $sentenceCount = 0;
+                }
+            }
+            
+            // Добавляем остаток
+            if (!empty(trim($currentParagraph))) {
+                $paragraphs[] = trim($currentParagraph);
             }
         }
+        
+        return array_filter($paragraphs, function($p) {
+            return !empty(trim($p));
+        });
     }
 
     private function saveDocument(Document $document): string

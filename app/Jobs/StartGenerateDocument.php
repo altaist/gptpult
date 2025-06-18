@@ -57,20 +57,45 @@ class StartGenerateDocument implements ShouldQueue
             // Формируем промпт для генерации документа
             $prompt = $this->buildPrompt();
 
-            Log::channel('queue')->info('Отправляем запрос к GPT сервису', [
+            Log::channel('queue')->info('Отправляем запрос к GPT ассистенту', [
                 'document_id' => $this->document->id,
                 'service' => $service,
-                'model' => $model
+                'assistant_id' => 'asst_OwXAXycYmcU85DAeqShRkhYa'
             ]);
 
-            // Отправляем запрос к GPT сервису
-            $response = $gptService->sendRequest($prompt, [
-                'model' => $model,
-                'temperature' => $temperature,
-            ]);
+            // Работа с OpenAI Assistants API
+            $assistantId = 'asst_OwXAXycYmcU85DAeqShRkhYa';
+            
+            // Создаем thread (не сохраняем в БД)
+            $thread = $gptService->createThread();
+            
+            // Добавляем сообщение в thread
+            $gptService->addMessageToThread($thread['id'], $prompt);
+            
+            // Запускаем run с ассистентом
+            $run = $gptService->createRun($thread['id'], $assistantId);
+            
+            // Ждем завершения run
+            $completedRun = $gptService->waitForRunCompletion($thread['id'], $run['id']);
+            
+            // Получаем ответ
+            $response = $gptService->getThreadMessages($thread['id']);
+            
+            // Извлекаем последнее сообщение ассистента
+            $assistantMessage = null;
+            foreach ($response['data'] as $message) {
+                if ($message['role'] === 'assistant') {
+                    $assistantMessage = $message['content'][0]['text']['value'];
+                    break;
+                }
+            }
+            
+            if (!$assistantMessage) {
+                throw new \Exception('Не получен ответ от ассистента');
+            }
 
             // Парсим ответ и извлекаем contents и objectives
-            $parsedData = $this->parseGptResponse($response['content']);
+            $parsedData = $this->parseGptResponse($assistantMessage);
 
             // Обновляем структуру документа
             $structure = $this->document->structure ?? [];
@@ -94,12 +119,13 @@ class StartGenerateDocument implements ShouldQueue
             $gptRequest = new \App\Models\GptRequest([
                 'document_id' => $this->document->id,
                 'prompt' => $prompt,
-                'response' => $response['content'],
+                'response' => $assistantMessage,
                 'status' => 'completed',
                 'metadata' => [
                     'service' => $service,
-                    'model' => $response['model'] ?? $model,
-                    'tokens_used' => $response['tokens_used'] ?? 0,
+                    'assistant_id' => $assistantId,
+                    'thread_id' => $thread['id'],
+                    'run_id' => $run['id'],
                     'temperature' => $temperature,
                 ]
             ]);
@@ -165,45 +191,10 @@ class StartGenerateDocument implements ShouldQueue
     {
         $topic = $this->document->structure['topic'] ?? $this->document->title;
         $documentType = $this->document->documentType->name ?? 'документ';
+        $pagesNum = $this->document->pages_num ?? 'не указан';
 
         return "
-        Создай структуру для документа типа '{$documentType}' на тему: '{$topic}'.
-        
-        Ответ должен быть в формате JSON со следующей структурой:
-        {
-            \"objectives\": [
-                \"Цель 1\",
-                \"Цель 2\",
-                \"Цель 3\"
-            ],
-            \"contents\": [
-                {
-                    \"title\": \"Название раздела 1\",
-                    \"subtopics\": [
-                        {
-                            \"title\": \"Подраздел 1.1\",
-                            \"content\": \"Содержание подраздела\"
-                        },
-                        {
-                            \"title\": \"Подраздел 1.2\",
-                            \"content\": \"Содержание подраздела\"
-                        }
-                    ]
-                },
-                {
-                    \"title\": \"Название раздела 2\",
-                    \"subtopics\": [
-                        {
-                            \"title\": \"Подраздел 2.1\",
-                            \"content\": \"Содержание подраздела\"
-                        }
-                    ]
-                }
-            ]
-        }
-        
-        Создай не менее 3 целей и не менее 3-4 основных разделов с подразделами. 
-        Содержание должно быть содержательным и соответствовать теме.
+        {$documentType}, {$topic}, {$pagesNum}
         ";
     }
 

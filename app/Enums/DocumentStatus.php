@@ -104,7 +104,10 @@ enum DocumentStatus: string
      */
     public function canStartFullGeneration(): bool
     {
-        return $this === self::PRE_GENERATED;
+        return in_array($this, [
+            self::PRE_GENERATED,
+            self::FULL_GENERATION_FAILED
+        ]);
     }
 
     /**
