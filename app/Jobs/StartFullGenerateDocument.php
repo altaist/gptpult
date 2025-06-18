@@ -193,15 +193,22 @@ class StartFullGenerateDocument implements ShouldQueue
             }
 
             // Сохраняем сгенерированный контент в поле content
+            Log::channel('queue')->info('ОТЛАДКА: Готовимся сохранить content', [
+                'document_id' => $this->document->id,
+                'generated_content_structure' => [
+                    'topics_count' => count($generatedContent['topics']),
+                    'content_preview' => json_encode($generatedContent, JSON_UNESCAPED_UNICODE)
+                ]
+            ]);
+            
             $this->document->update([
                 'content' => $generatedContent,
                 'status' => DocumentStatus::FULL_GENERATED
             ]);
 
-            Log::channel('queue')->info('Документ полностью сгенерирован', [
+            Log::channel('queue')->info('ОТЛАДКА: Content сохранен', [
                 'document_id' => $this->document->id,
-                'topics_count' => count($generatedContent['topics']),
-                'total_subtopics' => array_sum(array_map(fn($topic) => count($topic['subtopics']), $generatedContent['topics']))
+                'saved_content_check' => empty($this->document->fresh()->content) ? 'ПУСТОЙ' : 'ЕСТЬ_ДАННЫЕ'
             ]);
 
             // ВРЕМЕННО ОТКЛЮЧЕНО: Создаем фиктивный GptRequest для совместимости с существующими событиями
