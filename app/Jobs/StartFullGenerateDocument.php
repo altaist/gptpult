@@ -34,8 +34,16 @@ class StartFullGenerateDocument implements ShouldQueue
     public function handle(GptServiceFactory $factory): void
     {
         try {
-            // Перезагружаем документ из базы данных, чтобы получить актуальный статус
-            $this->document->refresh();
+            // Безопасная перезагрузка документа - игнорируем ошибки подключения к БД
+            try {
+                $this->document->refresh();
+            } catch (\Exception $e) {
+                Log::channel('queue')->warning('Не удалось обновить документ из БД, используем текущие данные', [
+                    'document_id' => $this->document->id,
+                    'error' => $e->getMessage()
+                ]);
+                // Продолжаем работу с текущими данными документа
+            }
             
             Log::channel('queue')->info('Начало полной генерации документа', [
                 'document_id' => $this->document->id,
