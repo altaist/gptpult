@@ -1,13 +1,15 @@
 <template>
     <div class="page-header q-pa-md bg-white border">
-        <div class="row items-center">
-            <div class="col" v-if="leftBtnIcon">
-                <btn :icon="leftBtnIcon" @click="onLeftBtnlick"/>
+        <div class="max-width-container">
+            <div class="row items-center">
+                <div class="col" v-if="leftBtnIcon">
+                    <btn :icon="leftBtnIcon" @click="onLeftBtnlick"/>
+                </div>
+                <div class="col text-center">
+                    <page-title @page-title-click="emit('click:title')">{{title}}</page-title>
+                </div>
+                <div class="col text-right" v-if="rightBtnIcon"><btn :icon="rightBtnIcon" @click="onRightBtnClick"/></div>
             </div>
-            <div class="col text-center">
-                <page-title @page-title-click="emit('click:title')">{{title}}</page-title>
-            </div>
-            <div class="col text-right" v-if="rightBtnIcon"><btn :icon="rightBtnIcon" @click="onRightBtnClick"/></div>
         </div>
     </div>
 </template>

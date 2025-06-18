@@ -8,6 +8,27 @@ html, body {
     min-height: 100%;
 }
 
+/* Глобальные стили для ограничения ширины контента */
+.max-width-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* На планшетах уменьшаем максимальную ширину */
+@media (max-width: 1024px) {
+    .max-width-container {
+        max-width: 100%;
+    }
+}
+
+/* На мобильных устройствах убираем ограничение ширины */
+@media (max-width: 768px) {
+    .max-width-container {
+        max-width: 100%;
+    }
+}
+
 .rounded-1 {
     border-radius: 10px;
 }

@@ -14,7 +14,7 @@
             @click:title="emit('click:header:title')"
             />
 
-        <page-container class="page-content q-px-md">    
+        <page-container class="page-content">    
             <slot/>
         </page-container>
 
@@ -31,6 +31,8 @@
 </template>
 <script setup>
 import PageContainer from '@/components/shared/PageContainer.vue';
+import PageHeader from '@/components/shared/PageHeader.vue';
+import PageFooter from '@/components/shared/PageFooter.vue';
 import { onMounted } from 'vue';
 import { checkAuth } from '@/composables/auth';
 
