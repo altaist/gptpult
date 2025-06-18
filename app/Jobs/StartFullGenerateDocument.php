@@ -34,80 +34,180 @@ class StartFullGenerateDocument implements ShouldQueue
     public function handle(GptServiceFactory $factory): void
     {
         try {
+            // Перезагружаем документ из базы данных, чтобы получить актуальный статус
+            $this->document->refresh();
+            
             Log::channel('queue')->info('Начало полной генерации документа', [
                 'document_id' => $this->document->id,
                 'document_title' => $this->document->title,
+                'current_status' => $this->document->status->value,
                 'job_id' => $this->job->getJobId()
             ]);
 
-            // Проверяем, что документ готов к полной генерации
-            if (!$this->document->status->canStartFullGeneration()) {
-                throw new \Exception('Документ не готов к полной генерации. Текущий статус: ' . $this->document->status->value);
+            // Устанавливаем статус "full_generating" если он еще не установлен
+            if ($this->document->status !== DocumentStatus::FULL_GENERATING) {
+                $this->document->update(['status' => DocumentStatus::FULL_GENERATING]);
+                Log::channel('queue')->info('Статус документа изменен на full_generating', [
+                    'document_id' => $this->document->id,
+                    'previous_status' => $this->document->status->value
+                ]);
             }
 
-            // Обновляем статус документа на "full_generating"
-            $this->document->update(['status' => DocumentStatus::FULL_GENERATING]);
+            // Проверяем, что документ имеет структуру для генерации
+            $structure = $this->document->structure;
+            if (!$structure || !isset($structure['contents']) || empty($structure['contents'])) {
+                throw new \Exception('Нет структуры документа для полной генерации');
+            }
 
             // Получаем настройки GPT из документа
             $gptSettings = $this->document->gpt_settings ?? [];
             $service = $gptSettings['service'] ?? 'openai';
-            $model = $gptSettings['model'] ?? 'gpt-4'; // Используем более мощную модель для полной генерации
-            $temperature = $gptSettings['temperature'] ?? 0.8; // Немного больше креативности
+            $temperature = $gptSettings['temperature'] ?? 0.8;
 
             // Получаем сервис из фабрики
             $gptService = $factory->make($service);
 
-            // Формируем промпт для полной генерации документа
-            $prompt = $this->buildFullPrompt();
-
-            Log::channel('queue')->info('Отправляем запрос на полную генерацию к GPT сервису', [
+            Log::channel('queue')->info('Начинаем генерацию через ассистента', [
                 'document_id' => $this->document->id,
                 'service' => $service,
-                'model' => $model
+                'assistant_id' => 'asst_8FBCbxGFVWfhwnGLHyo7T3Ju'
             ]);
 
-            // Отправляем запрос к GPT сервису
-            $response = $gptService->sendRequest($prompt, [
-                'model' => $model,
-                'temperature' => $temperature,
-            ]);
+            // ID ассистента для полной генерации
+            $assistantId = 'asst_8FBCbxGFVWfhwnGLHyo7T3Ju';
+            
+            // Получаем структуру документа
+            $contents = $structure['contents'] ?? [];
+            
+            if (empty($contents)) {
+                throw new \Exception('Нет структуры документа для полной генерации');
+            }
 
-            // Парсим ответ и извлекаем детальное содержимое
-            $parsedData = $this->parseFullGptResponse($response['content']);
+            // Подготавливаем результирующую структуру
+            $generatedContent = [
+                'topics' => []
+            ];
 
-            // Обновляем структуру документа с детальным содержимым
-            $structure = $this->document->structure ?? [];
-            $structure['detailed_contents'] = $parsedData['detailed_contents'] ?? [];
-            $structure['introduction'] = $parsedData['introduction'] ?? '';
-            $structure['conclusion'] = $parsedData['conclusion'] ?? '';
-            $structure['detailed_objectives'] = $parsedData['detailed_objectives'] ?? [];
+            // Генерируем содержимое для каждого раздела
+            foreach ($contents as $topicIndex => $topic) {
+                Log::channel('queue')->info('Генерируем раздел', [
+                    'document_id' => $this->document->id,
+                    'topic_index' => $topicIndex,
+                    'topic_title' => $topic['title']
+                ]);
 
-            // Сохраняем изменения
+                $generatedTopic = [
+                    'title' => $topic['title'],
+                    'subtopics' => []
+                ];
+
+                // Генерируем каждый подраздел отдельно
+                foreach ($topic['subtopics'] as $subtopicIndex => $subtopic) {
+                    Log::channel('queue')->info('Генерируем подраздел', [
+                        'document_id' => $this->document->id,
+                        'topic_index' => $topicIndex,
+                        'subtopic_index' => $subtopicIndex,
+                        'subtopic_title' => $subtopic['title']
+                    ]);
+
+                    // Создаем thread для данного subtopic
+                    $thread = $gptService->createThread();
+                    
+                    // Формируем промпт для конкретного subtopic
+                    $prompt = $this->buildSubtopicPrompt($subtopic);
+                    
+                    // Добавляем сообщение в thread
+                    $gptService->addMessageToThread($thread['id'], $prompt);
+                    
+                    // Запускаем run с ассистентом
+                    $run = $gptService->createRun($thread['id'], $assistantId);
+                    
+                    // Ждем завершения run
+                    $completedRun = $gptService->waitForRunCompletion($thread['id'], $run['id']);
+                    
+                    // Получаем ответ
+                    $response = $gptService->getThreadMessages($thread['id']);
+                    
+                    // Извлекаем последнее сообщение ассистента
+                    $assistantMessage = null;
+                    foreach ($response['data'] as $message) {
+                        if ($message['role'] === 'assistant') {
+                            $assistantMessage = $message['content'][0]['text']['value'];
+                            break;
+                        }
+                    }
+                    
+                    if (!$assistantMessage) {
+                        throw new \Exception("Не получен ответ от ассистента для подраздела: {$subtopic['title']}");
+                    }
+
+                    // Парсим JSON ответ от ассистента
+                    $parsedResponse = null;
+                    try {
+                        $parsedResponse = json_decode($assistantMessage, true);
+                        if (json_last_error() !== JSON_ERROR_NONE) {
+                            throw new \Exception('Ошибка парсинга JSON: ' . json_last_error_msg());
+                        }
+                    } catch (\Exception $e) {
+                        Log::channel('queue')->warning('Не удалось распарсить JSON ответ, используем текст как есть', [
+                            'document_id' => $this->document->id,
+                            'subtopic_title' => $subtopic['title'],
+                            'response' => $assistantMessage,
+                            'error' => $e->getMessage()
+                        ]);
+                        // Если не удалось распарсить JSON, используем весь ответ как текст
+                        $parsedResponse = ['text' => $assistantMessage];
+                    }
+
+                    // Извлекаем text из ответа или используем весь ответ если text нет
+                    $contentText = $parsedResponse['text'] ?? $assistantMessage;
+
+                    // Добавляем сгенерированный контент к подразделу
+                    $generatedSubtopic = [
+                        'title' => $subtopic['title'],
+                        'content' => trim($contentText)
+                    ];
+
+                    $generatedTopic['subtopics'][] = $generatedSubtopic;
+
+                    Log::channel('queue')->info('Подраздел сгенерирован', [
+                        'document_id' => $this->document->id,
+                        'subtopic_title' => $subtopic['title'],
+                        'content_length' => strlen($contentText),
+                        'was_json' => is_array($parsedResponse) && isset($parsedResponse['text'])
+                    ]);
+
+                    // Небольшая пауза между запросами
+                    sleep(1);
+                }
+
+                $generatedContent['topics'][] = $generatedTopic;
+            }
+
+            // Сохраняем сгенерированный контент в поле content
             $this->document->update([
-                'structure' => $structure,
+                'content' => $generatedContent,
                 'status' => DocumentStatus::FULL_GENERATED
             ]);
 
             Log::channel('queue')->info('Документ полностью сгенерирован', [
                 'document_id' => $this->document->id,
-                'detailed_contents_count' => count($structure['detailed_contents']),
-                'introduction_length' => strlen($structure['introduction']),
-                'conclusion_length' => strlen($structure['conclusion']),
-                'tokens_used' => $response['tokens_used'] ?? 0
+                'topics_count' => count($generatedContent['topics']),
+                'total_subtopics' => array_sum(array_map(fn($topic) => count($topic['subtopics']), $generatedContent['topics']))
             ]);
 
             // Создаем фиктивный GptRequest для совместимости с существующими событиями
             $gptRequest = new \App\Models\GptRequest([
                 'document_id' => $this->document->id,
-                'prompt' => $prompt,
-                'response' => $response['content'],
+                'prompt' => 'Полная генерация по частям',
+                'response' => 'Сгенерировано ' . count($generatedContent['topics']) . ' разделов',
                 'status' => 'completed',
                 'metadata' => [
                     'service' => $service,
-                    'model' => $response['model'] ?? $model,
-                    'tokens_used' => $response['tokens_used'] ?? 0,
+                    'assistant_id' => $assistantId,
+                    'generation_type' => 'full_by_parts',
+                    'topics_count' => count($generatedContent['topics']),
                     'temperature' => $temperature,
-                    'generation_type' => 'full'
                 ]
             ]);
             $gptRequest->document = $this->document;
@@ -166,100 +266,27 @@ class StartFullGenerateDocument implements ShouldQueue
     }
 
     /**
-     * Формирует промпт для полной генерации документа
+     * Формирует промпт для генерации конкретного подраздела
      */
-    private function buildFullPrompt(): string
+    private function buildSubtopicPrompt(array $subtopic): string
     {
-        $structure = $this->document->structure;
-        $topic = $structure['topic'] ?? $this->document->title;
-        $documentType = $this->document->documentType->name ?? 'документ';
-        $objectives = $structure['objectives'] ?? [];
-        $contents = $structure['contents'] ?? [];
-
-        $objectivesText = implode("\n", array_map(fn($obj, $i) => ($i + 1) . ". $obj", $objectives, array_keys($objectives)));
+        // Формируем промпт только с description и полями subtopic, без лишнего текста
+        $prompt = '';
         
-        $contentsText = '';
-        foreach ($contents as $i => $content) {
-            $contentsText .= ($i + 1) . ". " . $content['title'] . "\n";
-            foreach ($content['subtopics'] as $j => $subtopic) {
-                $contentsText .= "   " . ($j + 1) . ". " . $subtopic['title'] . "\n";
+        // Добавляем description если есть
+        if (isset($subtopic['content']) && !empty($subtopic['content'])) {
+            $prompt .= $subtopic['content'] . "\n\n";
+        }
+        
+        // Добавляем все поля subtopic
+        foreach ($subtopic as $key => $value) {
+            if (is_string($value) && !empty($value)) {
+                $prompt .= ucfirst($key) . ": " . $value . "\n";
+            } elseif (is_array($value) && !empty($value)) {
+                $prompt .= ucfirst($key) . ": " . implode(', ', $value) . "\n";
             }
         }
-
-        return "
-        Создай детальное содержимое для документа типа '{$documentType}' на тему: '{$topic}'.
         
-        БАЗОВАЯ СТРУКТУРА ДОКУМЕНТА:
-        
-        Цели:
-        {$objectivesText}
-        
-        Содержание:
-        {$contentsText}
-        
-        ЗАДАЧА: Создай полное детальное содержимое документа в формате JSON:
-        
-        {
-            \"introduction\": \"Подробное введение к документу (минимум 500 слов)\",
-            \"detailed_objectives\": [
-                {
-                    \"title\": \"Название цели\",
-                    \"description\": \"Подробное описание цели\",
-                    \"success_criteria\": \"Критерии успеха\"
-                }
-            ],
-            \"detailed_contents\": [
-                {
-                    \"title\": \"Название раздела\",
-                    \"introduction\": \"Введение к разделу\",
-                    \"subtopics\": [
-                        {
-                            \"title\": \"Название подраздела\",
-                            \"content\": \"Детальное содержание подраздела (минимум 300 слов)\",
-                            \"examples\": [\"Пример 1\", \"Пример 2\"],
-                            \"key_points\": [\"Ключевой момент 1\", \"Ключевой момент 2\"]
-                        }
-                    ],
-                    \"summary\": \"Краткое резюме раздела\"
-                }
-            ],
-            \"conclusion\": \"Подробное заключение документа (минимум 400 слов)\"
-        }
-        
-        ТРЕБОВАНИЯ:
-        - Все тексты должны быть содержательными и профессиональными
-        - Каждый подраздел должен содержать минимум 300 слов
-        - Включи практические примеры и ключевые моменты
-        - Введение и заключение должны быть подробными
-        - Соблюдай научный/деловой стиль изложения
-        ";
-    }
-
-    /**
-     * Парсит ответ от GPT и извлекает детальные структурированные данные
-     */
-    private function parseFullGptResponse(string $response): array
-    {
-        // Пытаемся найти JSON в ответе
-        $jsonStart = strpos($response, '{');
-        $jsonEnd = strrpos($response, '}');
-        
-        if ($jsonStart === false || $jsonEnd === false) {
-            throw new \Exception('Не удалось найти JSON в ответе GPT при полной генерации');
-        }
-        
-        $jsonString = substr($response, $jsonStart, $jsonEnd - $jsonStart + 1);
-        $data = json_decode($jsonString, true);
-        
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new \Exception('Ошибка парсинга JSON при полной генерации: ' . json_last_error_msg());
-        }
-        
-        // Валидируем структуру данных
-        if (!isset($data['detailed_contents']) || !isset($data['introduction']) || !isset($data['conclusion'])) {
-            throw new \Exception('Неверная структура данных в ответе GPT при полной генерации');
-        }
-        
-        return $data;
+        return trim($prompt);
     }
 } 

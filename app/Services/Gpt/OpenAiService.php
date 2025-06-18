@@ -10,12 +10,44 @@ class OpenAiService implements GptServiceInterface
     protected string $apiKey;
     protected ?string $organization;
     protected string $defaultModel;
+    protected ?string $proxyUrl;
+    protected bool $useProxy;
 
     public function __construct()
     {
         $this->apiKey = config('services.openai.api_key');
         $this->organization = config('services.openai.organization');
         $this->defaultModel = config('services.openai.default_model', 'gpt-3.5-turbo');
+        $this->proxyUrl = config('services.openai.proxy_url');
+        $this->useProxy = config('services.openai.use_proxy', true);
+    }
+
+    /**
+     * Создает HTTP клиент с настройками прокси и заголовками
+     */
+    private function getHttpClient(array $headers = []): \Illuminate\Http\Client\PendingRequest
+    {
+        $defaultHeaders = [
+            'Authorization' => 'Bearer ' . $this->apiKey,
+            'Content-Type' => 'application/json',
+        ];
+
+        $httpClient = Http::withHeaders(array_merge($defaultHeaders, $headers));
+        
+        $options = [
+            'timeout' => 120,
+            'connect_timeout' => 30,
+        ];
+        
+        // Добавляем прокси только если включен
+        if ($this->useProxy && !empty($this->proxyUrl)) {
+            $options['proxy'] = $this->proxyUrl;
+            Log::info('OpenAI request with proxy', ['proxy' => $this->proxyUrl]);
+        } else {
+            Log::info('OpenAI request without proxy');
+        }
+
+        return $httpClient->withOptions($options);
     }
 
     public function sendRequest(string $prompt, array $options = []): array
@@ -23,16 +55,14 @@ class OpenAiService implements GptServiceInterface
         $model = $options['model'] ?? $this->defaultModel;
         $temperature = $options['temperature'] ?? 0.7;
 
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->apiKey,
-            'Content-Type' => 'application/json',
-        ])->post('https://api.openai.com/v1/chat/completions', [
-            'model' => $model,
-            'messages' => [
-                ['role' => 'user', 'content' => $prompt]
-            ],
-            'temperature' => $temperature,
-        ]);
+        $response = $this->getHttpClient()
+            ->post('https://api.openai.com/v1/chat/completions', [
+                'model' => $model,
+                'messages' => [
+                    ['role' => 'user', 'content' => $prompt]
+                ],
+                'temperature' => $temperature,
+            ]);
 
         if (!$response->successful()) {
             Log::error('OpenAI API request failed', [
@@ -62,5 +92,113 @@ class OpenAiService implements GptServiceInterface
             'gpt-4' => 'GPT-4',
             'gpt-4-turbo-preview' => 'GPT-4 Turbo',
         ];
+    }
+
+    public function createThread(): array
+    {
+        $response = $this->getHttpClient([
+            'OpenAI-Beta' => 'assistants=v2',
+        ])->post('https://api.openai.com/v1/threads');
+
+        if (!$response->successful()) {
+            Log::error('OpenAI Create Thread failed', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+            throw new \Exception('OpenAI Create Thread failed: ' . $response->body());
+        }
+
+        return $response->json();
+    }
+
+    public function addMessageToThread(string $threadId, string $content): array
+    {
+        $response = $this->getHttpClient([
+            'OpenAI-Beta' => 'assistants=v2',
+        ])->post("https://api.openai.com/v1/threads/{$threadId}/messages", [
+            'role' => 'user',
+            'content' => $content,
+        ]);
+
+        if (!$response->successful()) {
+            Log::error('OpenAI Add Message failed', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+            throw new \Exception('OpenAI Add Message failed: ' . $response->body());
+        }
+
+        return $response->json();
+    }
+
+    public function createRun(string $threadId, string $assistantId): array
+    {
+        $response = $this->getHttpClient([
+            'OpenAI-Beta' => 'assistants=v2',
+        ])->post("https://api.openai.com/v1/threads/{$threadId}/runs", [
+            'assistant_id' => $assistantId,
+        ]);
+
+        if (!$response->successful()) {
+            Log::error('OpenAI Create Run failed', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+            throw new \Exception('OpenAI Create Run failed: ' . $response->body());
+        }
+
+        return $response->json();
+    }
+
+    public function waitForRunCompletion(string $threadId, string $runId): array
+    {
+        $maxAttempts = 60; // Максимум 60 попыток (5 минут при задержке 5 секунд)
+        $attempts = 0;
+
+        while ($attempts < $maxAttempts) {
+            $response = $this->getHttpClient([
+                'OpenAI-Beta' => 'assistants=v2',
+            ])->get("https://api.openai.com/v1/threads/{$threadId}/runs/{$runId}");
+
+            if (!$response->successful()) {
+                Log::error('OpenAI Get Run Status failed', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+                throw new \Exception('OpenAI Get Run Status failed: ' . $response->body());
+            }
+
+            $run = $response->json();
+            
+            if ($run['status'] === 'completed') {
+                return $run;
+            }
+            
+            if (in_array($run['status'], ['failed', 'cancelled', 'expired'])) {
+                throw new \Exception('Run failed with status: ' . $run['status']);
+            }
+
+            sleep(5); // Ждем 5 секунд перед следующей проверкой
+            $attempts++;
+        }
+
+        throw new \Exception('Run timeout: не удалось дождаться завершения за 5 минут');
+    }
+
+    public function getThreadMessages(string $threadId): array
+    {
+        $response = $this->getHttpClient([
+            'OpenAI-Beta' => 'assistants=v2',
+        ])->get("https://api.openai.com/v1/threads/{$threadId}/messages");
+
+        if (!$response->successful()) {
+            Log::error('OpenAI Get Messages failed', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+            throw new \Exception('OpenAI Get Messages failed: ' . $response->body());
+        }
+
+        return $response->json();
     }
 } 

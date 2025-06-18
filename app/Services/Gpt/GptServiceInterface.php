@@ -26,4 +26,46 @@ interface GptServiceInterface
      * @return array
      */
     public function getAvailableModels(): array;
+
+    /**
+     * Создать thread для Assistants API
+     *
+     * @return array
+     */
+    public function createThread(): array;
+
+    /**
+     * Добавить сообщение в thread
+     *
+     * @param string $threadId
+     * @param string $content
+     * @return array
+     */
+    public function addMessageToThread(string $threadId, string $content): array;
+
+    /**
+     * Создать run с ассистентом
+     *
+     * @param string $threadId
+     * @param string $assistantId
+     * @return array
+     */
+    public function createRun(string $threadId, string $assistantId): array;
+
+    /**
+     * Ждать завершения run
+     *
+     * @param string $threadId
+     * @param string $runId
+     * @return array
+     */
+    public function waitForRunCompletion(string $threadId, string $runId): array;
+
+    /**
+     * Получить сообщения из thread
+     *
+     * @param string $threadId
+     * @return array
+     */
+    public function getThreadMessages(string $threadId): array;
 } 

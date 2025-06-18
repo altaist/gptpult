@@ -27,6 +27,7 @@ class Document extends Model
 
     protected $casts = [
         'structure' => 'array',
+        'content' => 'array',
         'gpt_settings' => 'array',
         'status' => DocumentStatus::class
     ];

@@ -58,9 +58,34 @@ class AnthropicService implements GptServiceInterface
     public function getAvailableModels(): array
     {
         return [
-            'claude-3-opus-20240229' => 'Claude 3 Opus',
-            'claude-3-sonnet-20240229' => 'Claude 3 Sonnet',
             'claude-3-haiku-20240307' => 'Claude 3 Haiku',
+            'claude-3-sonnet-20240229' => 'Claude 3 Sonnet',
+            'claude-3-opus-20240229' => 'Claude 3 Opus',
         ];
+    }
+
+    public function createThread(): array
+    {
+        throw new \Exception('Assistants API не поддерживается для Anthropic');
+    }
+
+    public function addMessageToThread(string $threadId, string $content): array
+    {
+        throw new \Exception('Assistants API не поддерживается для Anthropic');
+    }
+
+    public function createRun(string $threadId, string $assistantId): array
+    {
+        throw new \Exception('Assistants API не поддерживается для Anthropic');
+    }
+
+    public function waitForRunCompletion(string $threadId, string $runId): array
+    {
+        throw new \Exception('Assistants API не поддерживается для Anthropic');
+    }
+
+    public function getThreadMessages(string $threadId): array
+    {
+        throw new \Exception('Assistants API не поддерживается для Anthropic');
     }
 } 
