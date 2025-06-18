@@ -85,9 +85,14 @@ const onSubmit = async () => {
 
         const response = await apiClient.post(route('documents.quick-create'), data);
         
-        // После успешного создания сразу переходим к просмотру документа
+        // После успешного создания переходим к просмотру документа с автозагрузкой
         if (response && response.document && response.document.id) {
-            router.visit(route('documents.show', response.document.id));
+            // Используем redirect_url из ответа или формируем URL с autoload=1
+            const redirectUrl = response.redirect_url || route('documents.show', {
+                document: response.document.id,
+                autoload: 1
+            });
+            router.visit(redirectUrl);
         } else {
             throw new Error('Неверный формат ответа от сервера');
         }

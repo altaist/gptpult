@@ -25,7 +25,9 @@ class LkController extends Controller
                 return [
                     'id' => $document->id,
                     'title' => $document->title,
-                    'status' => $document->status->value,
+                    'status' => $document->status->value, // Техническое значение для цвета
+                    'status_label' => $document->status->getLabel(), // Человекочитаемое название
+                    'status_color' => $document->status->getColor(), // Цвет из enum
                     'created_at' => $document->created_at->format('Y-m-d'),
                     'document_type' => $document->documentType?->name,
                 ];

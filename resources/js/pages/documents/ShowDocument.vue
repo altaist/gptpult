@@ -39,6 +39,16 @@
                     v-else
                     class="q-mt-md text-center q-gutter-md"
                 >
+                    <!-- Кнопка для запуска отслеживания статуса если autoload не активен -->
+                    <q-btn
+                        v-if="!shouldAutoload && !isGenerating()"
+                        label="Обновить документ"
+                        color="primary"
+                        outline
+                        @click="startPolling"
+                        class="q-px-lg q-py-sm"
+                    />
+                    
                     <q-btn
                         v-if="canStartFullGeneration()"
                         label="Завершить создание документа"
@@ -100,6 +110,10 @@ const canPay = computed(() => props.balance < props.orderPrice);
 // Реактивная ссылка на документ для обновления
 const currentDocument = ref(props.document);
 
+// Проверяем наличие параметра autoload в URL
+const urlParams = new URLSearchParams(window.location.search);
+const shouldAutoload = urlParams.get('autoload') === '1';
+
 // Трекер статуса документа
 const {
     status: documentStatus,
@@ -116,7 +130,7 @@ const {
 } = useDocumentStatus(
     () => props.document.id,
     {
-        autoStart: true,
+        autoStart: shouldAutoload, // Включаем автозапуск только при наличии параметра autoload=1
         onComplete: (status) => {
             $q.notify({
                 type: 'positive',

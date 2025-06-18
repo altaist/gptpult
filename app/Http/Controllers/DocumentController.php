@@ -233,7 +233,8 @@ class DocumentController extends Controller
 
         return response()->json([
             'message' => 'Документ успешно создан',
-            'document' => $document
+            'document' => $document,
+            'redirect_url' => route('documents.show', ['document' => $document->id, 'autoload' => 1])
         ], 201);
     }
 

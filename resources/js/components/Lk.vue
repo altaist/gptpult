@@ -26,34 +26,47 @@ const createNewTask = () => {
 }
 
 // Функция для получения цвета статуса
-const getStatusColor = (status) => {
+const getStatusColor = (document) => {
+  // Используем цвет из enum если доступен, иначе fallback
+  if (document.status_color) {
+    return document.status_color
+  }
+  
   const statusColors = {
     'draft': 'grey',
-    'in_progress': 'orange', 
-    'completed': 'green',
-    'rejected': 'red',
-    'pending': 'blue'
+    'pre_generating': 'primary',
+    'pre_generated': 'positive',
+    'pre_generation_failed': 'negative',
+    'full_generating': 'secondary',
+    'full_generated': 'green',
+    'full_generation_failed': 'red',
+    'in_review': 'warning',
+    'approved': 'green-10',
+    'rejected': 'red-8'
   }
-  return statusColors[status] || 'grey'
+  return statusColors[document.status] || 'grey'
 }
 
 // Функция для получения русского названия статуса
-const getStatusLabel = (status) => {
+const getStatusLabel = (document) => {
+  // Используем метку из enum если доступна, иначе fallback
+  if (document.status_label) {
+    return document.status_label
+  }
+  
   const statusLabels = {
     'draft': 'Черновик',
-    'in_progress': 'В обработке',
-    'completed': 'Готов', 
-    'rejected': 'Отклонено',
-    'pending': 'Ожидает',
-    'pre_generated': 'Сгенерирован',
-    'generating': 'Генерируется',
-    'error': 'Ошибка',
-    'new': 'Новый',
-    'paid': 'Оплачен',
-    'processing': 'Обрабатывается',
-    'ready': 'Готов к скачиванию'
+    'pre_generating': 'Генерируется структура...',
+    'pre_generated': 'Структура готова',
+    'pre_generation_failed': 'Ошибка генерации структуры',
+    'full_generating': 'Генерируется содержимое...',
+    'full_generated': 'Полностью готов',
+    'full_generation_failed': 'Ошибка полной генерации',
+    'in_review': 'На проверке',
+    'approved': 'Утвержден',
+    'rejected': 'Отклонен'
   }
-  return statusLabels[status] || status
+  return statusLabels[document.status] || document.status
 }
 
 // Функция для форматирования даты
@@ -151,7 +164,7 @@ const topUpBalance = async () => {
             class="document-item"
           >
             <q-item-section avatar>
-              <q-icon name="description" :color="getStatusColor(document.status)" size="md" />
+              <q-icon name="description" :color="getStatusColor(document)" size="md" />
             </q-item-section>
             
             <q-item-section>
@@ -165,9 +178,9 @@ const topUpBalance = async () => {
             
             <q-item-section side>
               <q-chip 
-                :color="getStatusColor(document.status)"
+                :color="getStatusColor(document)"
                 text-color="white"
-                :label="getStatusLabel(document.status)"
+                :label="getStatusLabel(document)"
                 size="sm"
               />
             </q-item-section>
