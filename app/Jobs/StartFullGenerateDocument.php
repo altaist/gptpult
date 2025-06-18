@@ -204,7 +204,8 @@ class StartFullGenerateDocument implements ShouldQueue
                 'total_subtopics' => array_sum(array_map(fn($topic) => count($topic['subtopics']), $generatedContent['topics']))
             ]);
 
-            // Создаем фиктивный GptRequest для совместимости с существующими событиями
+            // ВРЕМЕННО ОТКЛЮЧЕНО: Создаем фиктивный GptRequest для совместимости с существующими событиями
+            /*
             $gptRequest = new \App\Models\GptRequest([
                 'document_id' => $this->document->id,
                 'prompt' => 'Полная генерация по частям',
@@ -221,6 +222,7 @@ class StartFullGenerateDocument implements ShouldQueue
             $gptRequest->document = $this->document;
 
             event(new GptRequestCompleted($gptRequest));
+            */
 
         } catch (\Exception $e) {
             Log::channel('queue')->error('Ошибка при полной генерации документа', [
@@ -233,7 +235,8 @@ class StartFullGenerateDocument implements ShouldQueue
                 'status' => DocumentStatus::FULL_GENERATION_FAILED
             ]);
 
-            // Создаем фиктивный GptRequest для события ошибки
+            // ВРЕМЕННО ОТКЛЮЧЕНО: Создаем фиктивный GptRequest для события ошибки
+            /*
             $gptRequest = new \App\Models\GptRequest([
                 'document_id' => $this->document->id,
                 'status' => 'failed',
@@ -242,6 +245,7 @@ class StartFullGenerateDocument implements ShouldQueue
             $gptRequest->document = $this->document;
 
             event(new GptRequestFailed($gptRequest, $e->getMessage()));
+            */
 
             throw $e;
         }
@@ -262,7 +266,8 @@ class StartFullGenerateDocument implements ShouldQueue
             'status' => DocumentStatus::FULL_GENERATION_FAILED
         ]);
 
-        // Создаем фиктивный GptRequest для события ошибки
+        // ВРЕМЕННО ОТКЛЮЧЕНО: Создаем фиктивный GptRequest для события ошибки
+        /*
         $gptRequest = new \App\Models\GptRequest([
             'document_id' => $this->document->id,
             'status' => 'failed',
@@ -271,6 +276,7 @@ class StartFullGenerateDocument implements ShouldQueue
         $gptRequest->document = $this->document;
 
         event(new GptRequestFailed($gptRequest, $exception->getMessage()));
+        */
     }
 
     /**
