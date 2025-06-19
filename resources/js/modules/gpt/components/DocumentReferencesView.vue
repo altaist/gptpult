@@ -5,7 +5,7 @@
                 <div class="flex items-center justify-between q-mb-md">
                     <div class="text-h6">
                         <q-icon name="link" class="q-mr-sm" />
-                        Полезные ссылки
+                        Ссылки
                     </div>
                     <q-chip 
                         :label="`${references.length} ресурсов`" 

@@ -135,8 +135,17 @@ class WordDocumentService
         // Стиль для списка источников
         $this->phpWord->addParagraphStyle('References', [
             'alignment' => Jc::BOTH,
+            'spaceAfter' => 80,
+            'hangingIndent' => 360,
+            'lineSpacing' => 1.0
+        ]);
+
+        // Стиль для описаний источников
+        $this->phpWord->addParagraphStyle('ReferenceDescription', [
+            'alignment' => Jc::BOTH,
             'spaceAfter' => 120,
-            'hangingIndent' => 360
+            'leftIndent' => 720,
+            'lineSpacing' => 1.0
         ]);
     }
 
@@ -229,14 +238,6 @@ class WordDocumentService
                 
                 $section->addTextBreak(1);
             }
-            
-            // Добавляем список источников в содержание
-            $section->addTextBreak(1);
-            $section->addText(
-                'Список источников',
-                ['size' => 12, 'bold' => true],
-                'TOCItem'
-            );
         }
     }
 
@@ -352,30 +353,64 @@ class WordDocumentService
             foreach ($references as $index => $reference) {
                 $referenceNumber = $index + 1;
                 
-                // Формируем строку источника
+                // Формируем строку источника по академическим стандартам
                 $referenceText = "{$referenceNumber}. ";
                 
+                // Автор (если есть)
                 if (isset($reference['author']) && !empty($reference['author'])) {
                     $referenceText .= $reference['author'] . '. ';
                 }
                 
+                // Название (обязательное поле)
                 if (isset($reference['title']) && !empty($reference['title'])) {
-                    $referenceText .= $reference['title'] . '. ';
+                    $referenceText .= $reference['title'];
+                    
+                    // Добавляем тип ресурса в скобках для ясности
+                    if (isset($reference['type']) && !empty($reference['type'])) {
+                        $typeLabels = [
+                            'article' => 'статья',
+                            'pdf' => 'PDF',
+                            'book' => 'книга',
+                            'website' => 'веб-сайт',
+                            'research_paper' => 'научная работа',
+                            'other' => 'ресурс'
+                        ];
+                        $typeLabel = $typeLabels[$reference['type']] ?? 'ресурс';
+                        $referenceText .= " [{$typeLabel}]";
+                    }
+                    
+                    $referenceText .= '. ';
                 }
                 
-                if (isset($reference['year']) && !empty($reference['year'])) {
-                    $referenceText .= $reference['year'] . '. ';
+                // Дата публикации (если есть) - поддерживаем как новое поле publication_date, так и старое year
+                $publicationDate = $reference['publication_date'] ?? $reference['year'] ?? null;
+                if (!empty($publicationDate)) {
+                    $referenceText .= $publicationDate . '. ';
                 }
                 
+                // URL
                 if (isset($reference['url']) && !empty($reference['url'])) {
                     $referenceText .= 'URL: ' . $reference['url'];
                 }
                 
+                // Основная ссылка
                 $section->addText(
                     trim($referenceText),
                     ['size' => 12],
                     'References'
                 );
+                
+                // Описание релевантности (если есть) - добавляем как отдельный абзац с отступом
+                if (isset($reference['description']) && !empty($reference['description'])) {
+                    $section->addText(
+                        trim($reference['description']),
+                        ['size' => 11, 'italic' => true, 'color' => '666666'],
+                        'ReferenceDescription'
+                    );
+                }
+                
+                // Добавляем небольшой отступ между источниками
+                $section->addTextBreak(1);
             }
         } else {
             // Если источников нет, добавляем заглушку
