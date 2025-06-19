@@ -89,6 +89,12 @@
             @edit-contents="openContentsEditDialog"
         />
 
+        <!-- Ссылки на полезные ресурсы -->
+        <document-references-view 
+            v-if="document.structure?.references" 
+            :references="document.structure.references"
+        />
+
         <!-- Унифицированный диалог для редактирования -->
         <q-dialog v-model="editDialog.show" persistent>
             <q-card class="edit-dialog-card">
@@ -156,6 +162,7 @@ import { defineProps, defineEmits, ref, reactive } from 'vue';
 import { useQuasar } from 'quasar';
 import { router } from '@inertiajs/vue3';
 import DocumentContentsView from './DocumentContentsView.vue';
+import DocumentReferencesView from './DocumentReferencesView.vue';
 
 const props = defineProps({
     document: {
@@ -299,8 +306,6 @@ function getTextareaRows() {
             return 8;
     }
 }
-
-
 
 function getTextareaPlaceholder() {
     switch (editDialog.type) {

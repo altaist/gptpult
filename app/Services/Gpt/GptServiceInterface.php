@@ -68,4 +68,13 @@ interface GptServiceInterface
      * @return array
      */
     public function getThreadMessages(string $threadId): array;
+
+    /**
+     * Генерация с веб-поиском
+     *
+     * @param array $messages
+     * @param array $options
+     * @return array
+     */
+    public function generateWithWebSearch(array $messages, array $options = []): array;
 } 

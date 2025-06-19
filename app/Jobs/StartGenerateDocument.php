@@ -7,6 +7,7 @@ use App\Events\GptRequestCompleted;
 use App\Events\GptRequestFailed;
 use App\Models\Document;
 use App\Services\Gpt\GptServiceFactory;
+use App\Services\Gpt\GptServiceInterface;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -114,6 +115,9 @@ class StartGenerateDocument implements ShouldQueue
                 'objectives_count' => count($structure['objectives']),
                 'tokens_used' => $response['tokens_used'] ?? 0
             ]);
+
+            // Генерируем ссылки сразу после создания структуры
+            $this->generateReferences($gptService);
 
             // Создаем фиктивный GptRequest для совместимости с существующими событиями
             $gptRequest = new \App\Models\GptRequest([
@@ -224,5 +228,215 @@ class StartGenerateDocument implements ShouldQueue
         }
         
         return $data;
+    }
+
+    private function generateReferences(GptServiceInterface $gptService): void
+    {
+        try {
+            Log::channel('queue')->info('Начало генерации ссылок для документа', [
+                'document_id' => $this->document->id,
+                'document_title' => $this->document->title,
+            ]);
+
+            // Формируем промпт для поиска ссылок
+            $prompt = $this->buildReferencesPrompt();
+
+            Log::channel('queue')->info('Отправляем запрос для поиска ссылок', [
+                'document_id' => $this->document->id
+            ]);
+
+            // Работаем с OpenAI chat completion
+            $messages = [
+                [
+                    'role' => 'user',
+                    'content' => $prompt
+                ]
+            ];
+
+            // JSON схема для структурированного ответа
+            $schema = [
+                'type' => 'object',
+                'properties' => [
+                    'references' => [
+                        'type' => 'array',
+                        'items' => [
+                            'type' => 'object',
+                            'properties' => [
+                                'title' => [
+                                    'type' => 'string',
+                                    'description' => 'Название ресурса'
+                                ],
+                                'url' => [
+                                    'type' => 'string',
+                                    'description' => 'URL ссылки на ресурс'
+                                ],
+                                'type' => [
+                                    'type' => 'string',
+                                    'enum' => ['article', 'pdf', 'book', 'website', 'research_paper', 'other'],
+                                    'description' => 'Тип ресурса'
+                                ],
+                                'description' => [
+                                    'type' => 'string',
+                                    'description' => 'Краткое описание релевантности ресурса'
+                                ],
+                                'author' => [
+                                    'type' => 'string',
+                                    'description' => 'Автор ресурса (если известен)'
+                                ],
+                                'publication_date' => [
+                                    'type' => 'string',
+                                    'description' => 'Дата публикации (если известна)'
+                                ]
+                            ],
+                            'required' => ['title', 'url', 'type', 'description']
+                        ],
+                        'minItems' => 5,
+                        'maxItems' => 10
+                    ]
+                ],
+                'required' => ['references']
+            ];
+
+            // Отправляем запрос с JSON схемой
+            $response = $gptService->generateWithWebSearch($messages, [
+                'response_format' => [
+                    'type' => 'json_schema',
+                    'json_schema' => [
+                        'name' => 'references_response',
+                        'schema' => $schema
+                    ]
+                ],
+                'model' => 'gpt-4o'
+            ]);
+
+            if (!$response || !isset($response['choices'][0]['message']['content'])) {
+                throw new \Exception('Не получен ответ от GPT сервиса для генерации ссылок');
+            }
+
+            $content = $response['choices'][0]['message']['content'];
+            $referencesData = json_decode($content, true);
+
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new \Exception('Ошибка парсинга JSON ответа ссылок: ' . json_last_error_msg());
+            }
+
+            if (!isset($referencesData['references'])) {
+                throw new \Exception('Не найден массив ссылок в ответе');
+            }
+
+            // Валидируем и фильтруем ссылки
+            $validReferences = $this->validateReferences($referencesData['references']);
+
+            // Обновляем структуру документа
+            $structure = $this->document->structure ?? [];
+            $structure['references'] = $validReferences;
+
+            // Сохраняем изменения
+            $this->document->update([
+                'structure' => $structure
+            ]);
+
+            Log::channel('queue')->info('Ссылки успешно сгенерированы', [
+                'document_id' => $this->document->id,
+                'references_count' => count($validReferences),
+                'tokens_used' => $response['usage']['total_tokens'] ?? 0
+            ]);
+
+        } catch (\Exception $e) {
+            Log::channel('queue')->warning('Ошибка при генерации ссылок (не критично)', [
+                'document_id' => $this->document->id,
+                'error' => $e->getMessage()
+            ]);
+            // Не бросаем исключение, чтобы не сломать основную генерацию
+        }
+    }
+
+    /**
+     * Формирует промпт для поиска релевантных ссылок
+     */
+    private function buildReferencesPrompt(): string
+    {
+        $topic = $this->document->structure['topic'] ?? $this->document->title;
+        $documentType = $this->document->documentType->name ?? 'документ';
+        
+        // Получаем содержание документа для более точного поиска
+        $contents = $this->document->structure['contents'] ?? [];
+        $subtopics = [];
+        
+        foreach ($contents as $content) {
+            if (isset($content['subtopics'])) {
+                foreach ($content['subtopics'] as $subtopic) {
+                    $subtopics[] = $subtopic['title'] ?? '';
+                }
+            }
+        }
+        
+        $subtopicsText = !empty($subtopics) ? implode(', ', array_slice($subtopics, 0, 5)) : '';
+
+        return "Составь список из 10 релевантных ресурсов для студенческой работы на тему: \"{$topic}\" (тип работы: {$documentType}).
+
+" . (!empty($subtopicsText) ? "Основные подтемы: {$subtopicsText}.\n\n" : "") . 
+
+"Нужны качественные академические и образовательные ресурсы из твоих знаний:
+- Известные научные статьи и исследования
+- Классические и современные книги по теме
+- Авторитетные академические сайты и журналы
+- Образовательные платформы и курсы
+- Официальные источники и базы данных
+
+Важные критерии:
+1. Ресурсы должны быть релевантны теме работы
+2. Предпочтительно известные академические источники
+3. Включай как русскоязычные, так и англоязычные источники
+4. Добавляй различные типы ресурсов (статьи, книги, сайты)
+5. Укажи реальные URL-адреса известных ресурсов
+
+Для каждого ресурса укажи:
+- title: Точное название ресурса
+- url: Реальный URL (например, сайты университетов, библиотек, издательств)
+- type: Тип ресурса (article, book, website, research_paper, pdf, other)
+- description: Краткое описание почему ресурс релевантен для темы
+- author: Автор (если известен)
+- publication_date: Приблизительная дата публикации
+
+Верни результат строго в JSON формате согласно схеме. Всю информацию о ресурсе указывай на русском языке (только если ресурс на русском языке)";
+    }
+
+    /**
+     * Валидирует и фильтрует массив ссылок
+     */
+    private function validateReferences(array $references): array
+    {
+        $validReferences = [];
+        
+        foreach ($references as $reference) {
+            // Проверяем обязательные поля
+            if (!isset($reference['title']) || !isset($reference['url']) || 
+                !isset($reference['type']) || !isset($reference['description'])) {
+                continue;
+            }
+            
+            // Проверяем, что URL выглядит валидно
+            if (!filter_var($reference['url'], FILTER_VALIDATE_URL)) {
+                continue;
+            }
+            
+            // Проверяем тип ресурса
+            $allowedTypes = ['article', 'pdf', 'book', 'website', 'research_paper', 'other'];
+            if (!in_array($reference['type'], $allowedTypes)) {
+                $reference['type'] = 'other';
+            }
+            
+            $validReferences[] = [
+                'title' => trim($reference['title']),
+                'url' => trim($reference['url']),
+                'type' => $reference['type'],
+                'description' => trim($reference['description']),
+                'author' => isset($reference['author']) ? trim($reference['author']) : null,
+                'publication_date' => isset($reference['publication_date']) ? trim($reference['publication_date']) : null,
+            ];
+        }
+        
+        return $validReferences;
     }
 } 

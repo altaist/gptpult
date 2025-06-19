@@ -88,4 +88,9 @@ class AnthropicService implements GptServiceInterface
     {
         throw new \Exception('Assistants API не поддерживается для Anthropic');
     }
+
+    public function generateWithWebSearch(array $messages, array $options = []): array
+    {
+        throw new \Exception('Веб-поиск не поддерживается для Anthropic');
+    }
 } 

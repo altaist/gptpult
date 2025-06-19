@@ -201,4 +201,46 @@ class OpenAiService implements GptServiceInterface
 
         return $response->json();
     }
+
+    /**
+     * Генерация с веб-поиском
+     *
+     * @param array $messages
+     * @param array $options
+     * @return array
+     */
+    public function generateWithWebSearch(array $messages, array $options = []): array
+    {
+        $model = $options['model'] ?? 'gpt-4o';
+        $temperature = $options['temperature'] ?? 0.7;
+        
+        $requestData = [
+            'model' => $model,
+            'messages' => $messages,
+            'temperature' => $temperature,
+        ];
+
+        // Добавляем response_format если указан
+        if (isset($options['response_format'])) {
+            $requestData['response_format'] = $options['response_format'];
+        }
+
+        // Добавляем tools если указаны
+        if (isset($options['tools'])) {
+            $requestData['tools'] = $options['tools'];
+        }
+
+        $response = $this->getHttpClient()
+            ->post('https://api.openai.com/v1/chat/completions', $requestData);
+
+        if (!$response->successful()) {
+            Log::error('OpenAI API web search request failed', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+            throw new \Exception('OpenAI API web search request failed: ' . $response->body());
+        }
+
+        return $response->json();
+    }
 } 
