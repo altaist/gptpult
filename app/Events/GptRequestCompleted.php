@@ -27,6 +27,19 @@ class GptRequestCompleted implements ShouldBroadcast
      */
     public function broadcastOn(): array
     {
+        // Проверяем, что document загружен и имеет user_id
+        if (!$this->gptRequest->document || !$this->gptRequest->document->user_id) {
+            // Если document не загружен, пытаемся загрузить его
+            if ($this->gptRequest->document_id) {
+                $this->gptRequest->load('document');
+            }
+            
+            // Если все еще нет document или user_id, не делаем broadcast
+            if (!$this->gptRequest->document || !$this->gptRequest->document->user_id) {
+                return [];
+            }
+        }
+
         return [
             new PrivateChannel('user.' . $this->gptRequest->document->user_id),
         ];
@@ -45,5 +58,19 @@ class GptRequestCompleted implements ShouldBroadcast
             'status' => 'completed',
             'response' => $this->gptRequest->response,
         ];
+    }
+
+    /**
+     * Determine if this event should broadcast.
+     *
+     * @return bool
+     */
+    public function broadcastWhen(): bool
+    {
+        // Не делаем broadcast для фиктивных GptRequest без ID
+        return $this->gptRequest->id !== null && 
+               $this->gptRequest->document_id !== null &&
+               $this->gptRequest->document !== null &&
+               $this->gptRequest->document->user_id !== null;
     }
 } 
