@@ -91,8 +91,10 @@
 
         <!-- Ссылки на полезные ресурсы -->
         <document-references-view 
-            v-if="document.structure?.references" 
-            :references="document.structure.references"
+            :references="document.structure?.references || []"
+            :is-loading="shouldShowReferencesLoading"
+            :document-id="document.id"
+            @references-updated="handleReferencesUpdated"
         />
 
         <!-- Унифицированный диалог для редактирования -->
@@ -158,7 +160,7 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits, ref, reactive } from 'vue';
+import { defineProps, defineEmits, ref, reactive, computed } from 'vue';
 import { useQuasar } from 'quasar';
 import { router } from '@inertiajs/vue3';
 import DocumentContentsView from './DocumentContentsView.vue';
@@ -223,6 +225,22 @@ const editDialog = reactive({
     title: '',
     value: '',
     loading: false
+});
+
+// Определяем когда показывать загрузочное состояние для ссылок
+const shouldShowReferencesLoading = computed(() => {
+    // Показываем загрузку если:
+    // 1. Документ еще генерируется (структура или полное содержимое)
+    // 2. Или если есть содержание, но еще нет ссылок
+    const isCurrentlyGenerating = props.isGenerating || 
+                                props.documentStatus?.status === 'pre_generating' || 
+                                props.documentStatus?.status === 'full_generating';
+    
+    const hasContents = props.document?.structure?.contents && props.document.structure.contents.length > 0;
+    const hasReferences = props.document?.structure?.references && props.document.structure.references.length > 0;
+    
+    // Показываем загрузку если есть содержание, но нет ссылок, и не генерируется
+    return hasContents && !hasReferences && !isCurrentlyGenerating;
 });
 
 function openEditDialog(type, title, value) {
@@ -382,6 +400,22 @@ async function saveEdit() {
     } finally {
         editDialog.loading = false;
     }
+}
+
+// Обработчик обновления ссылок
+function handleReferencesUpdated(newReferences) {
+    console.log('Ссылки обновлены:', newReferences);
+    
+    $q.notify({
+        type: 'positive',
+        message: 'Ссылки успешно сгенерированы!',
+        position: 'top'
+    });
+    
+    // Перезагружаем страницу через небольшую задержку для показа уведомления
+    setTimeout(() => {
+        window.location.reload();
+    }, 1000);
 }
 </script>
 

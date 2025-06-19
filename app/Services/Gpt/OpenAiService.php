@@ -211,13 +211,14 @@ class OpenAiService implements GptServiceInterface
      */
     public function generateWithWebSearch(array $messages, array $options = []): array
     {
-        $model = $options['model'] ?? 'gpt-4o';
-        $temperature = $options['temperature'] ?? 0.7;
+        // Для web search используем специальную модель
+        $model = 'gpt-4o-search-preview';
         
         $requestData = [
             'model' => $model,
             'messages' => $messages,
-            'temperature' => $temperature,
+            // Используем web_search_options вместо tools для Chat Completions API
+            'web_search_options' => (object)[]
         ];
 
         // Добавляем response_format если указан
@@ -225,10 +226,11 @@ class OpenAiService implements GptServiceInterface
             $requestData['response_format'] = $options['response_format'];
         }
 
-        // Добавляем tools если указаны
-        if (isset($options['tools'])) {
-            $requestData['tools'] = $options['tools'];
-        }
+        Log::info('OpenAI web search request', [
+            'model' => $model,
+            'has_web_search' => true,
+            'messages_count' => count($messages)
+        ]);
 
         $response = $this->getHttpClient()
             ->post('https://api.openai.com/v1/chat/completions', $requestData);
@@ -237,10 +239,19 @@ class OpenAiService implements GptServiceInterface
             Log::error('OpenAI API web search request failed', [
                 'status' => $response->status(),
                 'body' => $response->body(),
+                'request_data' => $requestData
             ]);
             throw new \Exception('OpenAI API web search request failed: ' . $response->body());
         }
 
-        return $response->json();
+        $result = $response->json();
+        
+        Log::info('OpenAI web search response received', [
+            'finish_reason' => $result['choices'][0]['finish_reason'] ?? 'unknown',
+            'has_annotations' => isset($result['choices'][0]['message']['annotations']),
+            'usage' => $result['usage'] ?? []
+        ]);
+
+        return $result;
     }
 } 
