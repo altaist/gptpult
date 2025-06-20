@@ -190,6 +190,13 @@ class TelegramController extends Controller
     {
         $botToken = config('telegram.bot_token');
         
+        Log::info('Attempting to send Telegram message', [
+            'chat_id' => $chatId,
+            'text' => $text,
+            'bot_token_configured' => !empty($botToken),
+            'bot_token_length' => $botToken ? strlen($botToken) : 0
+        ]);
+        
         if (!$botToken) {
             Log::warning('Telegram bot token not configured');
             return;
@@ -207,6 +214,11 @@ class TelegramController extends Controller
             $data['reply_markup'] = json_encode($keyboard);
         }
         
+        Log::info('Sending to Telegram API', [
+            'url' => $url,
+            'data' => $data
+        ]);
+        
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_POST, true);
@@ -215,10 +227,25 @@ class TelegramController extends Controller
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         
         $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
         curl_close($ch);
         
+        Log::info('Telegram API response', [
+            'http_code' => $httpCode,
+            'response' => $response,
+            'curl_error' => $curlError
+        ]);
+        
         if ($response === false) {
-            Log::error('Failed to send Telegram message');
+            Log::error('Failed to send Telegram message: ' . $curlError);
+        } elseif ($httpCode !== 200) {
+            Log::error('Telegram API error', [
+                'http_code' => $httpCode,
+                'response' => $response
+            ]);
+        } else {
+            Log::info('Telegram message sent successfully');
         }
     }
     
