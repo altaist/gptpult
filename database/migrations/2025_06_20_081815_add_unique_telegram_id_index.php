@@ -12,10 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            // Сначала удаляем существующий обычный индекс если есть
-            $table->dropIndex(['telegram_id']);
-            
-            // Добавляем уникальный индекс
+            // Добавляем уникальный индекс для telegram_id
             $table->unique('telegram_id');
         });
     }
@@ -28,9 +25,6 @@ return new class extends Migration
         Schema::table('users', function (Blueprint $table) {
             // Удаляем уникальный индекс
             $table->dropUnique(['telegram_id']);
-            
-            // Восстанавливаем обычный индекс
-            $table->index('telegram_id');
         });
     }
 };
