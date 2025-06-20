@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { router } from '@inertiajs/vue3'
 
 // Пропсы для получения данных от родительского компонента
@@ -12,8 +12,21 @@ const props = defineProps({
   documents: {
     type: Array,
     default: () => []
+  },
+  telegram: {
+    type: Object,
+    default: () => ({
+      is_connected: false,
+      username: null,
+      connected_at: null
+    })
   }
 })
+
+// Состояние телеграм подключения
+const isTelegramConnected = ref(props.telegram.is_connected)
+const telegramUsername = ref(props.telegram.username || '')
+const isConnectingTelegram = ref(false)
 
 // Функция для перехода к документу
 const viewDocument = (documentId) => {
@@ -102,10 +115,145 @@ const topUpBalance = async () => {
     console.error('Ошибка при пополнении баланса:', error)
   }
 }
+
+// Функция для связки с телеграммом
+const connectTelegram = async () => {
+  try {
+    isConnectingTelegram.value = true
+    
+    const response = await fetch('/telegram/bot-link', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+        'Authorization': `Bearer ${props.user?.auth_token || ''}`
+      },
+    })
+    
+    if (response.ok) {
+      const data = await response.json()
+      // Открываем ссылку на телеграм бот
+      window.open(data.bot_url, '_blank')
+      
+      // Показываем уведомление пользователю
+      console.log('Переход в Telegram. После нажатия /start вернитесь сюда для проверки статуса.')
+      
+      // Запускаем периодическую проверку статуса (каждые 3 секунды в течение 30 секунд)
+      startConnectionPolling()
+    }
+  } catch (error) {
+    console.error('Ошибка при получении ссылки на бот:', error)
+  } finally {
+    isConnectingTelegram.value = false
+  }
+}
+
+// Периодическая проверка статуса подключения
+const startConnectionPolling = () => {
+  let attempts = 0
+  const maxAttempts = 10 // 10 попыток по 3 секунды = 30 секунд
+  
+  const pollInterval = setInterval(async () => {
+    attempts++
+    
+    try {
+      const response = await fetch('/telegram/check-connection', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+          'Authorization': `Bearer ${props.user?.auth_token || ''}`
+        },
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        
+        if (data.is_connected && !isTelegramConnected.value) {
+          // Аккаунт был связан!
+          isTelegramConnected.value = true
+          telegramUsername.value = data.telegram_username || ''
+          clearInterval(pollInterval)
+          
+          // Показываем уведомление об успешной связке
+          console.log('🎉 Аккаунт успешно связан с Telegram!')
+          
+          // Можно добавить toast уведомление если у вас есть система уведомлений
+        }
+      }
+    } catch (error) {
+      console.error('Ошибка при проверке статуса:', error)
+    }
+    
+    // Останавливаем опрос после максимального количества попыток
+    if (attempts >= maxAttempts) {
+      clearInterval(pollInterval)
+    }
+  }, 3000) // Проверяем каждые 3 секунды
+}
+
+// Проверка статуса подключения телеграма при загрузке
+const checkTelegramConnection = async () => {
+  try {
+    const response = await fetch('/telegram/check-connection', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+        'Authorization': `Bearer ${props.user?.auth_token || ''}`
+      },
+    })
+    
+    if (response.ok) {
+      const data = await response.json()
+      isTelegramConnected.value = data.is_connected
+      telegramUsername.value = data.telegram_username || ''
+    }
+  } catch (error) {
+    console.error('Ошибка при проверке статуса телеграма:', error)
+  }
+}
+
+// Инициализация при загрузке компонента
+onMounted(() => {
+  // Проверяем статус подключения телеграма при загрузке только если не был передан в пропсах
+  if (!props.telegram.is_connected) {
+    checkTelegramConnection()
+  }
+})
 </script>
 
 <template>
   <div class="lk-container">
+    <!-- Кнопка связки с телеграммом -->
+    <q-card class="telegram-card q-mb-md" flat bordered>
+      <q-card-section class="q-pa-md">
+        <div class="telegram-content">
+          <div class="telegram-info">
+            <q-icon name="telegram" size="24px" color="primary" class="q-mr-sm" />
+            <div>
+              <div class="text-subtitle1 text-weight-medium">
+                {{ isTelegramConnected ? 'Телеграм подключен' : 'Подключить Телеграм' }}
+              </div>
+              <div class="text-caption text-grey-6">
+                {{ isTelegramConnected ? 'Получайте уведомления в Telegram' : 'Нажмите кнопку, перейдите в бот и нажмите /start' }}
+              </div>
+            </div>
+          </div>
+          <q-btn
+            :color="isTelegramConnected ? 'positive' : 'primary'"
+            :icon="isTelegramConnected ? 'check' : 'telegram'"
+            :label="isTelegramConnected ? `Подключено ${telegramUsername ? '@' + telegramUsername : ''}` : 'Подключить'"
+            :disable="isTelegramConnected"
+            :loading="isConnectingTelegram"
+            @click="connectTelegram"
+            no-caps
+            unelevated
+          />
+        </div>
+      </q-card-section>
+    </q-card>
+
     <!-- Карточка с балансом -->
     <q-card class="balance-card q-mb-md" flat bordered>
       <q-card-section class="q-pa-lg">
@@ -200,6 +348,22 @@ const topUpBalance = async () => {
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
+}
+
+.telegram-card {
+  background: white;
+}
+
+.telegram-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.telegram-info {
+  display: flex;
+  align-items: center;
+  flex: 1;
 }
 
 .balance-card {

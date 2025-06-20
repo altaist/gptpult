@@ -39,6 +39,11 @@ class LkController extends Controller
         return Inertia::render('Lk', [
             'balance' => $balance,
             'documents' => $documents,
+            'telegram' => [
+                'is_connected' => !empty($user->telegram_id),
+                'username' => $user->telegram_username,
+                'connected_at' => $user->telegram_connected_at
+            ]
         ]);
     }
 } 

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\LkController;
+use App\Http\Controllers\TelegramController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -55,6 +56,12 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{document}/generation-progress', [DocumentGenerationController::class, 'getGenerationProgress'])->name('generation-progress');
     });
 
+    // Маршруты для телеграм бота
+    Route::prefix('telegram')->name('telegram.')->group(function () {
+        Route::get('/bot-link', [TelegramController::class, 'getBotLink'])->name('bot-link');
+        Route::get('/check-connection', [TelegramController::class, 'checkConnection'])->name('check-connection');
+    });
+
     // Маршруты для работы с файлами
     Route::get('/files/example', function () {
         return Inertia::render('files/FileExample');
@@ -90,5 +97,8 @@ Route::get('/payment/complete/{orderId}', [PaymentController::class, 'handlePaym
 // Обратная совместимость для заказов без документа
 Route::get('/payment/complete-without-document/{orderId}', [PaymentController::class, 'handlePaymentComplete'])
     ->name('payment.complete-without-document');
+
+// Публичный webhook для телеграм бота
+Route::post('/telegram/webhook', [TelegramController::class, 'webhook'])->name('telegram.webhook');
 
 require __DIR__.'/auth.php';

@@ -33,7 +33,10 @@ class User extends Authenticatable
         'balance_rub',
         'person',
         'settings',
-        'statistics'
+        'statistics',
+        'telegram_id',
+        'telegram_username',
+        'telegram_connected_at'
     ];
 
     /**
@@ -57,7 +60,8 @@ class User extends Authenticatable
         'role_id' => UserRole::class,
         'person' => 'array',
         'settings' => 'array',
-        'statistics' => 'array'
+        'statistics' => 'array',
+        'telegram_connected_at' => 'datetime'
     ];
 
     /**

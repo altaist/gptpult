@@ -13,6 +13,10 @@ defineProps({
   documents: {
     type: Array,
     default: () => []
+  },
+  telegram: {
+    type: Object,
+    default: () => ({})
   }
 });
 </script>
@@ -30,6 +34,7 @@ defineProps({
           :user="$page.props.auth.user"
           :balance="balance"
           :documents="documents"
+          :telegram="telegram"
         />
     </page-layout>
 </template> 
