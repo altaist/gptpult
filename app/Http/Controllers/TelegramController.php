@@ -34,12 +34,21 @@ class TelegramController extends Controller
     public function webhook(Request $request): JsonResponse
     {
         try {
+            // Логируем сырые данные запроса
+            Log::info('Telegram webhook called', [
+                'headers' => $request->headers->all(),
+                'ip' => $request->ip(),
+                'method' => $request->method(),
+                'url' => $request->fullUrl()
+            ]);
+            
             $update = $request->all();
             
             Log::info('Telegram webhook received:', $update);
             
             // Проверяем, есть ли сообщение
             if (!isset($update['message'])) {
+                Log::info('No message in update, skipping');
                 return response()->json(['status' => 'ok']);
             }
             
