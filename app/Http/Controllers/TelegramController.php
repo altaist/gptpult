@@ -66,8 +66,29 @@ class TelegramController extends Controller
                     // Ищем пользователя по ID
                     $user = User::find($userId);
                     
-                    if ($user && !$user->telegram_id) {
-                        // Связываем аккаунт с телеграмом только если еще не связан
+                    if (!$user) {
+                        // Пользователь не найден
+                        $this->sendUserNotFoundMessage($telegramUserId);
+                        return response()->json(['status' => 'ok']);
+                    }
+                    
+                    // Проверяем, не привязан ли уже этот Telegram к другому аккаунту
+                    $existingUser = User::where('telegram_id', $telegramUserId)->first();
+                    
+                    if ($existingUser && $existingUser->id !== $user->id) {
+                        // Telegram уже привязан к другому аккаунту
+                        $this->sendAlreadyLinkedToAnotherAccountMessage($telegramUserId, $existingUser->name);
+                        return response()->json(['status' => 'ok']);
+                    }
+                    
+                    if ($user->telegram_id && $user->telegram_id != $telegramUserId) {
+                        // У пользователя уже привязан другой Telegram
+                        $this->sendAccountAlreadyLinkedMessage($telegramUserId, $user->name);
+                        return response()->json(['status' => 'ok']);
+                    }
+                    
+                    if (!$user->telegram_id) {
+                        // Связываем аккаунт с телеграмом
                         $user->update([
                             'telegram_id' => $telegramUserId,
                             'telegram_username' => $telegramUsername,
@@ -78,8 +99,8 @@ class TelegramController extends Controller
                         $this->sendSuccessMessage($telegramUserId, $user->name);
                         
                         Log::info("User {$user->id} connected Telegram account {$telegramUserId}");
-                    } elseif ($user && $user->telegram_id) {
-                        // Если уже связан, просто отправляем сообщение
+                    } else {
+                        // Если уже связан с тем же Telegram
                         $this->sendAlreadyConnectedMessage($telegramUserId, $user->name);
                     }
                 }
@@ -174,6 +195,85 @@ class TelegramController extends Controller
                 [
                     [
                         'text' => '🌐 Открыть сайт',
+                        'url' => $appUrl
+                    ]
+                ]
+            ]
+        ];
+        
+        $this->sendTelegramMessage($chatId, $text, $keyboard);
+    }
+    
+    /**
+     * Отправить сообщение если пользователь не найден
+     */
+    private function sendUserNotFoundMessage($chatId): void
+    {
+        $appUrl = 'https://gptpult.ru';
+        
+        $text = "❌ <b>Пользователь не найден</b>\n\n";
+        $text .= "Возможно, ссылка устарела или некорректна.\n\n";
+        $text .= "Для связки аккаунта:\n";
+        $text .= "1. Войдите в ваш личный кабинет\n";
+        $text .= "2. Нажмите кнопку \"Подключить Телеграм\"\n";
+        $text .= "3. Перейдите по новой ссылке";
+        
+        $keyboard = [
+            'inline_keyboard' => [
+                [
+                    [
+                        'text' => '🌐 Открыть сайт',
+                        'url' => $appUrl
+                    ]
+                ]
+            ]
+        ];
+        
+        $this->sendTelegramMessage($chatId, $text, $keyboard);
+    }
+    
+    /**
+     * Отправить сообщение если Telegram уже привязан к другому аккаунту
+     */
+    private function sendAlreadyLinkedToAnotherAccountMessage($chatId, $existingUserName): void
+    {
+        $appUrl = 'https://gptpult.ru';
+        
+        $text = "⚠️ <b>Telegram уже привязан</b>\n\n";
+        $text .= "Ваш Telegram аккаунт уже связан с аккаунтом пользователя <b>{$existingUserName}</b>.\n\n";
+        $text .= "Один Telegram может быть привязан только к одному аккаунту сайта.\n\n";
+        $text .= "Если это ошибка, обратитесь в поддержку.";
+        
+        $keyboard = [
+            'inline_keyboard' => [
+                [
+                    [
+                        'text' => '🏠 Перейти в профиль',
+                        'url' => $appUrl . '/lk'
+                    ]
+                ]
+            ]
+        ];
+        
+        $this->sendTelegramMessage($chatId, $text, $keyboard);
+    }
+    
+    /**
+     * Отправить сообщение если у аккаунта уже привязан другой Telegram
+     */
+    private function sendAccountAlreadyLinkedMessage($chatId, $userName): void
+    {
+        $appUrl = 'https://gptpult.ru';
+        
+        $text = "⚠️ <b>Аккаунт уже привязан</b>\n\n";
+        $text .= "Аккаунт пользователя <b>{$userName}</b> уже связан с другим Telegram.\n\n";
+        $text .= "Для смены привязки обратитесь в поддержку.";
+        
+        $keyboard = [
+            'inline_keyboard' => [
+                [
+                    [
+                        'text' => '🏠 Перейти на сайт',
                         'url' => $appUrl
                     ]
                 ]
