@@ -665,6 +665,126 @@
             word-wrap: break-word;
         }
 
+        /* Hero Steps */
+        .hero-steps-wrapper {
+            margin: 4rem 0 2rem 0;
+            padding: 0 1rem;
+        }
+
+        .hero-step-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 2.5rem 2rem;
+            text-align: center;
+            border: 1px solid rgba(59, 130, 246, 0.1);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            height: 100%;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero-step-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(59, 130, 246, 0.15);
+            background: rgba(255, 255, 255, 1);
+            border-color: rgba(59, 130, 246, 0.2);
+        }
+
+        .hero-step-card .step-number {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: 800;
+            margin: 0 auto 1.5rem;
+            position: relative;
+            z-index: 2;
+            font-family: var(--heading-font);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .hero-step-card:hover .step-number {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4);
+        }
+
+        .hero-step-card .step-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 1rem;
+            font-family: var(--heading-font);
+            letter-spacing: -0.01em;
+            line-height: 1.2;
+        }
+
+        .hero-step-card .step-description {
+            color: #64748b;
+            line-height: 1.6;
+            font-size: 0.95rem;
+            font-weight: 400;
+        }
+
+        /* Unique gradient colors for each step */
+        .hero-step-card:nth-child(1) .step-number {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.3);
+        }
+
+        .hero-step-card:nth-child(2) .step-number {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .hero-step-card:nth-child(3) .step-number {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.3);
+        }
+
+        .hero-step-card:nth-child(1):hover .step-number {
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
+        }
+
+        .hero-step-card:nth-child(2):hover .step-number {
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);
+        }
+
+        .hero-step-card:nth-child(3):hover .step-number {
+            box-shadow: 0 10px 30px rgba(245, 158, 11, 0.4);
+        }
+
+        /* Connection lines between steps - только для больших экранов */
+        @media (min-width: 992px) {
+            .hero-step-card:not(:last-child)::after {
+                content: '→';
+                position: absolute;
+                right: -30px;
+                top: 50%;
+                transform: translateY(-50%);
+                font-size: 2rem;
+                color: #3b82f6;
+                font-weight: 800;
+                z-index: 3;
+                opacity: 0.6;
+                transition: all 0.3s ease;
+            }
+
+            .hero-step-card:hover::after {
+                opacity: 1;
+                transform: translateY(-50%) translateX(5px);
+                color: #2563eb;
+            }
+        }
+
         /* How It Works Section */
         .how-it-works-section {
             padding: 120px 0;
@@ -846,6 +966,32 @@
                 font-size: 1.2rem;
             }
             
+            .hero-steps-wrapper {
+                margin: 3rem 0 1.5rem 0;
+                padding: 0 0.5rem;
+            }
+            
+            .hero-step-card {
+                padding: 2rem 1.5rem;
+                margin-bottom: 1.5rem;
+            }
+            
+            .hero-step-card .step-number {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+                margin-bottom: 1rem;
+            }
+            
+            .hero-step-card .step-title {
+                font-size: 1.2rem;
+                margin-bottom: 0.8rem;
+            }
+            
+            .hero-step-card .step-description {
+                font-size: 0.9rem;
+            }
+            
             .hero-stats {
                 flex-direction: column;
                 align-items: center;
@@ -914,6 +1060,34 @@
             }
         }
 
+        @media (max-width: 768px) {
+            .hero-steps-wrapper {
+                margin: 3.5rem 0 2rem 0;
+                padding: 0 0.75rem;
+            }
+            
+            .hero-step-card {
+                padding: 2.2rem 1.8rem;
+                margin-bottom: 1.5rem;
+            }
+            
+            .hero-step-card .step-number {
+                width: 65px;
+                height: 65px;
+                font-size: 1.8rem;
+                margin-bottom: 1.2rem;
+            }
+            
+            .hero-step-card .step-title {
+                font-size: 1.3rem;
+                margin-bottom: 1rem;
+            }
+            
+            .hero-step-card .step-description {
+                font-size: 0.92rem;
+            }
+        }
+
         @media (max-width: 480px) {
             .hero-badge {
                 padding: 8px 16px;
@@ -921,6 +1095,32 @@
             
             .hero-title {
                 font-size: 2.2rem;
+            }
+            
+            .hero-steps-wrapper {
+                margin: 2.5rem 0 1.5rem 0;
+                padding: 0 0.25rem;
+            }
+            
+            .hero-step-card {
+                padding: 1.8rem 1.2rem;
+                margin-bottom: 1.2rem;
+            }
+            
+            .hero-step-card .step-number {
+                width: 55px;
+                height: 55px;
+                font-size: 1.3rem;
+                margin-bottom: 0.8rem;
+            }
+            
+            .hero-step-card .step-title {
+                font-size: 1.1rem;
+                margin-bottom: 0.7rem;
+            }
+            
+            .hero-step-card .step-description {
+                font-size: 0.85rem;
             }
             
             .service-card {
@@ -1146,8 +1346,41 @@
                     Подготовься и защити работу за час
                     </p>
                     
+                    <!-- How It Works Steps -->
+                    <div class="hero-steps-wrapper" data-aos="fade-up" data-aos-delay="300">
+                        <div class="row justify-content-center">
+                            <div class="col-lg-4 col-md-6 mb-4">
+                                <div class="hero-step-card">
+                                    <div class="step-number">1</div>
+                                    <h3 class="step-title">Опиши работу</h3>
+                                    <p class="step-description">
+                                        Укажи тип, название и требования. Чем подробнее опишешь задание, тем лучше будет результат
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-md-6 mb-4">
+                                <div class="hero-step-card">
+                                    <div class="step-number">2</div>
+                                    <h3 class="step-title">Проверь результат</h3>
+                                    <p class="step-description">
+                                        ИИ подготовит структуру работы и тезисы. Проверь, внеси коррективы и утверди финальный вариант
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-md-6 mb-4">
+                                <div class="hero-step-card">
+                                    <div class="step-number">3</div>
+                                    <h3 class="step-title">Подготовься к сдаче</h3>
+                                    <p class="step-description">
+                                        На основе полученных результатов подготовься к сдаче
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <!-- Hero Carousel -->
-                    <div class="hero-carousel-wrapper" data-aos="fade-up" data-aos-delay="300">
+                    <div class="hero-carousel-wrapper" data-aos="fade-up" data-aos-delay="400">
                         <div class="row">
                             <div class="col-12">
                                 <!-- Tab Navigation -->
@@ -1228,7 +1461,7 @@
                         </div>
                     </div>
 
-                    <div class="hero-buttons" data-aos="fade-up" data-aos-delay="400">
+                    <div class="hero-buttons" data-aos="fade-up" data-aos-delay="500">
                         <a href="/new" class="btn-hero-primary" id="btnTextWork">
                             <i class="fas fa-pencil-alt me-2"></i>
                             Написать работу
@@ -1241,7 +1474,7 @@
                 </div>
 
                 <!-- Hero Stats -->
-                <div class="hero-stats" data-aos="fade-up" data-aos-delay="500">
+                <div class="hero-stats" data-aos="fade-up" data-aos-delay="600">
                     <div class="hero-stat">
                         <span class="hero-stat-number">10 000+</span>
                         <div class="hero-stat-label">выполненных работ</div>

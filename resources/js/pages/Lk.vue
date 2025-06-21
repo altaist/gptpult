@@ -25,6 +25,7 @@ defineProps({
         :auto-auth="true"
         left-btn-icon=""
         :left-btn-go-back="false"
+        :logo-go-home="true"
     >
         <LkComponent 
           :user="$page.props.auth.user"

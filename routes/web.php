@@ -14,10 +14,13 @@ use App\Http\Controllers\PaymentTestController;
 use App\Http\Controllers\PaymentController;
 
 Route::get('/', function () {
-    return view('welcome');
+    return view('v3');
 });
 Route::get('/v2', function () {
     return view('v2');
+});
+Route::get('/v3', function () {
+    return view('v3');
 });
 
 Route::get('/dashboard', [LkController::class, 'index'])

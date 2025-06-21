@@ -8,6 +8,7 @@
             :left-btn-go-back="leftBtnGoBack"
             :right-btn-icon="rightBtnIcon"
             :right-btn-route="rightBtnRoute"
+            :logo-go-home="logoGoHome"
 
             @click:left="emit('click:header:left')"
             @click:right="emit('click:header:right')"
@@ -72,6 +73,10 @@ const props = defineProps({
         type: String,
         default: '/lk'
     },
+    logoGoHome: {
+        type: Boolean,
+        default: false
+    }
 });
 
 const emit = defineEmits(['click:header:left', 'click:header:right', 'click:header:title', 'click:footer:left', 'click:footer:right', 'click:footer:title', 'click:footer:menu']);
