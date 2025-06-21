@@ -12,7 +12,7 @@ import quasarOptions from './quasar_options';
 import '@quasar/extras/material-icons/material-icons.css'
 import 'quasar/src/css/index.sass';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+const appName = import.meta.env.VITE_APP_NAME || 'GPT Пульт';
 window.TWA = window.Telegram ? window.Telegram.WebApp : null;
 window.debug = (...t) => console.log(...t);
 window.redirect =  (path) => window.location = path;

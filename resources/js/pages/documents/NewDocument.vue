@@ -3,6 +3,7 @@
         title="GPT PULT"
         :auto-auth="true"
     >
+    <Head title="Создание документа" />
         <div class="q-pa-xl">
             <div class="text-center q-mb-xl">
                 <p class="text-h6 text-grey-7 q-mb-none">
@@ -56,6 +57,7 @@
 import { ref } from 'vue';
 import { router } from '@inertiajs/vue3';
 import PageLayout from '@/components/shared/PageLayout.vue';
+import { Head } from '@inertiajs/vue3';
 import { apiClient, isLoading, useLaravelErrors } from '@/composables/api';
 
 const props = defineProps({
