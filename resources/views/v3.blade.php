@@ -1218,7 +1218,7 @@
 
         @media (max-width: 768px) and (min-width: 577px) {
             .hero-section {
-                padding: 70px 0;
+                padding: 120px 0 70px 0;
                 min-height: 95vh;
             }
 
@@ -1232,7 +1232,7 @@
 
         @media (max-width: 576px) {
             .hero-section {
-                padding: 60px 0;
+                padding: 150px 0 60px 0;
                 min-height: 90vh;
             }
 
@@ -1244,7 +1244,7 @@
             }
 
             .hero-title {
-                font-size: 2.5rem;
+                font-size: 3.2rem;
                 margin-bottom: 2rem;
             }
             
@@ -1286,7 +1286,7 @@
             }
             
             .section-title {
-                font-size: 2rem;
+                font-size: 1.7rem;
             }
 
             .advantages-title h2 {
@@ -1411,12 +1411,20 @@
         }
 
         @media (max-width: 480px) {
+            .hero-section {
+                padding: 170px 0 60px 0;
+            }
+            
             .hero-badge {
                 padding: 8px 16px;
             }
             
             .hero-title {
-                font-size: 2.2rem;
+                font-size: 3.5rem;
+            }
+            
+            .section-title {
+                font-size: 1.5rem;
             }
             
             .service-card {
