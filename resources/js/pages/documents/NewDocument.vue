@@ -5,13 +5,14 @@
     >
     <Head title="Создание документа" />
         <div class="q-pa-xl">
-            <div class="text-center q-mb-xl">
-                <p class="text-h6 text-grey-7 q-mb-none">
-                    Создать документ очень легко - просто напишите название, а мы сделаем остальное
-                </p>
-            </div>
             
             <q-form @submit="onSubmit" class="q-gutter-md">
+                <div class="text-center q-mb-xl">
+                <p class="text-h5  text-primary q-mb-none">
+                    Выберите тип работы:
+                </p>
+            </div>
+
                 <q-select
                     v-model="form.document_type_id"
                     :options="document_types"
@@ -24,6 +25,12 @@
                     emit-value
                     map-options
                 />
+
+                <div class="text-center q-mb-xl">
+                <p class="text-h5 text-primary q-mb-none">
+                    Напишите тему работы, по которой будет создана структура:
+                </p>
+            </div>
 
                 <q-input
                     v-model="form.topic"
@@ -38,9 +45,9 @@
                     {{ error }}
                 </div>
 
-                <div class="row justify-center q-mt-md">
+                <div class="row justify-center q-mt-lg">
                     <q-btn
-                        label="Создать документ"
+                        label="Создать работу"
                         type="submit"
                         color="primary"
                         size="lg"
