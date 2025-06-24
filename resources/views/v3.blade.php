@@ -392,7 +392,7 @@
     </nav>
 
     <!-- Hero Section -->
-    <section class="hero-section">
+    <section class="hero-section" id="hero">
         <!-- Декоративные элементы фона -->
         <div class="hero-bg-element"></div>
         <div class="hero-bg-element"></div>
@@ -466,7 +466,7 @@
 
 
     <!-- Comparison Section -->
-    <section class="comparison-section" id="pricing">
+    <section class="comparison-section">
         <div class="container comparison-container">
             <div class="row">
                 <div class="col-12 text-center mb-5">
@@ -522,8 +522,8 @@
                 <div class="comparison-side comparison-right">
                     <div class="comparison-header">
                         <h3 class="comparison-title-text">GPT Пульт</h3>
-                        <div class="comparison-price">от 180₽</div>
-                        <div class="comparison-price-label">за работу</div>
+                        <div class="comparison-price">от 350₽</div>
+                        <div class="comparison-price-label">за подписку</div>
                     </div>
                     
                     <div class="comparison-features">
@@ -566,7 +566,7 @@
 
     
     <!-- Advantages Section -->
-    <section class="advantages-section">
+    <section class="advantages-section" id="features">
         <div class="container">
             <div class="row">
                 <div class="col-12 text-center mb-5">
@@ -694,7 +694,7 @@
     </section>
 
     <!-- Pricing Section -->
-    <section class="pricing-section">
+    <section class="pricing-section" id="pricing">
         <div class="container">
             <div class="row">
                 <div class="col-12 text-center mb-5">
@@ -826,19 +826,9 @@
                 <div class="col-lg-2 col-md-6 mb-4">
                     <h5 class="mb-3">Сервис</h5>
                     <ul class="list-unstyled">
-                        <li><a href="#" class="text-light opacity-75">О нас</a></li>
-                        <li><a href="#" class="text-light opacity-75">Как это работает</a></li>
-                        <li><a href="#" class="text-light opacity-75">Цены</a></li>
-                        <li><a href="#" class="text-light opacity-75">FAQ</a></li>
-                    </ul>
-                </div>
-                <div class="col-lg-2 col-md-6 mb-4">
-                    <h5 class="mb-3">Поддержка</h5>
-                    <ul class="list-unstyled">
-                        <li><a href="#" class="text-light opacity-75">Помощь</a></li>
-                        <li><a href="#" class="text-light opacity-75">Контакты</a></li>
-                        <li><a href="#" class="text-light opacity-75">Чат</a></li>
-                        <li><a href="#" class="text-light opacity-75">Email</a></li>
+                        <li><a href="#hero" class="text-light opacity-75">О нас</a></li>
+                        <li><a href="#features" class="text-light opacity-75">Как это работает</a></li>
+                        <li><a href="#pricing" class="text-light opacity-75">Цены</a></li>
                     </ul>
                 </div>
                 <div class="col-lg-2 col-md-6 mb-4">
@@ -849,19 +839,20 @@
                     </ul>
                 </div>
                 <div class="col-lg-4 mb-4">
-                    <h5 class="mb-3">Контакты</h5>
+                    <h5 class="mb-3">Поддержка</h5>
                     <p class="opacity-75">
-                        <i class="fas fa-envelope me-2"></i>support@gptpult.ru<br>
-                        <i class="fas fa-phone me-2"></i>+7 (999) 123-45-67<br>
+                        <i class="fas fa-envelope me-2"></i>dfdf576@gmail.com<br>
                         <i class="fas fa-clock me-2"></i>24/7 поддержка
                     </p>
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2024 GPT Пульт. Все права защищены.</p>
+                <p>&copy; 2025 GPT Пульт. Все права защищены.</p>
         </div>
     </div>
     </footer>
+
+    
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

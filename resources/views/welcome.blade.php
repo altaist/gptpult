@@ -1748,19 +1748,19 @@
                 <div class="col-lg-2 col-md-6 mb-4">
                     <h5 class="mb-3">Сервис</h5>
                     <ul class="list-unstyled">
-                        <li><a href="#" class="text-light opacity-75">О нас</a></li>
-                        <li><a href="#" class="text-light opacity-75">Как это работает</a></li>
-                        <li><a href="#" class="text-light opacity-75">Цены</a></li>
-                        <li><a href="#" class="text-light opacity-75">FAQ</a></li>
+                        <li><a href="#hero" class="text-light opacity-75">О нас</a></li>
+                        <li><a href="#features" class="text-light opacity-75">Как это работает</a></li>
+                        <li><a href="#pricing" class="text-light opacity-75">Цены</a></li>
+                        <li><a href="#contact" class="text-light opacity-75">FAQ</a></li>
                     </ul>
                 </div>
                 <div class="col-lg-2 col-md-6 mb-4">
                     <h5 class="mb-3">Поддержка</h5>
                     <ul class="list-unstyled">
-                        <li><a href="#" class="text-light opacity-75">Помощь</a></li>
-                        <li><a href="#" class="text-light opacity-75">Контакты</a></li>
-                        <li><a href="#" class="text-light opacity-75">Чат</a></li>
-                        <li><a href="#" class="text-light opacity-75">Email</a></li>
+                        <li><a href="#contact" class="text-light opacity-75">Помощь</a></li>
+                        <li><a href="#contact" class="text-light opacity-75">Контакты</a></li>
+                        <li><a href="#contact" class="text-light opacity-75">Чат</a></li>
+                        <li><a href="mailto:support@gptpult.ru" class="text-light opacity-75">Email</a></li>
                     </ul>
                 </div>
                 <div class="col-lg-2 col-md-6 mb-4">
