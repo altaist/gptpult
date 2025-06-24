@@ -5,6 +5,8 @@ namespace App\Services\Documents;
 use App\Models\Document;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
+use App\Enums\DocumentStatus;
 
 class DocumentService
 {
@@ -16,7 +18,8 @@ class DocumentService
      */
     public function create(array $data): Document
     {
-        return Document::create([
+        // Создаем документ
+        $document = Document::create([
             'user_id' => $data['user_id'],
             'document_type_id' => $data['document_type_id'],
             'title' => $data['title'],
@@ -26,6 +29,15 @@ class DocumentService
             'gpt_settings' => $data['gpt_settings'] ?? null,
             'status' => $data['status'] ?? 'draft'
         ]);
+
+        // Если указан статус pre_generating, проверяем возможность запуска генерации
+        if ($document->status === DocumentStatus::PRE_GENERATING) {
+            if ($this->hasActiveGenerationJob($document)) {
+                throw new \Exception('Для этого документа уже запущена задача генерации');
+            }
+        }
+
+        return $document;
     }
 
     /**
@@ -37,6 +49,16 @@ class DocumentService
      */
     public function update(Document $document, array $data): Document
     {
+        // Если меняется статус на генерацию, проверяем наличие активных задач
+        if (isset($data['status']) && 
+            in_array($data['status'], [DocumentStatus::PRE_GENERATING, DocumentStatus::FULL_GENERATING]) &&
+            $document->status !== $data['status']
+        ) {
+            if ($this->hasActiveGenerationJob($document)) {
+                throw new \Exception('Для этого документа уже запущена задача генерации');
+            }
+        }
+
         $document->update([
             'title' => $data['title'] ?? $document->title,
             'structure' => $data['structure'] ?? $document->structure,
@@ -375,5 +397,103 @@ class DocumentService
     {
         $document->update(['gpt_settings' => $gptSettings]);
         return $document->fresh();
+    }
+
+    /**
+     * Проверяет наличие активной задачи генерации для документа
+     *
+     * @param Document $document
+     * @return bool
+     */
+    public function hasActiveGenerationJob(Document $document): bool
+    {
+        $jobTypes = ['StartGenerateDocument', 'StartFullGenerateDocument'];
+        $documentIdPattern = '%"document_id":' . $document->id . '%';
+
+        // Проверяем наличие активной задачи в очереди
+        $hasActiveJob = cache()->remember(
+            'document_has_active_job_' . $document->id,
+            now()->addSeconds(5),
+            function () use ($documentIdPattern, $jobTypes) {
+                return DB::table('jobs')
+                    ->where('payload', 'like', $documentIdPattern)
+                    ->where(function ($q) use ($jobTypes) {
+                        foreach ($jobTypes as $type) {
+                            $q->orWhere('payload', 'like', '%' . $type . '%');
+                        }
+                    })
+                    ->exists();
+            }
+        );
+
+        if ($hasActiveJob) {
+            return true;
+        }
+
+        // Проверяем failed jobs
+        return DB::table('failed_jobs')
+            ->where('payload', 'like', $documentIdPattern)
+            ->where(function ($q) use ($jobTypes) {
+                foreach ($jobTypes as $type) {
+                    $q->orWhere('payload', 'like', '%' . $type . '%');
+                }
+            })
+            ->exists();
+    }
+
+    /**
+     * Получить статус job документа
+     *
+     * @param Document $document
+     * @return array
+     */
+    public function getJobStatus(Document $document): array
+    {
+        $jobTypes = ['StartGenerateDocument', 'StartFullGenerateDocument'];
+        $documentIdPattern = '%"document_id":' . $document->id . '%';
+
+        // Получаем информацию о job из базы данных
+        $job = DB::table('jobs')
+            ->where('payload', 'like', $documentIdPattern)
+            ->where(function ($q) use ($jobTypes) {
+                foreach ($jobTypes as $type) {
+                    $q->orWhere('payload', 'like', '%' . $type . '%');
+                }
+            })
+            ->first();
+
+        // Проверяем failed jobs
+        $failedJob = DB::table('failed_jobs')
+            ->where('payload', 'like', $documentIdPattern)
+            ->where(function ($q) use ($jobTypes) {
+                foreach ($jobTypes as $type) {
+                    $q->orWhere('payload', 'like', '%' . $type . '%');
+                }
+            })
+            ->first();
+
+        if ($failedJob) {
+            return [
+                'status' => 'failed',
+                'message' => 'Задача завершилась с ошибкой',
+                'error' => json_decode($failedJob->exception, true),
+                'failed_at' => $failedJob->failed_at
+            ];
+        }
+
+        if ($job) {
+            return [
+                'status' => 'processing',
+                'message' => 'Задача выполняется',
+                'attempts' => $job->attempts,
+                'created_at' => $job->created_at,
+                'available_at' => $job->available_at
+            ];
+        }
+
+        return [
+            'status' => 'not_found',
+            'message' => 'Задача не найдена в очереди'
+        ];
     }
 } 

@@ -200,50 +200,75 @@ class DocumentController extends Controller
      */
     public function quickCreate(Request $request)
     {
-        $validated = $request->validate([
-            'document_type_id' => ['required', 'exists:document_types,id'],
-            'topic' => ['required', 'string', 'max:255'],
-            'test' => ['nullable', 'boolean'], // Параметр для тестирования с фейковыми данными
-        ]);
-
-        // Если передан параметр test, создаем с фейковыми данными из фабрики
-        if ($request->boolean('test')) {
-            $document = Document::factory()->create([
-                'user_id' => Auth::id(),
-                'document_type_id' => $validated['document_type_id'],
-                'title' => $validated['topic'],
-                'status' => 'pre_generating', // Сразу устанавливаем статус генерации
+        try {
+            $validated = $request->validate([
+                'document_type_id' => ['required', 'exists:document_types,id'],
+                'topic' => ['required', 'string', 'max:255'],
+                'test' => ['nullable', 'boolean'], // Параметр для тестирования с фейковыми данными
             ]);
 
-            // Обновляем topic в структуре фабрики
-            $structure = $document->structure;
-            $structure['topic'] = $validated['topic'];
-            $document->structure = $structure;
-            $document->save();
-        } else {
-            // Создаем минимальный документ только с переданными данными
-            $document = Document::factory()->minimal()->create([
-                'user_id' => Auth::id(),
-                'document_type_id' => $validated['document_type_id'],
-                'title' => $validated['topic'],
-                'status' => 'pre_generating', // Сразу устанавливаем статус генерации
+            // Если передан параметр test, создаем с фейковыми данными из фабрики
+            if ($request->boolean('test')) {
+                $document = Document::factory()->create([
+                    'user_id' => Auth::id(),
+                    'document_type_id' => $validated['document_type_id'],
+                    'title' => $validated['topic'],
+                    'status' => 'pre_generating', // Сразу устанавливаем статус генерации
+                ]);
+
+                // Обновляем topic в структуре фабрики
+                $structure = $document->structure;
+                $structure['topic'] = $validated['topic'];
+                $document->structure = $structure;
+                $document->save();
+            } else {
+                // Создаем минимальный документ только с переданными данными
+                $document = Document::factory()->minimal()->create([
+                    'user_id' => Auth::id(),
+                    'document_type_id' => $validated['document_type_id'],
+                    'title' => $validated['topic'],
+                    'status' => 'pre_generating', // Сразу устанавливаем статус генерации
+                ]);
+
+                // Обновляем topic в структуре документа
+                $structure = $document->structure ?? [];
+                $structure['topic'] = $validated['topic'];
+                $document->structure = $structure;
+                $document->save();
+            }
+
+            // Проверяем, нет ли уже активной задачи генерации
+            if ($this->documentService->hasActiveGenerationJob($document)) {
+                return response()->json([
+                    'message' => 'Для этого документа уже запущена задача генерации',
+                    'document' => $document
+                ], 422);
+            }
+
+            // Запускаем Job для генерации документа
+            \App\Jobs\StartGenerateDocument::dispatch($document);
+
+            return response()->json([
+                'message' => 'Документ успешно создан',
+                'document' => $document,
+                'redirect_url' => route('documents.show', ['document' => $document->id, 'autoload' => 1])
+            ], 201);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'Ошибка валидации данных',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Ошибка при быстром создании документа', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
 
-            // Обновляем topic в структуре документа
-            $structure = $document->structure ?? [];
-            $structure['topic'] = $validated['topic'];
-            $document->structure = $structure;
-            $document->save();
+            return response()->json([
+                'message' => 'Ошибка при создании документа: ' . $e->getMessage()
+            ], 500);
         }
-
-        // Запускаем Job для генерации документа
-        \App\Jobs\StartGenerateDocument::dispatch($document);
-
-        return response()->json([
-            'message' => 'Документ успешно создан',
-            'document' => $document,
-            'redirect_url' => route('documents.show', ['document' => $document->id, 'autoload' => 1])
-        ], 201);
     }
 
     /**
