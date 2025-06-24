@@ -845,8 +845,6 @@
                     <h5 class="mb-3">Документы</h5>
                     <ul class="list-unstyled">
                         <li><a href="{{ asset('docs/Политика персональных данных.docx') }}" class="footer-doc-link" target="_blank">Политика конфиденциальности</a></li>
-                        <li><a href="{{ asset('docs/ПОЛОЖЕНИЕ о порядке возврата денежных средств за неоказанные платные услуги.docx') }}" class="footer-doc-link" target="_blank">Условия возврата</a></li>
-                        <li><a href="{{ asset('docs/Правила оформления заказа.docx') }}" class="footer-doc-link" target="_blank">Правила оформления заказа</a></li>
                         <li><a href="{{ asset('docs/Публичная оферта.docx') }}" class="footer-doc-link" target="_blank">Публичная оферта</a></li>
                     </ul>
                 </div>
