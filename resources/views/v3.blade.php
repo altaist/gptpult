@@ -10,6 +10,353 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Roboto+Slab:wght@100..900&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="{{ asset('css/v3.css') }}" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --heading-font: 'Inter', sans-serif;
+        }
+
+        /* Hero Carousel Styles */
+        .hero-carousel-wrapper {
+            margin: 4rem 0;
+            padding: 0 1rem;
+        }
+
+        .step-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .step-image {
+            display: none;
+        }
+
+        .step-badge {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: #3b82f6;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            z-index: 2;
+        }
+
+        .image-placeholder {
+            background: #f1f5f9;
+            border-radius: 16px;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #94a3b8;
+            border: 2px dashed #e2e8f0;
+        }
+
+        .image-placeholder i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .image-placeholder p {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .step-content {
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        .step-content h3 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 1rem;
+            font-family: var(--heading-font);
+        }
+
+        .step-content p {
+            font-size: 1.2rem;
+            color: #64748b;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .step-navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 2rem 0;
+        }
+
+        .step-nav-btn {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #3b82f6;
+            font-size: 1.2rem;
+        }
+
+        .step-nav-btn:hover:not(:disabled) {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+            transform: scale(1.1);
+        }
+
+        .step-nav-btn:disabled {
+            background: #f8fafc;
+            color: #cbd5e1;
+            border-color: #e2e8f0;
+            cursor: not-allowed;
+        }
+
+        .step-indicators {
+            display: flex;
+            gap: 8px;
+        }
+
+        .step-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .step-dot.active {
+            background: #3b82f6;
+            transform: scale(1.2);
+        }
+
+        .step-dot:hover {
+            transform: scale(1.1);
+        }
+
+        /* CTA Button */
+        .step-cta {
+            margin-top: 2rem;
+        }
+
+        .btn-step-primary {
+            display: inline-flex;
+            align-items: center;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            padding: 16px 32px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+            border: none;
+        }
+
+        .btn-step-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(59, 130, 246, 0.4);
+            color: white;
+        }
+
+        /* Responsive styles */
+        @media (max-width: 768px) {
+            .how-it-works-section {
+                padding: 40px 0;
+            }
+
+            .hero-carousel-wrapper {
+                margin: 1.5rem 0;
+                padding: 1rem;
+            }
+            
+            .step-container {
+                gap: 1rem;
+            }
+            
+            .step-content {
+                max-width: 100%;
+            }
+            
+            .step-content h3 {
+                font-size: 1.4rem;
+                margin-bottom: 0.5rem;
+            }
+            
+            .step-content p {
+                font-size: 1rem;
+                margin-bottom: 1rem;
+            }
+
+            .progress-wrapper {
+                margin-bottom: 1.5rem;
+            }
+
+            .progress-labels {
+                font-size: 0.7rem;
+            }
+
+            .step-icon-wrapper {
+                margin-bottom: 0.8rem;
+            }
+
+            .step-icon {
+                width: 55px;
+                height: 55px;
+            }
+
+            .step-icon i {
+                font-size: 1.4rem;
+            }
+
+            .step-badge-modern {
+                padding: 5px 12px;
+                font-size: 0.8rem;
+                margin-bottom: 0.8rem;
+            }
+
+            .step-navigation {
+                margin: 1rem 0 0.5rem 0;
+            }
+
+            .step-cta {
+                margin-top: 1rem;
+            }
+        }
+
+        /* Hero Carousel Styles */
+        .how-it-works-section {
+            padding: 60px 0;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        }
+
+        .hero-carousel-wrapper {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+        }
+
+        /* Progress Bar */
+        .progress-wrapper {
+            margin-bottom: 2rem;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            position: relative;
+            margin-bottom: 1rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .progress-labels {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .progress-label {
+            font-size: 0.8rem;
+            color: #64748b;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .progress-label.active {
+            color: #3b82f6;
+            font-weight: 600;
+        }
+
+        /* Step Icon */
+        .step-icon-wrapper {
+            margin-bottom: 1rem;
+        }
+
+        .step-icon {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+        }
+
+        .step-icon i {
+            font-size: 1.8rem;
+            color: white;
+        }
+
+        /* Modern Badge */
+        .step-badge-modern {
+            display: inline-block;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+        }
+
+        .step-content {
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        .step-content h3 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.8rem;
+            font-family: var(--heading-font);
+        }
+
+        .step-content p {
+            font-size: 1.1rem;
+            color: #64748b;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .step-navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 1.5rem 0 1rem 0;
+        }
+    </style>
 </head>
 <body>
     <!-- Loading Animation -->
@@ -275,6 +622,77 @@
         </div>
     </section>
 
+    <!-- How It Works Section -->
+    <section class="how-it-works-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 text-center mb-5">
+                    <h2 class="section-title">Твои 4 шага до сдачи</h2>
+                </div>
+            </div>
+            
+            <!-- Hero Carousel -->
+            <div class="hero-carousel-wrapper">
+                <div class="row">
+                    <div class="col-12">
+                        <!-- Progress Bar -->
+                        <div class="progress-wrapper">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="progressFill"></div>
+                            </div>
+                            <div class="progress-labels">
+                                <span class="progress-label active">Начало</span>
+                                <span class="progress-label">Тип</span>
+                                <span class="progress-label">Результат</span>
+                                <span class="progress-label">Готово</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Step Content -->
+                        <div class="step-container">
+                            <div class="step-content">
+                                <div class="step-icon-wrapper">
+                                    <div class="step-icon">
+                                        <i class="fas fa-file-alt"></i>
+                                    </div>
+                                </div>
+                                
+                                <div class="step-badge-modern">Шаг 1 из 4</div>
+                                
+                                <h3>Укажи тему и детали работы</h3>
+                                <p>Расскажи о своей работе: тема, объем, описание. Чем больше деталей, тем лучше результат</p>
+                                
+                                
+                                <div class="step-navigation">
+                                    <button class="step-nav-btn prev" disabled>
+                                        <i class="fas fa-arrow-left"></i>
+                                    </button>
+                                    <div class="step-indicators">
+                                        <span class="step-dot active" data-step="0"></span>
+                                        <span class="step-dot" data-step="1"></span>
+                                        <span class="step-dot" data-step="2"></span>
+                                        <span class="step-dot" data-step="3"></span>
+                                    </div>
+                                    <button class="step-nav-btn next">
+                                        <i class="fas fa-arrow-right"></i>
+                                    </button>
+                                </div>
+                                
+                                <!-- CTA Button -->
+                                <div class="step-cta">
+                                    <a href="/new" class="btn-step-primary">
+                                        <i class="fas fa-rocket me-2"></i>
+                                        Начать создание работы
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Pricing Section -->
     <section class="pricing-section">
         <div class="container">
@@ -291,33 +709,37 @@
                             <div class="pricing-icon">
                                 <i class="fas fa-leaf"></i>
                             </div>
-                            <h3 class="pricing-title">Базовый</h3>
+                            <h3 class="pricing-title">Беасплатный</h3>
                             <div class="pricing-price">
-                                <span class="pricing-amount">180₽</span>
-                                <span class="pricing-period">за работу</span>
+                                <span class="pricing-amount">0₽</span>
+                                <span class="pricing-period">уже у тебя</span>
                             </div>
                         </div>
                         <div class="pricing-features">
                             <div class="pricing-feature">
                                 <i class="fas fa-check"></i>
-                                <span>Эссе до 3 страниц</span>
+                                <span>Содержание документа</span>
                             </div>
                             <div class="pricing-feature">
                                 <i class="fas fa-check"></i>
-                                <span>Проверка на уникальность</span>
+                                <span>Цели и описание</span>
                             </div>
                             <div class="pricing-feature">
                                 <i class="fas fa-check"></i>
-                                <span>Результат за 10 минут</span>
+                                <span>Список литературы</span>
                             </div>
                             <div class="pricing-feature">
                                 <i class="fas fa-check"></i>
-                                <span>Базовое оформление</span>
+                                <span>Результат за минуту</span>
+                            </div>
+                            <div class="pricing-feature">
+                                <i class="fas fa-times" style="color: red;"></i>
+                                <span>Полный документ</span>
                             </div>
                         </div>
                         <div class="pricing-cta">
                             <a href="/new" class="pricing-btn">
-                                Заказать
+                                Использовать
                             </a>
                         </div>
                     </div>
@@ -333,29 +755,29 @@
                             <h3 class="pricing-title">Стандарт</h3>
                             <div class="pricing-price">
                                 <span class="pricing-amount">350₽</span>
-                                <span class="pricing-period">за работу</span>
+                                <span class="pricing-period">в месяц</span>
                             </div>
                         </div>
                         <div class="pricing-features">
                             <div class="pricing-feature">
                                 <i class="fas fa-check"></i>
-                                <span>Работы до 10 страниц</span>
+                                <span>3 генерации</span>
                             </div>
                             <div class="pricing-feature">
                                 <i class="fas fa-check"></i>
-                                <span>Расширенная проверка</span>
+                                <span>Работы до 12 страниц</span>
                             </div>
                             <div class="pricing-feature">
                                 <i class="fas fa-check"></i>
-                                <span>Результат за 5 минут</span>
+                                <span>Гарантия уникальности</span>
+                            </div>
+                            <div class="pricing-feature">
+                                <i class="fas fa-check"></i>
+                                <span>Результат за 10 минут</span>
                             </div>
                             <div class="pricing-feature">
                                 <i class="fas fa-check"></i>
                                 <span>Профессиональное оформление</span>
-                            </div>
-                            <div class="pricing-feature">
-                                <i class="fas fa-check"></i>
-                                <span>Список литературы</span>
                             </div>
                         </div>
                         <div class="pricing-cta">
@@ -366,59 +788,7 @@
                     </div>
                 </div>
                 
-                <div class="col-lg-4 col-md-6 mb-4">
-                    <div class="pricing-card">
-                        <div class="pricing-header">
-                            <div class="pricing-icon">
-                                <i class="fas fa-crown"></i>
-                            </div>
-                            <h3 class="pricing-title">Премиум</h3>
-                            <div class="pricing-price">
-                                <span class="pricing-amount">650₽</span>
-                                <span class="pricing-period">за работу</span>
-                            </div>
-                        </div>
-                        <div class="pricing-features">
-                            <div class="pricing-feature">
-                                <i class="fas fa-check"></i>
-                                <span>Работы любого объема</span>
-                            </div>
-                            <div class="pricing-feature">
-                                <i class="fas fa-check"></i>
-                                <span>Экспертная проверка</span>
-                            </div>
-                            <div class="pricing-feature">
-                                <i class="fas fa-check"></i>
-                                <span>Мгновенный результат</span>
-                            </div>
-                            <div class="pricing-feature">
-                                <i class="fas fa-check"></i>
-                                <span>Премиум оформление</span>
-                            </div>
-                            <div class="pricing-feature">
-                                <i class="fas fa-check"></i>
-                                <span>Полная библиография</span>
-                            </div>
-                            <div class="pricing-feature">
-                                <i class="fas fa-check"></i>
-                                <span>Персональная поддержка</span>
-                            </div>
-                        </div>
-                        <div class="pricing-cta">
-                            <a href="/new" class="pricing-btn">
-                                Заказать
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="row mt-4">
-                <div class="col-12 text-center">
-                    <p class="pricing-note">
-                        <i class="fas fa-shield-alt me-2"></i>
-                        Гарантия возврата средств в течение 24 часов
-                    </p>
-                </div>
+                
             </div>
         </div>
     </section>
@@ -497,6 +867,7 @@
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
         // Hide loading animation
         window.addEventListener('load', function() {
@@ -540,6 +911,102 @@
                 navbar.style.background = 'rgba(255, 255, 255, 0.95)';
                 navbar.style.boxShadow = 'none';
             }
+        });
+
+        // Initialize AOS
+        AOS.init({
+            duration: 1000,
+            once: true,
+            offset: 100
+        });
+
+        // Step navigation functionality
+        const textworkSteps = [
+            { 
+                title: "Укажи тему и детали работы", 
+                desc: "Расскажи о своей работе: тема, объем, описание. Чем больше деталей, тем лучше результат",
+                icon: "fas fa-file-alt",
+                badge: "Шаг 1 из 4"
+            },
+            { 
+                title: "Выбери тип работы", 
+                desc: "Курсовая, диплом, реферат или эссе - выбери подходящий формат для твоей работы",
+                icon: "fas fa-list",
+                badge: "Шаг 2 из 4"
+            },
+            { 
+                title: "Получи результат", 
+                desc: "Через 10 минут получи готовую уникальную работу с проверкой на плагиат",
+                icon: "fas fa-check-circle",
+                badge: "Шаг 3 из 4"
+            },
+            { 
+                title: "Доработай при необходимости", 
+                desc: "Воспользуйся бесплатными правками или сам отредактируй работу",
+                icon: "fas fa-edit",
+                badge: "Шаг 4 из 4"
+            }
+        ];
+
+        function updateStepContent(stepIndex) {
+            const step = textworkSteps[stepIndex];
+            const stepContent = document.querySelector('.step-content');
+            
+            // Update icon
+            const stepIcon = stepContent.querySelector('.step-icon i');
+            stepIcon.className = step.icon;
+            
+            // Update badge
+            const stepBadge = stepContent.querySelector('.step-badge-modern');
+            stepBadge.textContent = step.badge;
+            
+            // Update content
+            stepContent.querySelector('h3').textContent = step.title;
+            stepContent.querySelector('p').textContent = step.desc;
+            
+            // Update progress bar
+            const progressFill = document.getElementById('progressFill');
+            const progressWidth = ((stepIndex) / (textworkSteps.length-1)) * 100;
+            progressFill.style.width = progressWidth + '%';
+            
+            // Update progress labels
+            document.querySelectorAll('.progress-label').forEach((label, index) => {
+                label.classList.toggle('active', index === stepIndex);
+            });
+            
+            // Update navigation buttons
+            const prevBtn = document.querySelector('.step-nav-btn.prev');
+            const nextBtn = document.querySelector('.step-nav-btn.next');
+            
+            prevBtn.disabled = stepIndex === 0;
+            nextBtn.disabled = stepIndex === textworkSteps.length - 1;
+            
+            // Update indicators
+            document.querySelectorAll('.step-dot').forEach((dot, index) => {
+                dot.classList.toggle('active', index === stepIndex);
+            });
+        }
+
+        // Initialize step navigation
+        let currentStep = 0;
+
+        // Handle step navigation clicks
+        document.addEventListener('click', function(e) {
+            const target = e.target.closest('.step-nav-btn, .step-dot');
+            if (!target) return;
+            
+            if (target.classList.contains('step-nav-btn')) {
+                if (target.classList.contains('prev') && currentStep > 0) {
+                    currentStep--;
+                } else if (target.classList.contains('next') && currentStep < textworkSteps.length - 1) {
+                    currentStep++;
+                }
+            } else if (target.classList.contains('step-dot')) {
+                const dots = Array.from(document.querySelectorAll('.step-dot'));
+                currentStep = dots.indexOf(target);
+            }
+            
+            updateStepContent(currentStep);
         });
     </script>
 </body>
