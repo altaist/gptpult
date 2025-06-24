@@ -145,11 +145,16 @@ const onRightBtnClick = () => {
 
 @media (max-width: 480px) {
     .logo-text {
-        display: none;
+        display: block;
+        font-size: 14px;
     }
     
     .logo-container i {
-        margin-right: 0;
+        margin-right: 8px;
+    }
+
+    .logo-container {
+        padding: 6px 10px;
     }
 }
 </style>
