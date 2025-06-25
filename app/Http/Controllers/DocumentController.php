@@ -6,6 +6,7 @@ use App\Enums\DocumentStatus;
 use App\Models\Document;
 use App\Models\DocumentType;
 use App\Services\Documents\DocumentService;
+use App\Services\Documents\DocumentJobService;
 use App\Services\Documents\Files\WordDocumentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -18,13 +19,16 @@ class DocumentController extends Controller
     use AuthorizesRequests;
 
     protected DocumentService $documentService;
+    protected DocumentJobService $documentJobService;
     protected WordDocumentService $wordDocumentService;
 
     public function __construct(
         DocumentService $documentService,
+        DocumentJobService $documentJobService,
         WordDocumentService $wordDocumentService
     ) {
         $this->documentService = $documentService;
+        $this->documentJobService = $documentJobService;
         $this->wordDocumentService = $wordDocumentService;
     }
 
@@ -237,16 +241,15 @@ class DocumentController extends Controller
                 $document->save();
             }
 
-            // Проверяем, нет ли уже активной задачи генерации
-            if ($this->documentService->hasActiveGenerationJob($document)) {
+            // Запускаем генерацию через сервис
+            $result = $this->documentJobService->safeStartBaseGeneration($document);
+
+            if (!$result['success']) {
                 return response()->json([
-                    'message' => 'Для этого документа уже запущена задача генерации',
+                    'message' => $result['message'],
                     'document' => $document
                 ], 422);
             }
-
-            // Запускаем Job для генерации документа
-            \App\Jobs\StartGenerateDocument::dispatch($document);
 
             return response()->json([
                 'message' => 'Документ успешно создан',
@@ -279,6 +282,7 @@ class DocumentController extends Controller
         $this->authorize('view', $document);
 
         $statusEnum = $document->status;
+        $jobStatus = $this->documentJobService->getJobStatus($document);
 
         return response()->json([
             'document_id' => $document->id,
@@ -298,7 +302,8 @@ class DocumentController extends Controller
             'has_introduction' => !empty($document->structure['introduction']),
             'has_conclusion' => !empty($document->structure['conclusion']),
             'structure_complete' => !empty($document->structure['contents']) && !empty($document->structure['objectives']),
-            'document' => $document->load('documentType') // Добавляем полные данные документа
+            'document' => $document->load('documentType'), // Добавляем полные данные документа
+            'job_status' => $jobStatus // Добавляем информацию о статусе задания
         ]);
     }
 
@@ -460,6 +465,49 @@ class DocumentController extends Controller
         return response()->json([
             'message' => 'Содержание документа успешно обновлено',
             'contents' => $validated['contents']
+        ]);
+    }
+
+    /**
+     * Удалить все задания генерации документа
+     */
+    public function deleteGenerationJobs(Document $document)
+    {
+        $this->authorize('update', $document);
+
+        try {
+            $result = $this->documentJobService->deleteJobs($document);
+
+            return response()->json([
+                'message' => 'Задания генерации успешно удалены',
+                'deleted_jobs' => $result
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Ошибка при удалении заданий: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Запустить генерацию документа с проверкой существующих заданий
+     */
+    public function startGeneration(Document $document)
+    {
+        $this->authorize('update', $document);
+
+        $result = $this->documentJobService->safeStartBaseGeneration($document);
+
+        if (!$result['success']) {
+            return response()->json([
+                'message' => $result['message'],
+                'document' => $document
+            ], 422);
+        }
+
+        return response()->json([
+            'message' => $result['message'],
+            'document' => $document
         ]);
     }
 } 

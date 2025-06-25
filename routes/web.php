@@ -53,6 +53,10 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('/{document}/theses', [DocumentController::class, 'updateTheses'])->name('update-theses');
         Route::patch('/{document}/contents', [DocumentController::class, 'updateContents'])->name('update-contents');
         
+        // Маршруты для управления генерацией
+        Route::post('/{document}/start-generation', [DocumentController::class, 'startGeneration'])->name('start-generation');
+        Route::delete('/{document}/generation-jobs', [DocumentController::class, 'deleteGenerationJobs'])->name('delete-generation-jobs');
+        
         // Маршруты для полной генерации
         Route::post('/{document}/generate-full', [DocumentGenerationController::class, 'startFullGeneration'])->name('generate-full');
         Route::get('/{document}/generation-progress', [DocumentGenerationController::class, 'getGenerationProgress'])->name('generation-progress');

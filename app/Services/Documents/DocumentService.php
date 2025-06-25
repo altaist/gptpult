@@ -30,13 +30,6 @@ class DocumentService
             'status' => $data['status'] ?? 'draft'
         ]);
 
-        // Если указан статус pre_generating, проверяем возможность запуска генерации
-        if ($document->status === DocumentStatus::PRE_GENERATING) {
-            if ($this->hasActiveGenerationJob($document)) {
-                throw new \Exception('Для этого документа уже запущена задача генерации');
-            }
-        }
-
         return $document;
     }
 
@@ -439,6 +432,46 @@ class DocumentService
                 }
             })
             ->exists();
+    }
+
+    /**
+     * Удаляет все задания генерации для документа
+     *
+     * @param Document $document
+     * @return array Количество удаленных заданий ['active' => int, 'failed' => int]
+     */
+    public function deleteGenerationJobs(Document $document): array
+    {
+        $jobTypes = ['StartGenerateDocument', 'StartFullGenerateDocument'];
+        $documentIdPattern = '%"document_id":' . $document->id . '%';
+
+        // Удаляем активные задания
+        $activeJobsDeleted = DB::table('jobs')
+            ->where('payload', 'like', $documentIdPattern)
+            ->where(function ($q) use ($jobTypes) {
+                foreach ($jobTypes as $type) {
+                    $q->orWhere('payload', 'like', '%' . $type . '%');
+                }
+            })
+            ->delete();
+
+        // Удаляем неудачные задания
+        $failedJobsDeleted = DB::table('failed_jobs')
+            ->where('payload', 'like', $documentIdPattern)
+            ->where(function ($q) use ($jobTypes) {
+                foreach ($jobTypes as $type) {
+                    $q->orWhere('payload', 'like', '%' . $type . '%');
+                }
+            })
+            ->delete();
+
+        // Очищаем кэш проверки активных заданий
+        cache()->forget('document_has_active_job_' . $document->id);
+
+        return [
+            'active' => $activeJobsDeleted,
+            'failed' => $failedJobsDeleted
+        ];
     }
 
     /**
