@@ -71,7 +71,7 @@
                    Создан: {{ formatDate(document.created_at) }}
                  </span>
                  <span class="document-status" :style="{ color: getStatusColor(document) }">
-                   {{ getStatusLabel(document) }} {{ document.status }}
+                   {{ getStatusLabel(document) }}
                  </span>
                </div>
             </q-item-section>
