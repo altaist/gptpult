@@ -7,6 +7,7 @@ use App\Events\GptRequestCompleted;
 use App\Events\GptRequestFailed;
 use App\Models\Document;
 use App\Services\Gpt\GptServiceFactory;
+use App\Events\FullGenerationCompleted;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -209,6 +210,13 @@ class StartFullGenerateDocument implements ShouldQueue
             Log::channel('queue')->info('ОТЛАДКА: Content сохранен', [
                 'document_id' => $this->document->id,
                 'saved_content_check' => empty($this->document->fresh()->content) ? 'ПУСТОЙ' : 'ЕСТЬ_ДАННЫЕ'
+            ]);
+
+            // После успешной генерации вызываем событие
+            event(new FullGenerationCompleted($this->document));
+
+            Log::info('Полная генерация документа завершена', [
+                'document_id' => $this->document->id
             ]);
 
             // ВРЕМЕННО ОТКЛЮЧЕНО: Создаем фиктивный GptRequest для совместимости с существующими событиями
