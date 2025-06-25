@@ -57,6 +57,12 @@ const props = defineProps({
     title: {
         type: String,
         default: 'Документ создается'
+    },
+
+    // Тип генерации: 'structure' или 'full'
+    generationType: {
+        type: String,
+        default: 'structure'
     }
 });
 
@@ -69,6 +75,7 @@ const isOvertime = ref(false);
 
 // Массив строк процесса
 const processSteps = [
+    // Базовые шаги для генерации структуры
     'Готовим запрос к системе генерации',
     'Анализируем тему документа',
     'Формируем цели и задачи документа',
@@ -83,20 +90,41 @@ const processSteps = [
     'Подготавливаем документ к просмотру'
 ];
 
+// Шаги для полной генерации
+const fullGenerationSteps = [
+    'Подготовка к полной генерации документа',
+    'Анализ структуры документа',
+    'Сбор информации по каждому разделу',
+    'Генерация основного содержания',
+    'Проработка введения',
+    'Формирование основной части',
+    'Написание заключения',
+    'Добавление ссылок и источников',
+    'Проверка связности текста',
+    'Форматирование документа',
+    'Финальная проверка содержания',
+    'Подготовка к просмотру'
+];
+
 // Таймеры
 let countdownTimer = null;
 let processTimer = null;
 
 // Вычисляемые свойства
 const currentProcessText = computed(() => {
-    if (currentProcessIndex.value < processSteps.length) {
-        return processSteps[currentProcessIndex.value];
+    const steps = props.generationType === 'full' ? fullGenerationSteps : processSteps;
+    
+    if (currentProcessIndex.value < steps.length) {
+        return steps[currentProcessIndex.value];
     }
-    return 'Завершаем генерацию документа...';
+    return props.generationType === 'full' 
+        ? 'Завершаем полную генерацию документа...' 
+        : 'Завершаем генерацию документа...';
 });
 
 const processProgress = computed(() => {
-    const totalSteps = processSteps.length;
+    const steps = props.generationType === 'full' ? fullGenerationSteps : processSteps;
+    const totalSteps = steps.length;
     const progress = Math.min(currentProcessIndex.value / totalSteps, 1);
     
     // Если время превышено, показываем прогресс на основе времени

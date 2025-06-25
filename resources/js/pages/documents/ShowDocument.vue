@@ -1,6 +1,6 @@
 <template>
     <page-layout
-        title="GPT PULT"
+        title=""
         :is-sticky="true"
         :auto-auth="true"
     >
@@ -10,6 +10,7 @@
                 v-if="(shouldAutoload || isPollingActive) && getIsGenerating()"
                 :estimated-time="30"
                 :title="getDisplayStatusText()"
+                :generation-type="currentDocument.value?.status === 'full_generating' ? 'full' : 'structure'"
                 @timeout="handleGenerationTimeout"
             />
 
@@ -121,7 +122,12 @@ const props = defineProps({
     }
 });
 
-const canPay = computed(() => props.balance < props.orderPrice);
+const canPay = computed(() => {
+    // Показываем панель оплаты только если:
+    // 1. Баланса недостаточно И
+    // 2. Статус документа pre_generated
+    return props.balance < props.orderPrice && currentDocument.value?.status === 'pre_generated';
+});
 
 // Реактивная ссылка на документ для обновления
 const currentDocument = ref(props.document);
@@ -288,6 +294,7 @@ const startFullGeneration = async () => {
         currentDocument.value.status_label = 'Генерируется содержимое...';
         
         // Запускаем отслеживание статуса
+        isPollingActive.value = true;
         resumeTracking();
         
         $q.notify({
