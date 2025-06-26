@@ -89,6 +89,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Отношение к токенам связки Telegram
+     */
+    public function telegramLinkTokens(): HasMany
+    {
+        return $this->hasMany(TelegramLinkToken::class);
+    }
+
+    /**
      * Проверка роли администратора
      */
     public function isAdmin(): bool

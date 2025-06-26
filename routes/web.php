@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\LkController;
 use App\Http\Controllers\TelegramController;
+use App\Http\Controllers\TelegramAutoRegisterController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -100,5 +101,9 @@ Route::get('/payment/complete-without-document/{orderId}', [PaymentController::c
 
 // Публичный webhook для телеграм бота
 Route::post('/telegram/webhook', [TelegramController::class, 'webhook'])->name('telegram.webhook');
+
+// Маршруты для автоматической регистрации через Telegram
+Route::get('/auto-register', [TelegramAutoRegisterController::class, 'show'])->name('telegram.auto-register.show');
+Route::post('/auto-register', [TelegramAutoRegisterController::class, 'store'])->name('telegram.auto-register.store');
 
 require __DIR__.'/auth.php';

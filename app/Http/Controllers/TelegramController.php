@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\TelegramLinkToken;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
@@ -16,15 +17,19 @@ class TelegramController extends Controller
     {
         $user = $request->user();
         
+        // Генерируем безопасный токен для связки
+        $linkToken = TelegramLinkToken::generateForUser($user);
+        
         // Имя бота (должно быть в .env)
         $botUsername = config('telegram.bot_username', 'your_bot_username');
         
-        // Простая ссылка с ID пользователя
-        $telegramUrl = "https://t.me/{$botUsername}?start={$user->id}";
+        // Ссылка с токеном вместо ID пользователя
+        $telegramUrl = "https://t.me/{$botUsername}?start={$linkToken->token}";
         
         return response()->json([
             'bot_url' => $telegramUrl,
-            'user_id' => $user->id
+            'token' => $linkToken->token,
+            'expires_at' => $linkToken->expires_at->toISOString()
         ]);
     }
     
@@ -90,22 +95,18 @@ class TelegramController extends Controller
      */
     private function handleStartWithParameter($telegramUserId, $telegramUsername, $text): void
     {
-        $userId = str_replace('/start ', '', $text);
+        $token = str_replace('/start ', '', $text);
         
-        // Проверяем, что это число (ID пользователя)
-        if (!is_numeric($userId)) {
-            $this->sendInvalidParameterMessage($telegramUserId);
+        // Ищем действительный токен
+        $linkToken = TelegramLinkToken::findValidToken($token);
+        
+        if (!$linkToken) {
+            // Токен не найден, истек или уже использован
+            $this->sendInvalidTokenMessage($telegramUserId);
             return;
         }
         
-        // Ищем пользователя по ID
-        $user = User::find($userId);
-        
-        if (!$user) {
-            // Пользователь не найден
-            $this->sendUserNotFoundMessage($telegramUserId);
-            return;
-        }
+        $user = $linkToken->user;
         
         // Проверяем, не привязан ли уже этот Telegram к другому аккаунту
         $existingUser = User::where('telegram_id', $telegramUserId)->first();
@@ -130,12 +131,16 @@ class TelegramController extends Controller
                 'telegram_connected_at' => now()
             ]);
             
+            // Отмечаем токен как использованный
+            $linkToken->markAsUsed($telegramUserId, $telegramUsername);
+            
             // Отправляем сообщение с инлайн-кнопкой
             $this->sendSuccessMessage($telegramUserId, $user->name);
             
-            Log::info("User {$user->id} connected Telegram account {$telegramUserId}");
+            Log::info("User {$user->id} connected Telegram account {$telegramUserId} using token {$token}");
         } else {
             // Если уже связан с тем же Telegram
+            $linkToken->markAsUsed($telegramUserId, $telegramUsername);
             $this->sendAlreadyConnectedMessage($telegramUserId, $user->name);
         }
     }
@@ -152,8 +157,8 @@ class TelegramController extends Controller
             // Если аккаунт уже связан, показываем персонализированное приветствие
             $this->sendPersonalizedWelcomeMessage($telegramUserId, $existingUser);
         } else {
-            // Если аккаунта нет, показываем общее приветствие
-            $this->sendWelcomeMessage($telegramUserId);
+            // Если аккаунта нет, показываем общее приветствие с опцией связки
+            $this->sendWelcomeMessageWithLinkOption($telegramUserId, $telegramUsername);
         }
     }
     
@@ -169,8 +174,8 @@ class TelegramController extends Controller
             // Если аккаунт связан, показываем кнопки для личного кабинета
             $this->sendLinkedUserHelpMessage($telegramUserId, $existingUser);
         } else {
-            // Если аккаунт не связан, предлагаем связать
-            $this->sendUnlinkedUserHelpMessage($telegramUserId);
+            // Если аккаунт не связан, предлагаем связать или создать новый
+            $this->sendUnlinkedUserHelpMessage($telegramUserId, $telegramUsername);
         }
     }
     
@@ -244,9 +249,9 @@ class TelegramController extends Controller
     }
     
     /**
-     * Отправить приветственное сообщение
+     * Отправить приветственное сообщение с опцией связки
      */
-    private function sendWelcomeMessage($chatId): void
+    private function sendWelcomeMessageWithLinkOption($chatId, $telegramUsername = null): void
     {
         $appUrl = config('app.url');
         
@@ -256,24 +261,52 @@ class TelegramController extends Controller
             : $appUrl;
         
         $text = "👋 <b>Добро пожаловать в GPT PULT Bot!</b>\n\n";
-        $text .= "Для связки аккаунта:\n";
-        $text .= "1. Перейдите в ваш личный кабинет\n";
-        $text .= "2. Нажмите кнопку \"Подключить Телеграм\"\n";
-        $text .= "3. Вернитесь сюда и нажмите /start\n\n";
+        $text .= "🎯 <b>У вас есть два варианта:</b>\n\n";
+        $text .= "1️⃣ <b>Связать существующий аккаунт:</b>\n";
+        $text .= "   • Войдите в личный кабинет на сайте\n";
+        $text .= "   • Нажмите \"Подключить Телеграм\"\n";
+        $text .= "   • Вернитесь сюда по ссылке\n\n";
+        $text .= "2️⃣ <b>Создать новый аккаунт:</b>\n";
+        $text .= "   • Нажмите кнопку ниже\n";
+        $text .= "   • Автоматически получите доступ\n\n";
         $text .= "🔗 Связка позволит получать уведомления о готовности документов";
+        
+        // Генерируем токен для быстрой регистрации
+        $autoRegisterUrl = $buttonUrl . '/auto-register';
+        if ($telegramUsername) {
+            $autoRegisterUrl .= '?telegram_id=' . urlencode($chatId) . '&telegram_username=' . urlencode($telegramUsername);
+        }
         
         $keyboard = [
             'inline_keyboard' => [
                 [
                     [
+                        'text' => '🆕 Создать новый аккаунт',
+                        'url' => $autoRegisterUrl
+                    ]
+                ],
+                [
+                    [
                         'text' => '🌐 Открыть сайт',
                         'url' => $buttonUrl
+                    ],
+                    [
+                        'text' => '🏠 Личный кабинет',
+                        'url' => $buttonUrl . '/lk'
                     ]
                 ]
             ]
         ];
         
         $this->sendTelegramMessage($chatId, $text, $keyboard);
+    }
+
+    /**
+     * Отправить приветственное сообщение (старая версия для совместимости)
+     */
+    private function sendWelcomeMessage($chatId): void
+    {
+        $this->sendWelcomeMessageWithLinkOption($chatId);
     }
     
     /**
@@ -436,31 +469,11 @@ class TelegramController extends Controller
     }
     
     /**
-     * Отправить сообщение о неверном параметре
+     * Отправить сообщение о неверном параметре (deprecated - используется sendInvalidTokenMessage)
      */
     private function sendInvalidParameterMessage($chatId): void
     {
-        $appUrl = config('app.url');
-        
-        $text = "❌ <b>Неверный параметр</b>\n\n";
-        $text .= "Параметр команды /start должен быть числовым ID пользователя.\n\n";
-        $text .= "Для корректной связки аккаунта:\n";
-        $text .= "1. Войдите в ваш личный кабинет\n";
-        $text .= "2. Нажмите кнопку \"Подключить Телеграм\"\n";
-        $text .= "3. Перейдите по новой ссылке";
-        
-        $keyboard = [
-            'inline_keyboard' => [
-                [
-                    [
-                        'text' => '🌐 Открыть сайт',
-                        'url' => $appUrl
-                    ]
-                ]
-            ]
-        ];
-        
-        $this->sendTelegramMessage($chatId, $text, $keyboard);
+        $this->sendInvalidTokenMessage($chatId);
     }
     
     /**
@@ -558,7 +571,7 @@ class TelegramController extends Controller
     /**
      * Отправить сообщение для несвязанного пользователя
      */
-    private function sendUnlinkedUserHelpMessage($chatId): void
+    private function sendUnlinkedUserHelpMessage($chatId, $telegramUsername = null): void
     {
         $appUrl = config('app.url');
         $supportBotUsername = config('telegram.support_bot_username', 'support');
@@ -570,17 +583,32 @@ class TelegramController extends Controller
         
         $text = "🤖 <b>Добро пожаловать в GPT PULT Bot!</b>\n\n";
         $text .= "Похоже, ваш аккаунт еще не связан с Telegram.\n\n";
-        $text .= "🔗 <b>Для связки аккаунта:</b>\n";
-        $text .= "1. Войдите в личный кабинет\n";
-        $text .= "2. Нажмите \"Подключить Телеграм\"\n";
-        $text .= "3. Вернитесь сюда по ссылке\n\n";
+        $text .= "🎯 <b>У вас есть два варианта:</b>\n\n";
+        $text .= "1️⃣ <b>Связать существующий аккаунт:</b>\n";
+        $text .= "   • Войдите в личный кабинет\n";
+        $text .= "   • Нажмите \"Подключить Телеграм\"\n";
+        $text .= "   • Вернитесь сюда по ссылке\n\n";
+        $text .= "2️⃣ <b>Создать новый аккаунт:</b>\n";
+        $text .= "   • Быстрая регистрация через кнопку\n\n";
         $text .= "📋 <b>После связки вы сможете:</b>\n";
         $text .= "• Получать уведомления о документах\n";
         $text .= "• Быстро переходить в личный кабинет\n";
         $text .= "• Следить за балансом";
         
+        // Генерируем URL для быстрой регистрации
+        $autoRegisterUrl = $buttonUrl . '/auto-register';
+        if ($telegramUsername) {
+            $autoRegisterUrl .= '?telegram_id=' . urlencode($chatId) . '&telegram_username=' . urlencode($telegramUsername);
+        }
+        
         $keyboard = [
             'inline_keyboard' => [
+                [
+                    [
+                        'text' => '🆕 Создать новый аккаунт',
+                        'url' => $autoRegisterUrl
+                    ]
+                ],
                 [
                     [
                         'text' => '🌐 Открыть сайт',
@@ -595,6 +623,44 @@ class TelegramController extends Controller
                     [
                         'text' => '💬 Поддержка',
                         'url' => "https://t.me/{$supportBotUsername}"
+                    ]
+                ]
+            ]
+        ];
+        
+        $this->sendTelegramMessage($chatId, $text, $keyboard);
+    }
+
+    /**
+     * Отправить сообщение о неверном токене
+     */
+    private function sendInvalidTokenMessage($chatId): void
+    {
+        $appUrl = config('app.url');
+        
+        // Для локальной разработки используем продакшн URL для кнопок
+        $buttonUrl = str_contains($appUrl, 'localhost') || str_contains($appUrl, '127.0.0.1') 
+            ? 'https://gptpult.ru' 
+            : $appUrl;
+        
+        $text = "❌ <b>Недействительный токен связки</b>\n\n";
+        $text .= "Токен не найден, истек или уже был использован.\n\n";
+        $text .= "🔗 <b>Для связки аккаунта:</b>\n";
+        $text .= "1. Войдите в ваш личный кабинет\n";
+        $text .= "2. Нажмите \"Подключить Телеграм\"\n";
+        $text .= "3. Перейдите по новой ссылке\n\n";
+        $text .= "⏰ Токены действуют 24 часа";
+        
+        $keyboard = [
+            'inline_keyboard' => [
+                [
+                    [
+                        'text' => '🌐 Открыть сайт',
+                        'url' => $buttonUrl
+                    ],
+                    [
+                        'text' => '🏠 Личный кабинет',
+                        'url' => $buttonUrl . '/lk'
                     ]
                 ]
             ]
