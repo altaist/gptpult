@@ -4,7 +4,7 @@
         :is-sticky="true"
         :auto-auth="true"
     >
-        <div class="q-pa-md">
+        <div class="modern-container">
             <!-- Креативный блок загрузки -->
             <div 
                 v-if="(shouldAutoload || isPollingActive) && getIsGenerating()"
@@ -92,7 +92,8 @@
 
             <!-- Если генерация НЕ идет или нет автозагрузки -->
             <template v-else>
-                <document-view 
+                <!-- Шапка документа -->
+                <document-header 
                     :document="currentDocument"
                     :document-status="documentStatus"
                     :status-text="getDisplayStatusText()"
@@ -100,65 +101,96 @@
                     :is-pre-generation-complete="isPreGenerationComplete()"
                     :is-full-generation-complete="getIsFullGenerationComplete()"
                     :has-failed="hasFailed()"
-                    :is-approved="isApproved()"
-                    :editable="canEdit"
-                    @updated="handleDocumentUpdate"
                 />
 
-                <!-- Если не хватает баланса — панель оплаты -->
-                <DocumentPaymentPanel
-                    v-if="canPay"
-                    :amount="orderPrice"
-                    :document="currentDocument"
-                    class="q-mt-md"
-                />
+                <!-- Основной контент -->
+                <div class="main-content">
+                    <!-- Левая колонка с документом -->
+                    <div class="document-column">
+                        <div class="document-card">
+                            <document-view 
+                                :document="currentDocument"
+                                :document-status="documentStatus"
+                                :status-text="getDisplayStatusText()"
+                                :is-generating="getIsGenerating()"
+                                :is-pre-generation-complete="isPreGenerationComplete()"
+                                :is-full-generation-complete="getIsFullGenerationComplete()"
+                                :has-failed="hasFailed()"
+                                :is-approved="isApproved()"
+                                :editable="canEdit"
+                                @updated="handleDocumentUpdate"
+                            />
+                        </div>
+                    </div>
 
-                <!-- Если хватает баланса — панель кнопок действий -->
-                <div
-                    v-else
-                    class="q-mt-md text-center q-gutter-md"
-                > 
-                    <!-- Кнопка возобновления отслеживания для документов в процессе генерации -->
-                    <q-btn
-                        v-if="false && canResumeTracking() && !isPollingActive"
-                        label="Продолжить генерацию"
-                        color="primary"
-                        outline
-                        @click="resumeTracking"
-                        class="q-px-lg q-py-sm"
-                    />
-                    
-                    <!-- Кнопка остановки отслеживания -->
-                    <q-btn
-                        v-if="false"
-                        label="Остановить отслеживание"
-                        color="grey"
-                        outline
-                        @click="stopTracking"
-                        class="q-px-lg q-py-sm"
-                    />
-                    
-                    <!-- Кнопка запуска полной генерации -->
-                    <q-btn
-                        v-if="getCanStartFullGeneration()"
-                        label="Завершить создание документа"
-                        color="primary"
-                        size="lg"
-                        :loading="isStartingFullGeneration"
-                        @click="startFullGeneration"
-                        class="q-px-xl q-py-md"
-                    />
-                    
-                    <!-- Кнопка скачивания Word - ТОЛЬКО для full_generated -->
-                    <q-btn
-                        v-if="getIsFullGenerationComplete()"
-                        label="Скачать Word"
-                        color="primary"
-                        size="lg"
-                        :loading="isDownloading"
-                        @click="downloadWord"
-                        class="q-px-xl q-py-md"
-                    />
+                    <!-- Правая колонка с действиями -->
+                    <div class="actions-column">
+                        <!-- Если не хватает баланса — панель оплаты -->
+                        <div v-if="canPay" class="action-card payment-card">
+                            <DocumentPaymentPanel
+                                :amount="orderPrice"
+                                :document="currentDocument"
+                            />
+                        </div>
+
+                        <!-- Если хватает баланса — панель кнопок действий -->
+                        <div v-else class="action-card actions-card">
+                            <div class="actions-header">
+                                <h3 class="actions-title">Действия с документом</h3>
+                                <p class="actions-subtitle">Выберите следующий шаг</p>
+                            </div>
+                            
+                            <div class="actions-list">
+                                <!-- Кнопка запуска полной генерации -->
+                                <div v-if="getCanStartFullGeneration()" class="action-item">
+                                    <div class="action-info">
+                                        <h4 class="action-name">Завершить создание</h4>
+                                        <p class="action-description">Создать полное содержание документа с деталями</p>
+                                    </div>
+                                    <q-btn
+                                        label="Создать"
+                                        color="primary"
+                                        size="lg"
+                                        :loading="isStartingFullGeneration"
+                                        @click="startFullGeneration"
+                                        class="action-btn primary-btn"
+                                        unelevated
+                                        no-caps
+                                    />
+                                </div>
+                                
+                                <!-- Кнопка скачивания Word - ТОЛЬКО для full_generated -->
+                                <div v-if="getIsFullGenerationComplete()" class="action-item">
+                                    <div class="action-info">
+                                        <h4 class="action-name">Скачать документ</h4>
+                                        <p class="action-description">Получить готовый документ в формате Word</p>
+                                    </div>
+                                    <q-btn
+                                        label="Скачать"
+                                        color="positive"
+                                        size="lg"
+                                        :loading="isDownloading"
+                                        @click="downloadWord"
+                                        class="action-btn success-btn"
+                                        icon="download"
+                                        unelevated
+                                        no-caps
+                                    />
+                                </div>
+
+                                <!-- Информационная карточка если нет доступных действий -->
+                                <div v-if="!getCanStartFullGeneration() && !getIsFullGenerationComplete()" class="info-item">
+                                    <q-icon name="info" class="info-icon" />
+                                    <div class="info-content">
+                                        <h4 class="info-title">Ожидание</h4>
+                                        <p class="info-text">
+                                            {{ getIsGenerating() ? 'Документ генерируется...' : 'Документ готов к просмотру' }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </template>
         </div>
@@ -175,6 +207,7 @@ import { useDocumentStatus } from '@/composables/documentStatus';
 import { apiClient } from '@/composables/api';
 import { router } from '@inertiajs/vue3';
 import DocumentPaymentPanel from '@/modules/gpt/components/DocumentPaymentPanel.vue';
+import DocumentHeader from '@/modules/gpt/components/DocumentHeader.vue';
 
 const $q = useQuasar();
 const isDownloading = ref(false);
@@ -576,9 +609,137 @@ const linkTelegram = async () => {
         telegramLoading.value = false;
     }
 };
+
+// Новые функции для современного дизайна
+const getStatusIcon = () => {
+    const status = currentDocument.value?.status;
+    switch (status) {
+        case 'draft': return 'edit';
+        case 'pre_generating': return 'hourglass_empty';
+        case 'pre_generated': return 'check_circle_outline';
+        case 'pre_generation_failed': return 'error_outline';
+        case 'full_generating': return 'autorenew';
+        case 'full_generated': return 'check_circle';
+        case 'full_generation_failed': return 'error';
+        case 'in_review': return 'visibility';
+        case 'approved': return 'verified';
+        case 'rejected': return 'cancel';
+        default: return 'help_outline';
+    }
+};
+
+const getStatusClass = () => {
+    const status = currentDocument.value?.status;
+    switch (status) {
+        case 'draft': return 'status-draft';
+        case 'pre_generating':
+        case 'full_generating': return 'status-generating';
+        case 'pre_generated':
+        case 'full_generated': return 'status-completed';
+        case 'pre_generation_failed':
+        case 'full_generation_failed': return 'status-failed';
+        case 'in_review': return 'status-review';
+        case 'approved': return 'status-approved';
+        case 'rejected': return 'status-rejected';
+        default: return 'status-unknown';
+    }
+};
+
+const getProgressIcon = () => {
+    const status = currentDocument.value?.status;
+    if (getIsGenerating()) return 'autorenew';
+    if (getIsFullGenerationComplete()) return 'check';
+    if (hasFailed() && hasFailed()) return 'close';
+    return 'hourglass_empty';
+};
+
+const getProgressClass = () => {
+    const status = currentDocument.value?.status;
+    if (getIsGenerating()) return 'progress-generating';
+    if (getIsFullGenerationComplete()) return 'progress-completed';
+    if (hasFailed() && hasFailed()) return 'progress-failed';
+    return 'progress-pending';
+};
+
+const getProgressText = () => {
+    const status = currentDocument.value?.status;
+    switch (status) {
+        case 'draft': return 'Черновик';
+        case 'pre_generating': return 'Генерация структуры';
+        case 'pre_generated': return 'Структура готова';
+        case 'full_generating': return 'Создание содержания';
+        case 'full_generated': return 'Полностью готов';
+        case 'pre_generation_failed':
+        case 'full_generation_failed': return 'Ошибка генерации';
+        default: return 'Неизвестно';
+    }
+};
+
+// Функция форматирования даты (используется только на главной странице)
+const formatDate = (dateString) => {
+    if (!dateString) return 'Не указано';
+    
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMs = now - date;
+    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+    const diffInDays = Math.floor(diffInHours / 24);
+    
+    if (diffInHours < 1) {
+        const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+        return diffInMinutes < 1 ? 'Только что' : `${diffInMinutes} мин. назад`;
+    } else if (diffInHours < 24) {
+        return `${diffInHours} ч. назад`;
+    } else if (diffInDays < 7) {
+        return `${diffInDays} дн. назад`;
+    } else {
+        return date.toLocaleDateString('ru-RU', {
+            day: 'numeric',
+            month: 'short',
+            year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+        });
+    }
+};
+
+const getCompletionPercentage = () => {
+    const status = currentDocument.value?.status;
+    switch (status) {
+        case 'draft': return 10;
+        case 'pre_generating': return 25;
+        case 'pre_generated': return 50;
+        case 'full_generating': return 75;
+        case 'full_generated': return 100;
+        case 'pre_generation_failed':
+        case 'full_generation_failed': return 0;
+        default: return 0;
+    }
+};
+
+const getEstimatedTime = () => {
+    if (!getIsGenerating()) {
+        return null; // Не показываем время если не генерируется
+    }
+    
+    const status = currentDocument.value?.status;
+    if (status === 'pre_generating') {
+        return '2-3 минуты';
+    } else if (status === 'full_generating') {
+        return '5-8 минут';
+    }
+    
+    return null;
+};
 </script>
 
 <style scoped>
+/* Основной контейнер */
+.modern-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 32px 24px;
+    min-height: 100vh;
+}
+
 /* Современный блок загрузки */
 .generation-container {
     display: flex;
@@ -613,7 +774,7 @@ const linkTelegram = async () => {
     width: 2px;
     height: 15px;
     margin-left: 2px;
-    animation: blink 2s step-end infinite; /* Замедляем мигание с 1.5s до 2s */
+    animation: blink 2s step-end infinite;
 }
 
 @keyframes blink {
@@ -621,7 +782,7 @@ const linkTelegram = async () => {
     61%, 100% { opacity: 0; }
 }
 
-/* Заголовок */
+/* Заголовок загрузки */
 .generation-header {
     margin-bottom: 40px;
 }
@@ -666,7 +827,7 @@ const linkTelegram = async () => {
     box-shadow: 
         0 20px 40px rgba(74, 85, 104, 0.4),
         inset 0 -2px 8px rgba(0, 0, 0, 0.2);
-    animation: typewriterBounce 4s ease-in-out infinite; /* Замедляем с 3s до 4s */
+    animation: typewriterBounce 4s ease-in-out infinite;
 }
 
 @keyframes typewriterBounce {
@@ -682,8 +843,7 @@ const linkTelegram = async () => {
     border-radius: 18px;
     padding: 12px;
     margin-bottom: 30px;
-    box-shadow: 
-        0 8px 16px rgba(74, 85, 104, 0.2);
+    box-shadow: 0 8px 16px rgba(74, 85, 104, 0.2);
 }
 
 .keys {
@@ -745,7 +905,7 @@ const linkTelegram = async () => {
         0 8px 16px rgba(0, 0, 0, 0.15),
         inset 0 1px 2px rgba(255, 255, 255, 0.8);
     overflow: hidden;
-    animation: paperMove 4s ease-in-out infinite; /* Замедляем с 3s до 4s */
+    animation: paperMove 4s ease-in-out infinite;
 }
 
 .paper-lines {
@@ -809,71 +969,6 @@ const linkTelegram = async () => {
     border: none;
 }
 
-/* Магические частицы */
-.magic-particles {
-    display: none;
-}
-
-/* Статус процесса */
-.process-status {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    margin-bottom: 24px;
-    padding: 12px 20px;
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
-    border: 1px solid rgba(59, 130, 246, 0.2);
-    border-radius: 12px;
-    position: relative;
-    overflow: hidden;
-}
-
-.process-status::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.2) 50%, transparent 100%);
-    animation: shimmer 3s ease-in-out infinite;
-}
-
-@keyframes shimmer {
-    0% { left: -100%; }
-    100% { left: 100%; }
-}
-
-.status-icon {
-    color: #3b82f6;
-}
-
-.magic-icon {
-    font-size: 18px;
-    animation: iconSpin 4s ease-in-out infinite;
-}
-
-@keyframes iconSpin {
-    0%, 100% { transform: rotate(0deg) scale(1); }
-    25% { transform: rotate(90deg) scale(1.1); }
-    50% { transform: rotate(180deg) scale(1); }
-    75% { transform: rotate(270deg) scale(1.1); }
-}
-
-.status-text {
-    font-size: 14px;
-    color: #1e293b;
-    font-weight: 600;
-    text-align: center;
-    animation: textFade 2s ease-in-out infinite;
-}
-
-@keyframes textFade {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
-}
-
 /* Время ожидания с анимированными точками */
 .time-estimate {
     display: flex;
@@ -898,35 +993,6 @@ const linkTelegram = async () => {
     0%, 100% { transform: rotate(0deg); }
     25% { transform: rotate(15deg); }
     75% { transform: rotate(-15deg); }
-}
-
-.loading-dots {
-    display: flex;
-    gap: 3px;
-    margin-left: 8px;
-}
-
-.dot {
-    width: 3px;
-    height: 3px;
-    background: #059669;
-    border-radius: 50%;
-    animation: dotBounce 1.4s ease-in-out infinite both;
-}
-
-.dot:nth-child(1) { animation-delay: -0.32s; }
-.dot:nth-child(2) { animation-delay: -0.16s; }
-.dot:nth-child(3) { animation-delay: 0s; }
-
-@keyframes dotBounce {
-    0%, 80%, 100% {
-        transform: scale(0.8);
-        opacity: 0.5;
-    }
-    40% {
-        transform: scale(1.2);
-        opacity: 1;
-    }
 }
 
 /* Советы пользователю */
@@ -969,43 +1035,523 @@ const linkTelegram = async () => {
     max-width: 280px;
 }
 
-.tip-item {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    padding: 16px;
-    background: rgba(249, 250, 251, 0.8);
-    border-radius: 12px;
-    color: #6b7280;
-    font-size: 14px;
-    font-weight: 500;
+/* === ОСНОВНОЙ ДИЗАЙН СТРАНИЦЫ === */
+
+/* Шапка документа */
+.document-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 24px;
+    padding: 32px 40px;
+    margin-bottom: 32px;
+    color: white;
+    position: relative;
+    overflow: hidden;
 }
 
-.tip-icon {
-    font-size: 20px;
-    color: #9ca3af;
+.document-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.1) 50%, transparent 100%);
+    animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px;
+    position: relative;
+    z-index: 1;
+}
+
+.document-info-section {
+    flex: 1;
+}
+
+.document-main-title {
+    font-size: 32px;
+    font-weight: 700;
+    margin: 0 0 20px 0;
+    line-height: 1.2;
+    color: white;
+}
+
+.document-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 32px;
+    align-items: center;
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 8px 16px;
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.detail-icon {
+    font-size: 18px;
+    opacity: 0.9;
     flex-shrink: 0;
 }
 
+.detail-label {
+    font-weight: 500;
+    opacity: 0.9;
+}
+
+.detail-value {
+    font-weight: 700;
+}
+
+/* Статусы */
+.status-draft { color: #f59e0b; }
+.status-generating { color: #3b82f6; }
+.status-completed { color: #10b981; }
+.status-failed { color: #ef4444; }
+.status-review { color: #8b5cf6; }
+.status-approved { color: #10b981; }
+.status-rejected { color: #ef4444; }
+.status-unknown { color: #6b7280; }
+
+/* Прогресс секция */
+.progress-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.progress-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.progress-inner {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.progress-icon {
+    font-size: 28px;
+    color: #4f46e5;
+}
+
+.progress-generating .progress-icon {
+    animation: spin 2s linear infinite;
+    color: #3b82f6;
+}
+
+.progress-completed .progress-icon {
+    color: #10b981;
+}
+
+.progress-failed .progress-icon {
+    color: #ef4444;
+}
+
+.progress-pending .progress-icon {
+    color: #f59e0b;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.progress-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #ffffff;
+    margin-top: 8px;
+}
+
+/* Основной контент */
+.main-content {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 32px;
+    align-items: start;
+}
+
+/* Колонка с документом */
+.document-column {
+    min-height: 600px;
+}
+
+.document-card {
+    background: white;
+    border-radius: 20px;
+    padding: 32px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid #f1f5f9;
+    transition: all 0.3s ease;
+}
+
+.document-card:hover {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+}
+
+/* Колонка с действиями */
+.actions-column {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    position: sticky;
+    top: 100px;
+}
+
+/* Карточки действий */
+.action-card {
+    background: white;
+    border-radius: 20px;
+    padding: 28px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid #f1f5f9;
+    transition: all 0.3s ease;
+}
+
+.action-card:hover {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+}
+
+/* Карточка действий */
+.actions-card {
+    border: 2px solid transparent;
+    background: linear-gradient(white, white) padding-box,
+                linear-gradient(135deg, #667eea, #764ba2) border-box;
+}
+
+.actions-header {
+    margin-bottom: 24px;
+}
+
+.actions-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 8px 0;
+}
+
+.actions-subtitle {
+    font-size: 14px;
+    color: #64748b;
+    margin: 0;
+}
+
+.actions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.action-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 20px;
+    background: #f8fafc;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+}
+
+.action-item:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+}
+
+.action-info {
+    flex: 1;
+}
+
+.action-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0 0 4px 0;
+}
+
+.action-description {
+    font-size: 13px;
+    color: #64748b;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.action-btn {
+    min-width: 100px;
+    border-radius: 12px;
+    font-weight: 600;
+    padding: 12px 20px;
+    transition: all 0.2s ease;
+}
+
+.primary-btn {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.primary-btn:hover {
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+    transform: translateY(-1px);
+}
+
+.success-btn {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.success-btn:hover {
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+    transform: translateY(-1px);
+}
+
+/* Информационный элемент */
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-radius: 16px;
+    border: 1px solid #f59e0b;
+}
+
+.info-icon {
+    font-size: 24px;
+    color: #d97706;
+    flex-shrink: 0;
+}
+
+.info-content {
+    flex: 1;
+}
+
+.info-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #92400e;
+    margin: 0 0 4px 0;
+}
+
+.info-text {
+    font-size: 14px;
+    color: #a16207;
+    margin: 0;
+}
+
+/* Карточка статистики */
+.stats-card {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border: 1px solid #e2e8f0;
+}
+
+.stats-header {
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.stats-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+}
+
+.stats-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.stat-icon {
+    font-size: 20px;
+    color: #4f46e5;
+    flex-shrink: 0;
+}
+
+.stat-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.stat-label {
+    font-size: 13px;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.stat-value {
+    font-size: 15px;
+    color: #1e293b;
+    font-weight: 600;
+}
+
+/* Карточка платежа */
+.payment-card {
+    border: 2px solid #ef4444;
+    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+}
+
 /* Адаптивность */
-@media (max-width: 768px) {
-    .generation-container {
-        padding: 24px 16px;
-        min-height: 70vh;
+@media (max-width: 1200px) {
+    .main-content {
+        grid-template-columns: 1fr 350px;
+        gap: 24px;
     }
     
-    .generation-card {
-        padding: 32px 24px;
+    .document-main-title {
+        font-size: 28px;
+    }
+}
+
+@media (max-width: 1024px) {
+    .main-content {
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
+    
+    .actions-column {
+        position: static;
+        order: -1;
+    }
+    
+    .document-header {
+        padding: 24px 28px;
+    }
+    
+    .header-content {
+        flex-direction: column;
+        gap: 24px;
+        text-align: center;
+    }
+    
+    .document-details {
+        justify-content: center;
+        gap: 20px;
+    }
+    
+    .detail-item {
+        font-size: 14px;
+        padding: 6px 12px;
+    }
+    
+    .detail-icon {
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 768px) {
+    .modern-container {
+        padding: 20px 16px;
+    }
+    
+    .document-header {
+        padding: 20px 24px;
         border-radius: 20px;
     }
     
-    .generation-title {
+    .document-main-title {
         font-size: 24px;
+        margin-bottom: 16px;
     }
     
-    .generation-subtitle {
-        font-size: 15px;
+    .document-details {
+        flex-direction: column;
+        gap: 12px;
+        width: 100%;
+    }
+    
+    .detail-item {
+        width: 100%;
+        justify-content: center;
+        padding: 8px 16px;
+        font-size: 14px;
+    }
+    
+    .progress-section {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .progress-circle {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .progress-inner {
+        width: 45px;
+        height: 45px;
+    }
+    
+    .progress-icon {
+        font-size: 22px;
+    }
+    
+    .progress-label {
+        font-size: 13px;
+    }
+    
+    .document-card {
+        padding: 24px 20px;
+        border-radius: 16px;
+    }
+    
+    .action-card {
+        padding: 20px;
+        border-radius: 16px;
+    }
+    
+    .action-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 12px;
+    }
+    
+    .action-btn {
+        width: 100%;
+        min-width: auto;
     }
     
     /* Адаптация блока машинки для планшетов */
@@ -1049,15 +1595,6 @@ const linkTelegram = async () => {
     
     .cursor {
         height: 12px;
-    }
-    
-    .generation-tips {
-        margin-top: 20px;
-    }
-    
-    .tip-item {
-        padding: 12px;
-        font-size: 13px;
     }
 }
 
@@ -1155,12 +1692,6 @@ const linkTelegram = async () => {
     .cursor {
         height: 10px;
         width: 1px;
-    }
-    
-    .tip-item {
-        flex-direction: column;
-        text-align: center;
-        gap: 8px;
     }
 }
 </style> 
