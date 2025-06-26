@@ -270,34 +270,12 @@ if (shouldAutoload) {
     isPollingActive.value = true;
 }
 
-// Креативная анимация
-const typingText = ref('');
-const progressPercentage = ref(0);
-const currentProcessText = ref('Инициализация генерации...');
-
 // Новые переменные для улучшенной машинки
 const currentTypedText = ref('');
 const printedLines = ref([]);
 const typewriterKeys = ref([]);
 
-// Процессы для отображения
-const processes = [
-    'Инициализация генерации документа',
-    'Анализ темы и требований',
-    'Формирование структуры работы',
-    'Создание плана содержания',
-    'Генерация основных разделов',
-    'Проработка деталей',
-    'Добавление связующих элементов',
-    'Проверка логической структуры',
-    'Финальная обработка',
-    'Подготовка к просмотру'
-];
-
-let typingInterval = null;
-let processInterval = null;
-let progressInterval = null;
-let lettersInterval = null;
+// Интервал для анимации печати
 let typewriterInterval = null;
 
 // Инициализация клавиш машинки
@@ -337,7 +315,7 @@ const startTypewriterAnimation = () => {
             const char = currentText[charIndex];
             currentTypedText.value += char;
             
-            // Анимируем нажатие случайной клавиши
+            // Анимируем нажатие случайной клавиши (упрощенно)
             animateRandomKeyPress();
             
             charIndex++;
@@ -347,7 +325,7 @@ const startTypewriterAnimation = () => {
             currentTypedText.value = '';
             
             // Ограничиваем количество напечатанных строк
-            if (printedLines.value.length > 4) {
+            if (printedLines.value.length > 3) {
                 printedLines.value.shift();
             }
             
@@ -355,70 +333,37 @@ const startTypewriterAnimation = () => {
             textIndex = (textIndex + 1) % typewriterTexts.length;
             currentText = typewriterTexts[textIndex];
             charIndex = 0;
-            
-            // Пауза между строками
-            setTimeout(() => {}, 1500);
         }
-    }, 120); // Скорость печати
+    }, 150); // Замедляем печать с 80ms до 150ms
 };
 
 // Анимация нажатия случайной клавиши
 const animateRandomKeyPress = () => {
-    const randomIndex = Math.floor(Math.random() * typewriterKeys.value.length);
-    const key = typewriterKeys.value[randomIndex];
-    
-    key.isPressed = true;
-    
-    // Убираем эффект нажатия через короткое время
-    setTimeout(() => {
-        key.isPressed = false;
-    }, 120);
-};
-
-// Функция анимации прогресса
-const startProgressAnimation = () => {
-    progressInterval = setInterval(() => {
-        progressPercentage.value = Math.min(progressPercentage.value + Math.random() * 2, 95);
-    }, 500);
-};
-
-// Функция смены процессов
-const startProcessAnimation = () => {
-    let processIndex = 0;
-    
-    processInterval = setInterval(() => {
-        currentProcessText.value = processes[processIndex];
-        processIndex = (processIndex + 1) % processes.length;
-    }, 2000);
-};
-
-// Запуск всех анимаций
-const startCreativeAnimations = () => {
-    initTypewriterKeys();
-    startTypewriterAnimation();
-    startProgressAnimation();
-    startProcessAnimation();
-};
-
-// Остановка всех анимаций
-const stopCreativeAnimations = () => {
-    if (typingInterval) clearInterval(typingInterval);
-    if (processInterval) clearInterval(processInterval);
-    if (progressInterval) clearInterval(progressInterval);
-    if (lettersInterval) clearInterval(lettersInterval);
-    if (typewriterInterval) clearInterval(typewriterInterval);
+    // Умеренная частота анимации клавиш
+    if (Math.random() > 0.4) { // Уменьшаем с 80% до 60% для более спокойной анимации
+        const randomIndex = Math.floor(Math.random() * typewriterKeys.value.length);
+        const key = typewriterKeys.value[randomIndex];
+        
+        key.isPressed = true;
+        
+        // Убираем эффект нажатия через более длительное время
+        setTimeout(() => {
+            key.isPressed = false;
+        }, 100); // Увеличиваем с 60ms до 100ms
+    }
 };
 
 // Запускаем анимации при монтировании
 onMounted(() => {
     if ((shouldAutoload || isPollingActive.value) && getIsGenerating()) {
-        startCreativeAnimations();
+        initTypewriterKeys();
+        startTypewriterAnimation();
     }
 });
 
 // Останавливаем анимации при размонтировании
 onUnmounted(() => {
-    stopCreativeAnimations();
+    if (typewriterInterval) clearInterval(typewriterInterval);
 });
 
 // Маппинг статусов для отображения без API
@@ -584,12 +529,6 @@ const handleDocumentUpdate = () => {
     window.location.reload();
 };
 
-// Обработчик события таймаута компонента генерации
-const handleGenerationTimeout = () => {
-    // Ничего не делаем - просто ловим событие
-    console.log('Время ожидания генерации истекло, но продолжаем отслеживание через useDocumentStatus');
-};
-
 // Состояние Telegram
 const telegramLoading = ref(false);
 
@@ -650,27 +589,36 @@ const linkTelegram = async () => {
 }
 
 .generation-card {
-    background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+    background: #ffffff;
     border-radius: 24px;
     padding: 48px 40px;
     max-width: 600px;
     width: 100%;
     text-align: center;
-    box-shadow: 
-        0 20px 40px rgba(0, 0, 0, 0.08),
-        0 4px 12px rgba(0, 0, 0, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
     position: relative;
     overflow: hidden;
 }
 
+/* Убираем сложные анимации градиентов */
 .generation-card::before {
     display: none;
 }
 
-@keyframes gradientShift {
-    0%, 100% { opacity: 0; }
-    50% { opacity: 0; }
+/* Упрощаем блок курсора */
+.cursor {
+    display: inline-block;
+    background: #3b82f6;
+    width: 2px;
+    height: 15px;
+    margin-left: 2px;
+    animation: blink 2s step-end infinite; /* Замедляем мигание с 1.5s до 2s */
+}
+
+@keyframes blink {
+    0%, 60% { opacity: 1; }
+    61%, 100% { opacity: 0; }
 }
 
 /* Заголовок */
@@ -718,12 +666,12 @@ const linkTelegram = async () => {
     box-shadow: 
         0 20px 40px rgba(74, 85, 104, 0.4),
         inset 0 -2px 8px rgba(0, 0, 0, 0.2);
-    animation: typewriterBounce 3s ease-in-out infinite;
+    animation: typewriterBounce 4s ease-in-out infinite; /* Замедляем с 3s до 4s */
 }
 
 @keyframes typewriterBounce {
     0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-8px); }
+    50% { transform: translateY(-4px); }
 }
 
 .machine-body {
@@ -735,15 +683,18 @@ const linkTelegram = async () => {
     padding: 12px;
     margin-bottom: 30px;
     box-shadow: 
-        inset 0 2px 4px rgba(0, 0, 0, 0.3),
-        0 4px 8px rgba(0, 0, 0, 0.2);
+        0 8px 16px rgba(74, 85, 104, 0.2);
 }
 
 .keys {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(4, 1fr);
     gap: 9px;
+    width: 100%;
     height: 100%;
+    align-items: center;
+    justify-items: center;
 }
 
 .key {
@@ -752,38 +703,33 @@ const linkTelegram = async () => {
     justify-content: center;
     width: 100%;
     height: 100%;
+    max-width: 75px;
+    max-height: 28px;
     background: linear-gradient(145deg, #f3f4f6 0%, #d1d5db 100%);
     border-radius: 6px;
     font-size: 16px;
     font-weight: 700;
     color: #374151;
-    box-shadow: 
-        0 2px 4px rgba(0, 0, 0, 0.2),
-        inset 0 1px 2px rgba(255, 255, 255, 0.5);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     transition: all 0.1s ease;
     cursor: pointer;
-    animation: keyFloat 3s ease-in-out infinite;
 }
 
 .key:hover {
     transform: translateY(-1px);
-    box-shadow: 
-        0 4px 8px rgba(0, 0, 0, 0.3),
-        inset 0 1px 2px rgba(255, 255, 255, 0.7);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 .key-pressed {
     transform: translateY(2px) !important;
     background: linear-gradient(145deg, #3b82f6 0%, #1d4ed8 100%) !important;
     color: white !important;
-    box-shadow: 
-        0 1px 2px rgba(0, 0, 0, 0.4),
-        inset 0 -1px 2px rgba(0, 0, 0, 0.2) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important;
 }
 
-@keyframes keyFloat {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-1px); }
+@keyframes paperMove {
+    0%, 100% { transform: translateX(-50%) translateY(0px); }
+    50% { transform: translateX(-50%) translateY(-4px); }
 }
 
 .paper {
@@ -799,12 +745,7 @@ const linkTelegram = async () => {
         0 8px 16px rgba(0, 0, 0, 0.15),
         inset 0 1px 2px rgba(255, 255, 255, 0.8);
     overflow: hidden;
-    animation: paperMove 3s ease-in-out infinite;
-}
-
-@keyframes paperMove {
-    0%, 100% { transform: translateX(-50%) translateY(0px); }
-    50% { transform: translateX(-50%) translateY(-8px); }
+    animation: paperMove 4s ease-in-out infinite; /* Замедляем с 3s до 4s */
 }
 
 .paper-lines {
@@ -866,20 +807,6 @@ const linkTelegram = async () => {
 .typed-text {
     animation: none;
     border: none;
-}
-
-.cursor {
-    display: inline-block;
-    background: #3b82f6;
-    width: 2px;
-    height: 15px;
-    margin-left: 2px;
-    animation: blink 1s step-end infinite;
-}
-
-@keyframes blink {
-    0%, 50% { opacity: 1; }
-    51%, 100% { opacity: 0; }
 }
 
 /* Магические частицы */
@@ -1081,13 +1008,47 @@ const linkTelegram = async () => {
         font-size: 15px;
     }
     
-    .typewriter {
-        width: 64px;
-        height: 64px;
+    /* Адаптация блока машинки для планшетов */
+    .typewriter-container {
+        margin-top: 40px;
+        height: 200px;
     }
     
-    .typed-text {
-        font-size: 20px;
+    .typewriter {
+        width: 320px;
+        height: 200px;
+    }
+    
+    .machine-body {
+        width: 280px;
+        height: 120px;
+        margin-bottom: 20px;
+    }
+    
+    .keys {
+        gap: 6px;
+    }
+    
+    .key {
+        font-size: 14px;
+    }
+    
+    .paper {
+        width: 200px;
+        height: 80px;
+        top: -35px;
+    }
+    
+    .printed-line {
+        font-size: 10px;
+    }
+    
+    .current-line {
+        font-size: 11px;
+    }
+    
+    .cursor {
+        height: 12px;
     }
     
     .generation-tips {
@@ -1107,6 +1068,93 @@ const linkTelegram = async () => {
     
     .generation-title {
         font-size: 22px;
+    }
+    
+    /* Адаптация блока машинки для мобильных */
+    .typewriter-container {
+        margin-top: 20px;
+        height: 140px;
+    }
+    
+    .typewriter {
+        width: 240px;
+        height: 140px;
+    }
+    
+    .machine-body {
+        width: 200px;
+        height: 80px;
+        margin-bottom: 15px;
+        border-radius: 12px;
+        padding: 8px;
+    }
+    
+    .keys {
+        gap: 3px;
+        width: 100%;
+        height: 100%;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        grid-template-rows: repeat(4, 1fr);
+        align-items: center;
+        justify-items: center;
+    }
+    
+    .key {
+        font-size: 10px;
+        font-weight: 600;
+        border-radius: 3px;
+        width: 100%;
+        height: 100%;
+        max-width: 42px;
+        max-height: 16px;
+        min-width: 38px;
+        min-height: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .paper {
+        width: 150px;
+        height: 60px;
+        top: -25px;
+    }
+    
+    .paper-lines {
+        top: 12px;
+        left: 12px;
+        right: 12px;
+        height: calc(100% - 24px);
+        background: repeating-linear-gradient(
+            transparent,
+            transparent 8px,
+            #e2e8f0 8px,
+            #e2e8f0 9px
+        );
+    }
+    
+    .typed-content {
+        bottom: 16px;
+        left: 16px;
+        right: 16px;
+        top: 16px;
+    }
+    
+    .printed-line {
+        font-size: 8px;
+        line-height: 1.2;
+        margin-bottom: 1px;
+    }
+    
+    .current-line {
+        font-size: 9px;
+        line-height: 1.2;
+    }
+    
+    .cursor {
+        height: 10px;
+        width: 1px;
     }
     
     .tip-item {
