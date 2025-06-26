@@ -35,6 +35,47 @@ class AutoAuthController extends Controller
     }
 
     /**
+     * Автоматический вход по токену через GET запрос (для Telegram)
+     */
+    public function autoLoginByToken(Request $request, string $authToken)
+    {
+        $user = User::where('auth_token', $authToken)->first();
+
+        if (!$user) {
+            return redirect('/')->with('error', 'Недействительный токен авторизации');
+        }
+
+        Auth::login($user);
+
+        // Получаем параметр redirect и валидируем его
+        $redirectTo = $request->query('redirect', '/lk');
+        
+        // Список разрешенных маршрутов для безопасности
+        $allowedRoutes = ['/lk', '/new', '/documents', '/profile'];
+        
+        // Проверяем, что redirect начинается с / и входит в разрешенные
+        if (!str_starts_with($redirectTo, '/') || !$this->isAllowedRoute($redirectTo, $allowedRoutes)) {
+            $redirectTo = '/lk'; // По умолчанию в ЛК
+        }
+        
+        return redirect($redirectTo)->with('success', 'Добро пожаловать, ' . $user->name . '!');
+    }
+
+    /**
+     * Проверить, разрешен ли маршрут для перенаправления
+     */
+    private function isAllowedRoute(string $route, array $allowedRoutes): bool
+    {
+        foreach ($allowedRoutes as $allowedRoute) {
+            if (str_starts_with($route, $allowedRoute)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    /**
      * Автоматическая регистрация
      */
     public function autoRegister(Request $request)

@@ -13,6 +13,10 @@ defineProps({
   documents: {
     type: Array,
     default: () => []
+  },
+  isDevelopment: {
+    type: Boolean,
+    default: false
   }
 });
 </script>
@@ -31,6 +35,7 @@ defineProps({
           :user="$page.props.auth.user"
           :balance="balance"
           :documents="documents"
+          :isDevelopment="isDevelopment"
         />
     </page-layout>
 </template> 

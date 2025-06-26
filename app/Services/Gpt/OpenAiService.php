@@ -152,7 +152,7 @@ class OpenAiService implements GptServiceInterface
 
     public function waitForRunCompletion(string $threadId, string $runId): array
     {
-        $maxAttempts = 60; // Максимум 60 попыток (5 минут при задержке 5 секунд)
+        $maxAttempts = 48; // Максимум 48 попыток (4 минуты при задержке 5 секунд)
         $attempts = 0;
 
         while ($attempts < $maxAttempts) {
@@ -182,7 +182,7 @@ class OpenAiService implements GptServiceInterface
             $attempts++;
         }
 
-        throw new \Exception('Run timeout: не удалось дождаться завершения за 5 минут');
+        throw new \Exception('Run timeout: не удалось дождаться завершения за 4 минуты (возможно OpenAI перегружен)');
     }
 
     public function getThreadMessages(string $threadId): array

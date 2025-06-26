@@ -146,6 +146,8 @@ const {
     isFullGenerationComplete,
     hasFailed,
     isApproved,
+    hasReferences,
+    isWaitingForReferences,
     getStatusText,
     startPolling,
     stopPolling
@@ -189,6 +191,20 @@ if (shouldAutoload) {
     isPollingActive.value = true;
 }
 
+// Маппинг статусов для отображения без API
+const statusTextMapping = {
+    'draft': 'Черновик',
+    'pre_generating': 'Генерируется структура...',
+    'pre_generated': 'Структура готова',
+    'pre_generation_failed': 'Ошибка генерации структуры',
+    'full_generating': 'Генерируется содержимое...',
+    'full_generated': 'Полностью готов',
+    'full_generation_failed': 'Ошибка полной генерации',
+    'in_review': 'На проверке',
+    'approved': 'Утвержден',
+    'rejected': 'Отклонен'
+};
+
 // Функция для проверки возможности возобновления отслеживания
 const canResumeTracking = () => {
     const status = currentDocument.value?.status;
@@ -217,38 +233,19 @@ const stopTracking = () => {
     });
 };
 
-// Функция для получения корректного статуса документа
+// Получить текст статуса для отображения
 const getDisplayStatusText = () => {
-    // Если есть статус из API (при автообновлении), используем его
+    // Если есть данные из API, используем их
     if (documentStatus.value) {
+        // Специальное сообщение для ожидания ссылок
+        if (isWaitingForReferences()) {
+            return 'Генерируются ссылки...';
+        }
         return getStatusText();
     }
     
-    // Если есть status_label из контроллера, используем его
-    if (currentDocument.value?.status_label) {
-        return currentDocument.value.status_label;
-    }
-    
-    // Если нет автообновления, используем статус из изначальных данных документа
-    if (currentDocument.value?.status) {
-        // Мапинг статусов для отображения
-        const statusMap = {
-            'draft': 'Черновик',
-            'pre_generating': 'Генерируется структура...',
-            'pre_generated': 'Структура готова',
-            'pre_generation_failed': 'Ошибка генерации структуры',
-            'full_generating': 'Генерируется содержимое...',
-            'full_generated': 'Полностью готов',
-            'full_generation_failed': 'Ошибка полной генерации',
-            'in_review': 'На проверке',
-            'approved': 'Утвержден',
-            'rejected': 'Отклонен'
-        };
-        
-        return statusMap[currentDocument.value.status] || currentDocument.value.status;
-    }
-    
-    return 'Неизвестно';
+    // Если нет автообновления, используем статус из исходных данных документа
+    return statusTextMapping[currentDocument.value?.status] || 'Неизвестный статус';
 };
 
 // Функции-обертки для работы без автообновления

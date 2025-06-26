@@ -20,6 +20,11 @@ class StartGenerateDocument implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     /**
+     * Максимальное время выполнения задачи в секундах
+     */
+    public $timeout = 600;
+
+    /**
      * Create a new job instance.
      */
     public function __construct(

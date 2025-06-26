@@ -12,6 +12,8 @@ use App\Http\Controllers\FilesController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PaymentTestController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\TelegramController;
+use App\Http\Controllers\TelegramLinkController;
 
 Route::get('/', function () {
     return view('v3');
@@ -79,10 +81,20 @@ Route::middleware(['auth'])->group(function () {
     // Универсальный маршрут для заказа без документа
     Route::post('/orders/process', [OrderController::class, 'processOrder'])->name('orders.process-without-document');
 
+    // Управление веб-хуками и связка с Telegram (авторизованные пользователи)
+    Route::prefix('telegram')->group(function () {
+        // Управление веб-хуками (админ)
+        Route::post('/set-webhook', [TelegramController::class, 'setWebhook'])->name('telegram.set-webhook');
+        Route::post('/delete-webhook', [TelegramController::class, 'deleteWebhook'])->name('telegram.delete-webhook');
+        Route::get('/me', [TelegramController::class, 'getMe'])->name('telegram.me');
+        
+        // Связка с Telegram
+        Route::post('/link', [TelegramLinkController::class, 'generateLink'])->name('telegram.link');
+        Route::post('/unlink', [TelegramLinkController::class, 'unlink'])->name('telegram.unlink');
+        Route::get('/status', [TelegramLinkController::class, 'status'])->name('telegram.status');
+    });
 });
 
-// Тестовая страница оплаты
-Route::get('/payment/test', [PaymentTestController::class, 'show'])->name('payment.test');
 // Страница создания документа (доступна всем, но с проверкой авторизации в компоненте)
 Route::get('/new', NewDocumentController::class)->name('documents.new');
 
@@ -90,6 +102,7 @@ Route::get('/new', NewDocumentController::class)->name('documents.new');
 Route::post('/login/auto', [App\Http\Controllers\Auth\AutoAuthController::class, 'autoLogin'])->name('login.auto');
 Route::post('/register/auto', [App\Http\Controllers\Auth\AutoAuthController::class, 'autoRegister'])->name('register.auto');
 Route::get('/logout', [App\Http\Controllers\Auth\AutoAuthController::class, 'logout'])->name('logout');
+Route::get('/auto-login/{auth_token}', [App\Http\Controllers\Auth\AutoAuthController::class, 'autoLoginByToken'])->name('auto.login');
 
 // Маршруты для платежей
 Route::get('/payment/complete/{orderId}', [PaymentController::class, 'handlePaymentComplete'])
@@ -97,5 +110,12 @@ Route::get('/payment/complete/{orderId}', [PaymentController::class, 'handlePaym
 // Обратная совместимость для заказов без документа
 Route::get('/payment/complete-without-document/{orderId}', [PaymentController::class, 'handlePaymentComplete'])
     ->name('payment.complete-without-document');
+
+// Тестовая страница оплаты
+Route::get('/payment/test', [PaymentTestController::class, 'show'])->name('payment.test');
+
+// Telegram бот роуты (веб-хук должен быть без auth middleware)
+Route::post('/telegram/webhook', [TelegramController::class, 'webhook'])->name('telegram.webhook');
+Route::get('/telegram/test-mode', [TelegramController::class, 'testMode'])->name('telegram.test-mode');
 
 require __DIR__.'/auth.php';

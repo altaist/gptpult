@@ -33,7 +33,11 @@ class User extends Authenticatable
         'balance_rub',
         'person',
         'settings',
-        'statistics'
+        'statistics',
+        'telegram_id',
+        'telegram_username',
+        'telegram_link_token',
+        'telegram_linked_at'
     ];
 
     /**

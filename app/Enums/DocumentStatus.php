@@ -111,6 +111,24 @@ enum DocumentStatus: string
     }
 
     /**
+     * Проверить, можно ли запустить полную генерацию для конкретного документа
+     * (проверяет и статус, и наличие ссылок)
+     */
+    public function canStartFullGenerationWithReferences(\App\Models\Document $document): bool
+    {
+        // Сначала проверяем статус
+        if (!$this->canStartFullGeneration()) {
+            return false;
+        }
+
+        // Затем проверяем наличие ссылок
+        $structure = $document->structure ?? [];
+        $references = $structure['references'] ?? [];
+        
+        return !empty($references);
+    }
+
+    /**
      * Проверить, завершена ли полная генерация
      */
     public function isFullyGenerated(): bool

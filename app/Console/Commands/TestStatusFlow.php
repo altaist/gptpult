@@ -143,11 +143,11 @@ class TestStatusFlow extends Command
     {
         $statusEnum = $document->status;
         
-        $this->line("   📄 {$action}");
-        $this->line("   📊 Статус: {$statusEnum->value} ({$statusEnum->getLabel()})");
-        $this->line("   🎨 Цвет: {$statusEnum->getColor()}");
-        $this->line("   🔗 Иконка: {$statusEnum->getIcon()}");
-        $this->line("   🏁 Финальный: " . ($statusEnum->isFinal() ? 'Да' : 'Нет'));
+        $this->line("   {$action}");
+        $this->line("   Статус: {$statusEnum->value} ({$statusEnum->getLabel()})");
+        $this->line("   Цвет: {$statusEnum->getColor()}");
+        $this->line("   Иконка: {$statusEnum->getIcon()}");
+        $this->line("   Финальный: " . ($statusEnum->isFinal() ? 'Да' : 'Нет'));
         $this->line('');
     }
 } 

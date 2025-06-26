@@ -12,7 +12,7 @@ class StartDocumentWorker extends Command
      *
      * @var string
      */
-    protected $signature = 'queue:work-documents {--timeout=300 : Максимальное время выполнения задачи в секундах}';
+    protected $signature = 'queue:work-documents {--timeout=600 : Максимальное время выполнения задачи в секундах}';
 
     /**
      * The console command description.
@@ -36,9 +36,9 @@ class StartDocumentWorker extends Command
         $this->line('   - Базовая генерация (StartGenerateDocument)');
         $this->line('   - Полная генерация (StartFullGenerateDocument)');
         $this->line('');
-        $this->line('📊 Логи: storage/logs/queue.log');
-        $this->line('🛑 Остановка: Ctrl+C');
+        $this->line('Для остановки нажмите Ctrl+C');
         $this->line('');
+        $this->line('Логи: storage/logs/queue.log');
 
         try {
             // Запускаем воркер с настройками для очереди документов

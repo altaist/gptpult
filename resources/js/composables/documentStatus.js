@@ -202,6 +202,20 @@ export function useDocumentStatus(documentId, options = {}) {
     }
     
     /**
+     * Проверить, есть ли ссылки в документе
+     */
+    const hasReferences = () => {
+        return status.value?.has_references || false
+    }
+    
+    /**
+     * Проверить, ожидается ли генерация ссылок
+     */
+    const isWaitingForReferences = () => {
+        return status.value?.status === 'pre_generated' && !hasReferences()
+    }
+    
+    /**
      * Проверить, произошла ли ошибка генерации
      */
     const hasFailed = () => {
@@ -260,6 +274,8 @@ export function useDocumentStatus(documentId, options = {}) {
         canStartFullGeneration,
         hasFailed,
         isApproved,
-        isFinal
+        isFinal,
+        hasReferences,
+        isWaitingForReferences
     }
 } 

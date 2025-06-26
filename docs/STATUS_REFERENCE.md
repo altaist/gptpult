@@ -138,12 +138,17 @@ $percentage = ($completionPoints / $totalPoints) * 100;
 
 ### Запуск полной генерации
 ```php
-// Условие
-$document->status === DocumentStatus::PRE_GENERATED
+// Условие: статус pre_generated И наличие ссылок
+$document->status === DocumentStatus::PRE_GENERATED && 
+!empty($document->structure['references'])
 
 // Или через метод
-$document->status->canStartFullGeneration()
+$document->status->canStartFullGenerationWithReferences($document)
 ```
+
+**Важно:** Полная генерация теперь требует:
+1. Статус документа `pre_generated`
+2. Наличие сгенерированных ссылок в структуре документа
 
 ### Утверждение документа
 ```php
@@ -158,37 +163,3 @@ $document->status === DocumentStatus::FULL_GENERATED
 !empty($document->structure['contents']) && 
 !empty($document->structure['objectives'])
 ```
-
-## 🔔 События и уведомления
-
-### События, генерируемые системой
-- `GptRequestCompleted` - при завершении любой генерации
-- `GptRequestFailed` - при ошибке генерации
-
-### Callback'и в композабле
-```javascript
-{
-    onComplete: (status) => {},        // pre_generated
-    onFullComplete: (status) => {},    // full_generated  
-    onApproved: (status) => {},        // approved
-    onError: (err) => {},              // любая ошибка
-    onStatusChange: (status) => {}     // любое изменение
-}
-```
-
-## 📋 Чек-лист для разработчика
-
-### При добавлении нового статуса:
-- [ ] Добавить в enum `DocumentStatus`
-- [ ] Обновить методы `getLabel()`, `getColor()`, `getIcon()`
-- [ ] Обновить `isFinal()` и `isGenerating()` если нужно
-- [ ] Добавить в frontend `statusMap`
-- [ ] Обновить тесты
-- [ ] Обновить документацию
-
-### При изменении логики статусов:
-- [ ] Проверить все переходы в Job'ах
-- [ ] Обновить условия в контроллерах
-- [ ] Проверить frontend логику
-- [ ] Протестировать через команды
-- [ ] Обновить API documentation 

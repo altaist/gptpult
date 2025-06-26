@@ -292,7 +292,7 @@ class DocumentController extends Controller
             'status_icon' => $statusEnum->getIcon(),
             'is_final' => $statusEnum->isFinal(),
             'is_generating' => $statusEnum->isGenerating(),
-            'can_start_full_generation' => $statusEnum->canStartFullGeneration(),
+            'can_start_full_generation' => $statusEnum->canStartFullGenerationWithReferences($document),
             'is_fully_generated' => $statusEnum->isFullyGenerated(),
             'title' => $document->title,
             'updated_at' => $document->updated_at,
@@ -301,6 +301,7 @@ class DocumentController extends Controller
             'has_detailed_contents' => !empty($document->structure['detailed_contents']),
             'has_introduction' => !empty($document->structure['introduction']),
             'has_conclusion' => !empty($document->structure['conclusion']),
+            'has_references' => !empty($document->structure['references']),
             'structure_complete' => !empty($document->structure['contents']) && !empty($document->structure['objectives']),
             'document' => $document->load('documentType'), // Добавляем полные данные документа
             'job_status' => $jobStatus // Добавляем информацию о статусе задания

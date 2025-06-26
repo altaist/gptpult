@@ -1,5 +1,48 @@
 <template>
   <div class="lk-container">
+    <!-- Карточка Telegram -->
+    <q-card class="telegram-card q-mb-md" flat bordered>
+      <q-card-section class="q-pa-lg">
+        <div class="telegram-content">
+          <div class="telegram-icon">
+            <q-icon name="fab fa-telegram" size="2rem" color="primary" />
+          </div>
+          <div class="telegram-info">
+            <div class="text-h6 text-grey-8">Telegram</div>
+            <div v-if="telegramStatus.is_linked" class="text-caption text-positive">
+              @{{ telegramStatus.telegram_username || 'Связан' }}
+            </div>
+            <div v-else class="text-caption text-grey-6">
+              Быстрый доступ к ЛК
+            </div>
+          </div>
+          <div class="telegram-actions">
+            <q-btn
+              v-if="!telegramStatus.is_linked"
+              color="primary"
+              label="Связать"
+              size="md"
+              @click="linkTelegram"
+              :loading="telegramLoading"
+              unelevated
+            />
+            <q-btn
+              v-else-if="isDevelopment"
+              color="negative"
+              label="Отвязать"
+              size="md"
+              @click="unlinkTelegram"
+              :loading="telegramLoading"
+              outline
+            />
+            <div v-else-if="telegramStatus.is_linked" class="text-caption text-grey-6">
+              Связан
+            </div>
+          </div>
+        </div>
+      </q-card-section>
+    </q-card>
+
     <!-- Карточка с балансом -->
     <q-card class="balance-card q-mb-md" flat bordered>
       <q-card-section class="q-pa-lg">
@@ -130,6 +173,28 @@
   background: white;
 }
 
+.telegram-card {
+  background: white;
+}
+
+.telegram-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.telegram-icon {
+  flex-shrink: 0;
+}
+
+.telegram-info {
+  flex: 1;
+}
+
+.telegram-actions {
+  flex-shrink: 0;
+}
+
 .balance-content {
   display: flex;
   align-items: center;
@@ -206,8 +271,15 @@
 </style>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { router } from '@inertiajs/vue3'
+import { useQuasar } from 'quasar'
+import { useTelegramMiniApp } from '@/composables/useTelegramMiniApp.js'
+
+const $q = useQuasar()
+
+// Telegram Mini App
+const { isTelegramMiniApp, telegramData, showBackButton, hideBackButton } = useTelegramMiniApp()
 
 // Пропсы для получения данных от родительского компонента
 const props = defineProps({
@@ -219,8 +291,148 @@ const props = defineProps({
   documents: {
     type: Array,
     default: () => []
+  },
+  isDevelopment: {
+    type: Boolean,
+    default: false
   }
 })
+
+// Состояние Telegram
+const telegramStatus = ref({
+  is_linked: false,
+  telegram_username: null,
+  linked_at: null
+})
+const telegramLoading = ref(false)
+
+// Загрузить статус Telegram при монтировании компонента
+onMounted(async () => {
+  await loadTelegramStatus()
+  
+  // Если это Telegram Mini App, настраиваем интерфейс
+  if (isTelegramMiniApp.value) {
+    // Можно скрыть некоторые элементы интерфейса для Mini App
+    console.log('Running in Telegram Mini App mode')
+  }
+})
+
+// Загрузить статус связи с Telegram
+const loadTelegramStatus = async () => {
+  try {
+    const response = await fetch('/telegram/status', {
+      headers: {
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+      }
+    })
+    
+    if (response.ok) {
+      telegramStatus.value = await response.json()
+    }
+  } catch (error) {
+    console.error('Ошибка при загрузке статуса Telegram:', error)
+  }
+}
+
+// Связать с Telegram
+const linkTelegram = async () => {
+  telegramLoading.value = true
+  
+  try {
+    const response = await fetch('/telegram/link', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+      }
+    })
+    
+    const data = await response.json()
+    
+    if (response.ok) {
+      // Открываем ссылку на бота в новой вкладке
+      window.open(data.bot_url, '_blank')
+      
+      $q.notify({
+        type: 'positive',
+        message: 'Перейдите в Telegram и нажмите "Старт"',
+        timeout: 5000
+      })
+      
+      // Проверяем статус через некоторое время
+      setTimeout(async () => {
+        await loadTelegramStatus()
+      }, 2000)
+      
+    } else {
+      $q.notify({
+        type: 'negative',
+        message: data.error || 'Ошибка при создании ссылки',
+        timeout: 3000
+      })
+    }
+    
+  } catch (error) {
+    console.error('Ошибка при связке с Telegram:', error)
+    $q.notify({
+      type: 'negative',
+      message: 'Ошибка при связке с Telegram',
+      timeout: 3000
+    })
+  } finally {
+    telegramLoading.value = false
+  }
+}
+
+// Отвязать от Telegram
+const unlinkTelegram = async () => {
+  $q.dialog({
+    title: 'Отвязать Telegram',
+    message: 'Вы уверены, что хотите отвязать свой Telegram аккаунт?',
+    cancel: true,
+    persistent: true
+  }).onOk(async () => {
+    telegramLoading.value = true
+    
+    try {
+      const response = await fetch('/telegram/unlink', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+      })
+      
+      const data = await response.json()
+      
+      if (response.ok) {
+        $q.notify({
+          type: 'positive',
+          message: 'Telegram успешно отвязан',
+          timeout: 3000
+        })
+        
+        await loadTelegramStatus()
+      } else {
+        $q.notify({
+          type: 'negative',
+          message: data.error || 'Ошибка при отвязке Telegram',
+          timeout: 3000
+        })
+      }
+      
+    } catch (error) {
+      console.error('Ошибка при отвязке Telegram:', error)
+      $q.notify({
+        type: 'negative',
+        message: 'Ошибка при отвязке Telegram',
+        timeout: 3000
+      })
+    } finally {
+      telegramLoading.value = false
+    }
+  })
+}
 
 // Функция для перехода к документу
 const viewDocument = (documentId) => {

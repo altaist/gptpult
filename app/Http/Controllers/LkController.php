@@ -39,6 +39,7 @@ class LkController extends Controller
         return Inertia::render('Lk', [
             'balance' => $balance,
             'documents' => $documents,
+            'isDevelopment' => app()->environment(['local', 'testing']),
         ]);
     }
 } 

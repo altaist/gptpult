@@ -19,12 +19,19 @@ class DocumentGenerationController extends Controller
     {
         $this->authorize('update', $document);
 
-        // Проверяем, можно ли запустить полную генерацию
-        if (!$document->status->canStartFullGeneration()) {
+        // Проверяем, можно ли запустить полную генерацию (включая проверку ссылок)
+        if (!$document->status->canStartFullGenerationWithReferences($document)) {
+            $structure = $document->structure ?? [];
+            $hasReferences = !empty($structure['references']);
+            
             return response()->json([
-                'message' => 'Документ не готов к полной генерации',
+                'message' => $hasReferences 
+                    ? 'Документ не готов к полной генерации' 
+                    : 'Документ не готов к полной генерации: ожидается завершение генерации ссылок',
                 'current_status' => $document->status->value,
-                'required_status' => DocumentStatus::PRE_GENERATED->value
+                'required_status' => DocumentStatus::PRE_GENERATED->value,
+                'has_references' => $hasReferences,
+                'references_required' => true
             ], 422);
         }
 
@@ -64,13 +71,14 @@ class DocumentGenerationController extends Controller
             'status_icon' => $statusEnum->getIcon(),
             'is_generating' => $statusEnum->isGenerating(),
             'is_final' => $statusEnum->isFinal(),
-            'can_start_full_generation' => $statusEnum->canStartFullGeneration(),
+            'can_start_full_generation' => $statusEnum->canStartFullGenerationWithReferences($document),
             'is_fully_generated' => $statusEnum->isFullyGenerated(),
             'progress' => [
                 'has_basic_structure' => !empty($structure['contents']) && !empty($structure['objectives']),
                 'has_detailed_contents' => !empty($structure['detailed_contents']),
                 'has_introduction' => !empty($structure['introduction']),
                 'has_conclusion' => !empty($structure['conclusion']),
+                'has_references' => !empty($structure['references']),
                 'completion_percentage' => $this->calculateCompletionPercentage($structure, $statusEnum)
             ]
         ]);
@@ -82,24 +90,34 @@ class DocumentGenerationController extends Controller
     private function calculateCompletionPercentage(array $structure, DocumentStatus $status): int
     {
         $completionPoints = 0;
-        $totalPoints = 10;
+        $totalPoints = 12; // Увеличиваем общее количество баллов для учета ссылок
 
-        // Базовая структура (40% от общего)
-        if (!empty($structure['contents'])) $completionPoints += 2;
-        if (!empty($structure['objectives'])) $completionPoints += 2;
-
-        // Полная генерация (60% от общего)
-        if (!empty($structure['detailed_contents'])) $completionPoints += 3;
-        if (!empty($structure['introduction'])) $completionPoints += 1.5;
-        if (!empty($structure['conclusion'])) $completionPoints += 1.5;
-
-        // Бонус за финальные статусы
-        if ($status === DocumentStatus::FULL_GENERATED) {
-            $completionPoints = $totalPoints; // 100%
-        } elseif ($status === DocumentStatus::PRE_GENERATED) {
-            $completionPoints = min($completionPoints, 4); // Максимум 40% без полной генерации
+        // Базовая структура (30%)
+        if (!empty($structure['contents'])) {
+            $completionPoints += 2;
+        }
+        if (!empty($structure['objectives'])) {
+            $completionPoints += 1;
+        }
+        
+        // Ссылки (15%)
+        if (!empty($structure['references'])) {
+            $completionPoints += 2;
         }
 
-        return (int) round(($completionPoints / $totalPoints) * 100);
+        // Полная генерация (55%)
+        if (!empty($structure['detailed_contents'])) {
+            $completionPoints += 4;
+        }
+        if (!empty($structure['introduction'])) {
+            $completionPoints += 1.5;
+        }
+        if (!empty($structure['conclusion'])) {
+            $completionPoints += 1.5;
+        }
+
+        $percentage = min(100, round(($completionPoints / $totalPoints) * 100));
+        
+        return $percentage;
     }
 } 

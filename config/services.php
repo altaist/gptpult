@@ -55,4 +55,11 @@ return [
         'default_model' => env('ANTHROPIC_DEFAULT_MODEL', 'claude-3-opus-20240229'),
     ],
 
+    'telegram' => [
+        'bot_token' => env('TELEGRAM_BOT_TOKEN'),
+        'webhook_url' => env('TELEGRAM_WEBHOOK_URL'),
+        'bot_username' => env('TELEGRAM_BOT_USERNAME'),
+        'test_app_url' => env('TELEGRAM_TEST_APP_URL', 'http://127.0.0.1:8000'),
+    ],
+
 ];

@@ -13,7 +13,26 @@
                     <div class="col-6">
                         <div class="text-subtitle2">Статус</div>
                         <div>
-                            {{ statusText }}
+                            <q-item-section side>
+                                <q-icon
+                                    :name="documentStatus?.status_icon || getDefaultIcon()"
+                                    :color="documentStatus?.status_color || getDefaultColor()"
+                                    size="sm"
+                                />
+                            </q-item-section>
+                            
+                            <q-item-section>
+                                <q-item-label class="text-weight-medium">
+                                    {{ statusText }}
+                                </q-item-label>
+                                <q-item-label 
+                                    v-if="documentStatus?.status === 'pre_generated' && !documentStatus?.has_references"
+                                    caption 
+                                    class="text-warning"
+                                >
+                                    Ожидается завершение генерации ссылок
+                                </q-item-label>
+                            </q-item-section>
                         </div>
                     </div>
                 </div>
@@ -242,6 +261,25 @@ const shouldShowReferencesLoading = computed(() => {
     // Показываем загрузку если есть содержание, но нет ссылок, и не генерируется
     return hasContents && !hasReferences && !isCurrentlyGenerating;
 });
+
+// Функции для получения иконки и цвета по умолчанию
+const getDefaultIcon = () => {
+    if (props.isGenerating) return 'sync';
+    if (props.isPreGenerationComplete) return 'check_circle';
+    if (props.isFullGenerationComplete) return 'task_alt';
+    if (props.isApproved) return 'verified';
+    if (props.hasFailed) return 'error';
+    return 'radio_button_unchecked';
+};
+
+const getDefaultColor = () => {
+    if (props.isGenerating) return 'primary';
+    if (props.isPreGenerationComplete) return 'positive';
+    if (props.isFullGenerationComplete) return 'green';
+    if (props.isApproved) return 'green-10';
+    if (props.hasFailed) return 'negative';
+    return 'grey';
+};
 
 function openEditDialog(type, title, value) {
     editDialog.type = type;
