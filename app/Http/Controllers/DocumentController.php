@@ -207,7 +207,8 @@ class DocumentController extends Controller
         try {
             $validated = $request->validate([
                 'document_type_id' => ['required', 'exists:document_types,id'],
-                'topic' => ['required', 'string', 'max:255'],
+                'topic' => ['required', 'string', 'min:10', 'max:255'],
+                'pages_num' => ['nullable', 'integer', 'min:3', 'max:25'],
                 'test' => ['nullable', 'boolean'], // Параметр для тестирования с фейковыми данными
             ]);
 
@@ -217,6 +218,7 @@ class DocumentController extends Controller
                     'user_id' => Auth::id(),
                     'document_type_id' => $validated['document_type_id'],
                     'title' => $validated['topic'],
+                    'pages_num' => $validated['pages_num'] ?? 10,
                     'status' => 'pre_generating', // Сразу устанавливаем статус генерации
                 ]);
 
@@ -231,6 +233,7 @@ class DocumentController extends Controller
                     'user_id' => Auth::id(),
                     'document_type_id' => $validated['document_type_id'],
                     'title' => $validated['topic'],
+                    'pages_num' => $validated['pages_num'] ?? 10,
                     'status' => 'pre_generating', // Сразу устанавливаем статус генерации
                 ]);
 
