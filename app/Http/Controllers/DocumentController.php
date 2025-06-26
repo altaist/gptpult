@@ -106,7 +106,7 @@ class DocumentController extends Controller
         $orderPrice = (float) ($order?->amount ?? \App\Services\Orders\OrderService::DEFAULT_PRICE);
         $balance = $document->user->balance_rub ?? 0;
 
-        return Inertia::render('documents/ShowDocument', [
+        return Inertia::render('documents/ShowDocumentModern', [
             'document' => array_merge(
                 $document->load('documentType')->toArray(),
                 [
@@ -117,7 +117,8 @@ class DocumentController extends Controller
                 ]
             ),
             'balance' => $balance,
-            'orderPrice' => $orderPrice
+            'orderPrice' => $orderPrice,
+            'user' => $document->user->only(['id', 'name', 'email', 'telegram_id', 'telegram_username'])
         ]);
     }
 
