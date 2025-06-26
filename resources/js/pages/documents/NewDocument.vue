@@ -1,6 +1,6 @@
 <template>
     <page-layout
-        title="GPT PULT"
+        title="Создание документа"
         :auto-auth="true"
     >
     <Head title="Создание документа" />

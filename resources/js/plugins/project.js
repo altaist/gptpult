@@ -1,6 +1,7 @@
-
 import PageLayout from '@/components/shared/PageLayout.vue';
+import PageLayoutModern from '@/components/shared/PageLayoutModern.vue';
 import PageHeader from '@/components/shared/PageHeader.vue';
+import PageHeaderModern from '@/components/shared/PageHeaderModern.vue';
 import PageFooter from '@/components/shared/PageFooter.vue';
 import PageSection from '@/components/shared/PageSection.vue';
 import PageTitle from '@/components/shared/PageTitle.vue';
@@ -12,9 +13,15 @@ import Lorem from '@/components/shared/Lorem.vue';
 export const ProjectPlugin = {
     install: (app, options) => {
 
-
-        app.component("page-layout", PageLayout);
-        app.component("page-header", PageHeader);
+        // Новые современные компоненты как основные
+        app.component("page-layout", PageLayoutModern);
+        app.component("page-header", PageHeaderModern);
+        
+        // Старые компоненты как legacy (для обратной совместимости)
+        app.component("page-layout-legacy", PageLayout);
+        app.component("page-header-legacy", PageHeader);
+        
+        // Остальные компоненты без изменений
         app.component("page-title", PageTitle);
         app.component("page-footer", PageFooter);
         app.component("page-section", PageSection);

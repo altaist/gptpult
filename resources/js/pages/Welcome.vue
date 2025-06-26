@@ -1,6 +1,6 @@
 <template>
     <page-layout 
-        title="ПРИЛОЖЕНИЕ"
+        title="Главная"
         footer-text="Контакты"
         :left-btn-go-back="true"
         :auto-auth="true"

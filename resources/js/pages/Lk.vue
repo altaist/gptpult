@@ -25,7 +25,7 @@ defineProps({
     <Head title="Личный кабинет" />
 
     <page-layout 
-        title="GPT Пульт"
+        title="Личный кабинет"
         :auto-auth="true"
         left-btn-icon=""
         :left-btn-go-back="false"
