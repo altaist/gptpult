@@ -141,6 +141,19 @@ class DocumentService
     }
 
     /**
+     * Обновляет заголовок документа
+     *
+     * @param Document $document
+     * @param string $title
+     * @return Document
+     */
+    public function updateTitle(Document $document, string $title): Document
+    {
+        $document->update(['title' => $title]);
+        return $document->fresh();
+    }
+
+    /**
      * Обновляет цели документа
      *
      * @param Document $document

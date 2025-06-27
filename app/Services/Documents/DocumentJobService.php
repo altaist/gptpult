@@ -8,6 +8,8 @@ use App\Jobs\StartFullGenerateDocument;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use App\Services\Orders\OrderService;
+use App\Services\Orders\TransitionService;
 
 class DocumentJobService
 {
@@ -44,13 +46,25 @@ class DocumentJobService
      * Запустить полную генерацию документа
      *
      * @param Document $document
+     * @param TransitionService|null $transitionService
      * @return void
      * @throws \Exception если уже есть активное задание
      */
-    public function startFullGeneration(Document $document): void
+    public function startFullGeneration(Document $document, TransitionService $transitionService = null): void
     {
         if ($this->hasActiveJob($document)) {
             throw new \Exception('Для этого документа уже запущена задача генерации');
+        }
+
+        if ($document->status !== 'full_generation_failed' && $transitionService) {
+            $user = $document->user;
+            $amount = OrderService::FULL_GENERATION_PRICE;
+
+            $transitionService->debitUser(
+                $user,
+                $amount,
+                "Оплата за полную генерацию документа #{$document->id}"
+            );
         }
 
         Log::info('Запуск полной генерации документа', [

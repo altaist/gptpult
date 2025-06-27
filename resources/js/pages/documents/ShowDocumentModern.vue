@@ -7,7 +7,7 @@
         <div class="modern-container">
             <!-- Креативный блок загрузки -->
             <div 
-                v-if="(shouldAutoload || isPollingActive) && getIsGenerating()"
+                v-if="getIsGenerating()"
                 class="generation-container"
             >
                 <div class="generation-card">
@@ -15,7 +15,7 @@
                     <div class="generation-header">
                         <h2 class="generation-title">{{ getDisplayStatusText() }}</h2>
                         <p class="generation-subtitle">
-                            {{ currentDocument.value?.status === 'full_generating' ? 
+                            {{ currentDocument.status === 'full_generating' ? 
                                 'Создаем полное содержание вашего документа' : 
                                 'Формируем структуру и план документа' 
                             }}
@@ -64,7 +64,7 @@
                     <!-- Время ожидания с анимированными точками -->
                     <div class="time-estimate">
                         <q-icon name="schedule" class="time-icon" />
-                        <span>Примерное время: {{ currentDocument.value?.status === 'full_generating' ? '5-8' : '1-3' }} минут</span>
+                        <span>Примерное время: {{ currentDocument.status === 'full_generating' ? '5-8' : '1-3' }} минут</span>
                     </div>
 
                     <!-- Советы пользователю -->
@@ -101,6 +101,8 @@
                     :is-pre-generation-complete="isPreGenerationComplete()"
                     :is-full-generation-complete="getIsFullGenerationComplete()"
                     :has-failed="hasFailed()"
+                    :editable="canEdit"
+                    @updated="handleDocumentUpdate"
                 />
 
                 <!-- Основной контент -->
@@ -124,73 +126,19 @@
                     </div>
 
                     <!-- Правая колонка с действиями -->
-                    <div class="actions-column">
-                        <!-- Если не хватает баланса — панель оплаты -->
-                        <div v-if="canPay" class="action-card payment-card">
-                            <DocumentPaymentPanel
-                                :amount="orderPrice"
-                                :document="currentDocument"
-                            />
-                        </div>
-
-                        <!-- Если хватает баланса — панель кнопок действий -->
-                        <div v-else class="action-card actions-card">
-                            <div class="actions-header">
-                                <h3 class="actions-title">Действия с документом</h3>
-                                <p class="actions-subtitle">Выберите следующий шаг</p>
-                            </div>
-                            
-                            <div class="actions-list">
-                                <!-- Кнопка запуска полной генерации -->
-                                <div v-if="getCanStartFullGeneration()" class="action-item">
-                                    <div class="action-info">
-                                        <h4 class="action-name">Завершить создание</h4>
-                                        <p class="action-description">Создать полное содержание документа с деталями</p>
-                                    </div>
-                                    <q-btn
-                                        label="Создать"
-                                        color="primary"
-                                        size="lg"
-                                        :loading="isStartingFullGeneration"
-                                        @click="startFullGeneration"
-                                        class="action-btn primary-btn"
-                                        unelevated
-                                        no-caps
-                                    />
-                                </div>
-                                
-                                <!-- Кнопка скачивания Word - ТОЛЬКО для full_generated -->
-                                <div v-if="getIsFullGenerationComplete()" class="action-item">
-                                    <div class="action-info">
-                                        <h4 class="action-name">Скачать документ</h4>
-                                        <p class="action-description">Получить готовый документ в формате Word</p>
-                                    </div>
-                                    <q-btn
-                                        label="Скачать"
-                                        color="positive"
-                                        size="lg"
-                                        :loading="isDownloading"
-                                        @click="downloadWord"
-                                        class="action-btn success-btn"
-                                        icon="download"
-                                        unelevated
-                                        no-caps
-                                    />
-                                </div>
-
-                                <!-- Информационная карточка если нет доступных действий -->
-                                <div v-if="!getCanStartFullGeneration() && !getIsFullGenerationComplete()" class="info-item">
-                                    <q-icon name="info" class="info-icon" />
-                                    <div class="info-content">
-                                        <h4 class="info-title">Ожидание</h4>
-                                        <p class="info-text">
-                                            {{ getIsGenerating() ? 'Документ генерируется...' : 'Документ готов к просмотру' }}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <DocumentActions
+                        :document="currentDocument"
+                        :balance="balance"
+                        :order-price="orderPrice"
+                        :can-start-full-generation="getCanStartFullGeneration()"
+                        :is-full-generation-complete="getIsFullGenerationComplete()"
+                        :is-generating="getIsGenerating()"
+                        :is-starting-full-generation="isStartingFullGeneration"
+                        :is-downloading="isDownloading"
+                        @start-full-generation="startFullGeneration"
+                        @download-word="downloadWord"
+                        @retry-generation="retryGeneration"
+                    />
                 </div>
             </template>
         </div>
@@ -208,6 +156,7 @@ import { apiClient } from '@/composables/api';
 import { router } from '@inertiajs/vue3';
 import DocumentPaymentPanel from '@/modules/gpt/components/DocumentPaymentPanel.vue';
 import DocumentHeader from '@/modules/gpt/components/DocumentHeader.vue';
+import DocumentActions from '@/modules/gpt/components/DocumentActions.vue';
 
 const $q = useQuasar();
 const isDownloading = ref(false);
@@ -286,6 +235,9 @@ const {
             // Обновляем текущий документ когда приходят новые данные
             currentDocument.value = newDocument;
             console.log('Документ обновлен:', newDocument);
+            
+            // Проверяем нужно ли перейти на загрузочный экран
+            checkAndRedirectToLoadingScreen();
         },
         onError: (err) => {
             $q.notify({
@@ -386,11 +338,36 @@ const animateRandomKeyPress = () => {
     }
 };
 
-// Запускаем анимации при монтировании
+// Автоматически переходим на загрузочный экран если документ генерируется
+const checkAndRedirectToLoadingScreen = () => {
+    const status = currentDocument.value?.status;
+    // Проверяем если документ генерируется и мы не на загрузочном экране
+    if ((status === 'full_generating' || status === 'pre_generating') && !shouldAutoload) {
+        console.log('Документ генерируется, переходим на загрузочный экран...');
+        // Если документ генерируется, но мы не на загрузочном экране - переходим туда
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.set('autoload', '1');
+        
+        // Используем timeout чтобы дать возможность завершиться текущим операциям
+        setTimeout(() => {
+            window.location.href = currentUrl.toString();
+        }, 100);
+    }
+};
+
+// Проверяем при монтировании компонента
 onMounted(() => {
-    if ((shouldAutoload || isPollingActive.value) && getIsGenerating()) {
+    checkAndRedirectToLoadingScreen();
+    
+    if (getIsGenerating()) {
         initTypewriterKeys();
         startTypewriterAnimation();
+        
+        // Включаем отслеживание если оно ещё не включено
+        if (!isPollingActive.value && !shouldAutoload) {
+            isPollingActive.value = true;
+            resumeTracking();
+        }
     }
 });
 
@@ -507,6 +484,14 @@ const startFullGeneration = async () => {
             message: response.message || 'Полная генерация запущена',
             position: 'top'
         });
+
+        // Небольшая задержка для завершения локального обновления
+        setTimeout(() => {
+            // Перенаправляем на загрузочный экран с параметром autoload
+            const currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.set('autoload', '1');
+            window.location.href = currentUrl.toString();
+        }, 200);
         
     } catch (error) {
         $q.notify({
@@ -543,6 +528,60 @@ const downloadWord = async () => {
         });
     } finally {
         isDownloading.value = false;
+    }
+};
+
+// Обработчик повторной генерации
+const retryGeneration = async () => {
+    try {
+        const status = currentDocument.value?.status;
+        
+        // Определяем какую генерацию нужно повторить
+        if (status === 'pre_generation_failed') {
+            // Повторяем базовую генерацию
+            isStartingFullGeneration.value = true;
+            
+            const response = await apiClient.post(route('documents.start-generation', props.document.id));
+            
+            // Обновляем статус документа локально
+            currentDocument.value.status = 'pre_generating';
+            currentDocument.value.status_label = 'Генерируется структура...';
+            
+            $q.notify({
+                type: 'positive',
+                message: 'Повторная генерация структуры запущена',
+                position: 'top'
+            });
+            
+        } else if (status === 'full_generation_failed') {
+            // Повторяем полную генерацию
+            isStartingFullGeneration.value = true;
+            
+            const response = await apiClient.post(route('documents.generate-full', props.document.id));
+            
+            // Обновляем статус документа локально
+            currentDocument.value.status = 'full_generating';
+            currentDocument.value.status_label = 'Генерируется содержимое...';
+            
+            $q.notify({
+                type: 'positive',
+                message: 'Повторная полная генерация запущена',
+                position: 'top'
+            });
+        }
+        
+        // Запускаем отслеживание статуса
+        isPollingActive.value = true;
+        resumeTracking();
+        
+    } catch (error) {
+        $q.notify({
+            type: 'negative',
+            message: error.response?.data?.message || 'Ошибка при запуске повторной генерации',
+            position: 'top'
+        });
+    } finally {
+        isStartingFullGeneration.value = false;
     }
 };
 

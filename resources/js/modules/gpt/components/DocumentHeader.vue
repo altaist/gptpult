@@ -2,8 +2,20 @@
     <div class="document-header">
         <div class="header-content">
             <div class="document-info-section">
-                <!-- Заголовок документа -->
-                <h1 class="document-main-title">{{ document?.topic || document?.title || 'Документ без названия' }}</h1>
+                <!-- Заголовок документа с кнопкой редактирования -->
+                <h1 class="document-main-title">
+                    {{ document?.title || document?.topic || 'Документ без названия' }}
+                    <q-btn 
+                        v-if="editable"
+                        icon="edit" 
+                        flat 
+                        round 
+                        size="sm" 
+                        @click="openEditTitleDialog"
+                        class="edit-title-btn"
+                        color="white"
+                    />
+                </h1>
                 
                 <!-- Информация о документе -->
                 <div class="document-details">
@@ -12,32 +24,92 @@
                         <span class="detail-value">{{ document?.document_type?.name || 'Не указан' }}</span>
                     </div>
                     
-                    <div class="detail-item">
-                        <span class="detail-value" :class="getStatusClass()">{{ getDisplayStatusText() }}</span>
-                    </div>
-                    
                     <div v-if="document?.pages_num" class="detail-item">
                         <q-icon name="article" class="detail-icon" />
-                        <span class="detail-label">Объем:</span>
                         <span class="detail-value">{{ document.pages_num }} страниц</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <q-icon name="schedule" class="detail-icon" />
+                        <span class="detail-value">{{ formatCreatedDate() }}</span>
                     </div>
                 </div>
             </div>
             
-            <!-- Статус прогресса -->
-            <div class="progress-section">
-                <div class="progress-circle" :class="getProgressClass()">
-                    <div class="progress-inner">
-                        <q-icon :name="getProgressIcon()" class="progress-icon" />
+            <!-- Современный статус блок -->
+            <div class="status-section">
+                <div class="status-card">
+                    <div class="status-header">
+                        <span class="status-label">Статус</span>
+                    </div>
+                    <div class="status-content">
+                        <span class="status-text">{{ getDisplayStatusText() }}</span>
+                        <div 
+                            v-if="documentStatus?.status === 'pre_generated' && !documentStatus?.has_references"
+                            class="status-note"
+                        >
+                            Ожидается завершение генерации ссылок
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Диалог редактирования заголовка -->
+    <q-dialog v-model="editTitleDialog.show" persistent>
+        <q-card class="edit-dialog">
+            <q-card-section class="edit-dialog-header">
+                <div class="edit-dialog-title">
+                    <q-icon name="edit" class="edit-dialog-icon" />
+                    Редактировать заголовок
+                </div>
+                <q-btn icon="close" flat round dense v-close-popup class="close-btn" />
+            </q-card-section>
+
+            <q-separator class="dialog-separator" />
+
+            <q-card-section class="edit-dialog-content">
+                <CustomInput
+                    v-model="editTitleDialog.value"
+                    type="text"
+                    label="Заголовок документа"
+                    :autofocus="true"
+                    placeholder="Введите заголовок документа..."
+                    :maxlength="30"
+                    :counter="true"
+                    :error="titleError"
+                />
+            </q-card-section>
+
+            <q-separator class="dialog-separator" />
+
+            <q-card-actions class="edit-dialog-actions">
+                <q-btn 
+                    flat 
+                    label="Отмена" 
+                    @click="closeEditTitleDialog" 
+                    class="cancel-btn"
+                    no-caps
+                />
+                <q-btn 
+                    unelevated 
+                    label="Сохранить" 
+                    color="primary" 
+                    @click="saveTitleEdit" 
+                    :loading="editTitleDialog.loading" 
+                    class="save-btn"
+                    no-caps
+                />
+            </q-card-actions>
+        </q-card>
+    </q-dialog>
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, ref, reactive } from 'vue';
+import { useQuasar } from 'quasar';
+import CustomInput from '@/components/shared/CustomInput.vue';
 
 const props = defineProps({
     document: {
@@ -67,8 +139,24 @@ const props = defineProps({
     hasFailed: {
         type: Boolean,
         default: false
+    },
+    editable: {
+        type: Boolean,
+        default: false
     }
 });
+
+const emit = defineEmits(['updated']);
+const $q = useQuasar();
+
+// Состояние диалога редактирования заголовка
+const editTitleDialog = reactive({
+    show: false,
+    value: '',
+    loading: false
+});
+
+const titleError = ref('');
 
 // Маппинг статусов для отображения без API
 const statusTextMapping = {
@@ -95,34 +183,111 @@ const getDisplayStatusText = () => {
 };
 
 const getStatusClass = () => {
-    const status = props.document?.status;
-    switch (status) {
-        case 'draft': return 'status-draft';
-        case 'pre_generating':
-        case 'full_generating': return 'status-generating';
-        case 'pre_generated':
-        case 'full_generated': return 'status-completed';
-        case 'pre_generation_failed':
-        case 'full_generation_failed': return 'status-failed';
-        case 'in_review': return 'status-review';
-        case 'approved': return 'status-approved';
-        case 'rejected': return 'status-rejected';
-        default: return 'status-unknown';
+    if (props.isGenerating) return 'status-generating';
+    if (props.isPreGenerationComplete) return 'status-pre-complete';
+    if (props.isFullGenerationComplete) return 'status-complete';
+    if (props.hasFailed) return 'status-failed';
+    return 'status-default';
+};
+
+const getStatusIcon = () => {
+    if (props.isGenerating) return 'sync';
+    if (props.isPreGenerationComplete) return 'check_circle';
+    if (props.isFullGenerationComplete) return 'task_alt';
+    if (props.hasFailed) return 'error';
+    return 'radio_button_unchecked';
+};
+
+const formatCreatedDate = () => {
+    if (!props.document?.created_at) return 'Не указано';
+    
+    const date = new Date(props.document.created_at);
+    const now = new Date();
+    const diffInMs = now - date;
+    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+    const diffInDays = Math.floor(diffInHours / 24);
+    
+    if (diffInHours < 1) {
+        const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+        return diffInMinutes < 1 ? 'Только что' : `${diffInMinutes} мин. назад`;
+    } else if (diffInHours < 24) {
+        return `${diffInHours} ч. назад`;
+    } else if (diffInDays < 7) {
+        return `${diffInDays} дн. назад`;
+    } else {
+        return date.toLocaleDateString('ru-RU', {
+            day: 'numeric',
+            month: 'short',
+            year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+        });
     }
 };
 
-const getProgressIcon = () => {
-    if (props.isGenerating) return 'autorenew';
-    if (props.isFullGenerationComplete) return 'check';
-    if (props.hasFailed) return 'close';
-    return 'hourglass_empty';
+// Функции для редактирования заголовка
+const openEditTitleDialog = () => {
+    editTitleDialog.value = props.document?.title || props.document?.topic || '';
+    editTitleDialog.show = true;
+    editTitleDialog.loading = false;
+    titleError.value = '';
 };
 
-const getProgressClass = () => {
-    if (props.isGenerating) return 'progress-generating';
-    if (props.isFullGenerationComplete) return 'progress-completed';
-    if (props.hasFailed) return 'progress-failed';
-    return 'progress-pending';
+const closeEditTitleDialog = () => {
+    editTitleDialog.show = false;
+    editTitleDialog.value = '';
+    editTitleDialog.loading = false;
+    titleError.value = '';
+};
+
+const saveTitleEdit = async () => {
+    // Валидация длины заголовка
+    if (!editTitleDialog.value.trim()) {
+        titleError.value = 'Заголовок не может быть пустым';
+        return;
+    }
+    
+    if (editTitleDialog.value.length > 30) {
+        titleError.value = 'Заголовок не может быть длиннее 30 символов';
+        return;
+    }
+    
+    titleError.value = '';
+    editTitleDialog.loading = true;
+    
+    try {
+        const url = route('documents.update-title', props.document.id);
+        const data = { title: editTitleDialog.value.trim() };
+
+        await fetch(url, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify(data)
+        });
+
+        $q.notify({
+            type: 'positive',
+            message: 'Заголовок успешно обновлен'
+        });
+
+        closeEditTitleDialog();
+        emit('updated');
+        
+        // Перезагружаем страницу для обновления данных
+        setTimeout(() => {
+            location.reload();
+        }, 500);
+
+    } catch (error) {
+        console.error('Ошибка при сохранении заголовка:', error);
+        $q.notify({
+            type: 'negative',
+            message: 'Ошибка при сохранении заголовка'
+        });
+    } finally {
+        editTitleDialog.loading = false;
+    }
 };
 </script>
 
@@ -173,12 +338,28 @@ const getProgressClass = () => {
     margin: 0 0 20px 0;
     line-height: 1.2;
     color: white;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.edit-title-btn {
+    opacity: 0.8;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    margin-left: 8px;
+}
+
+.edit-title-btn:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(1.05);
 }
 
 .document-details {
     display: flex;
     flex-wrap: wrap;
-    gap: 32px;
+    gap: 16px;
     align-items: center;
 }
 
@@ -200,75 +381,94 @@ const getProgressClass = () => {
     flex-shrink: 0;
 }
 
-.detail-label {
-    font-weight: 500;
-    opacity: 0.9;
-}
-
 .detail-value {
     font-weight: 700;
 }
 
-/* Статусы */
-.status-draft { color: #fbbf24; }
-.status-generating { color: #60a5fa; }
-.status-completed { color: #34d399; }
-.status-failed { color: #f87171; }
-.status-review { color: #a78bfa; }
-.status-approved { color: #34d399; }
-.status-rejected { color: #f87171; }
-.status-unknown { color: #d1d5db; }
-
-/* Прогресс секция */
-.progress-section {
+/* Современный статус блок */
+.status-section {
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 }
 
-.progress-circle {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    background: rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(10px);
+.status-card {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
     transition: all 0.3s ease;
+    min-width: 200px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
-.progress-inner {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.9);
+.status-card:hover {
+    background: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.status-header {
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 12px;
+    margin-bottom: 8px;
 }
 
-.progress-icon {
-    font-size: 28px;
-    color: #4f46e5;
+.status-main-icon {
+    font-size: 24px;
+    flex-shrink: 0;
 }
 
-.progress-generating .progress-icon {
+.status-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.status-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.status-text {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e293b;
+    line-height: 1.3;
+}
+
+.status-note {
+    font-size: 11px;
+    color: #fbbf24;
+    font-weight: 500;
+    line-height: 1.2;
+}
+
+/* Цвета статусов */
+.status-generating {
+    color: #60a5fa !important;
     animation: spin 2s linear infinite;
-    color: #3b82f6;
 }
 
-.progress-completed .progress-icon {
-    color: #10b981;
+.status-pre-complete {
+    color: #34d399 !important;
 }
 
-.progress-failed .progress-icon {
-    color: #ef4444;
+.status-complete {
+    color: #10b981 !important;
 }
 
-.progress-pending .progress-icon {
-    color: #f59e0b;
+.status-failed {
+    color: #f87171 !important;
+}
+
+.status-default {
+    color: rgba(255, 255, 255, 0.8) !important;
 }
 
 @keyframes spin {
@@ -301,6 +501,11 @@ const getProgressClass = () => {
     .detail-icon {
         font-size: 16px;
     }
+    
+    .status-card {
+        min-width: 180px;
+        padding: 16px;
+    }
 }
 
 @media (max-width: 768px) {
@@ -312,38 +517,282 @@ const getProgressClass = () => {
     .document-main-title {
         font-size: 24px;
         margin-bottom: 16px;
+        flex-wrap: wrap;
+        justify-content: center;
+        text-align: center;
+        word-break: break-word;
+        overflow-wrap: break-word;
+        hyphens: auto;
+        max-width: 100%;
+        line-height: 1.3;
+    }
+    
+    .edit-title-btn {
+        margin-left: 4px;
+        margin-top: 4px;
     }
     
     .document-details {
         flex-direction: column;
         gap: 12px;
         width: 100%;
+        align-items: stretch;
     }
     
     .detail-item {
         width: 100%;
+        min-height: 48px;
         justify-content: center;
-        padding: 8px 16px;
+        padding: 12px 16px;
         font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+        box-sizing: border-box;
     }
     
-    .progress-section {
+    .detail-icon {
+        font-size: 18px;
+        min-width: 18px;
+        flex-shrink: 0;
+    }
+    
+    .detail-value {
+        text-align: center;
+        flex: 1;
+        word-break: break-word;
+        line-height: 1.3;
+    }
+    
+    .status-card {
+        width: 100%;
+        min-width: auto;
+        text-align: center;
+        min-height: 80px;
+        display: flex;
         flex-direction: column;
-        gap: 12px;
+        justify-content: center;
     }
     
-    .progress-circle {
-        width: 60px;
-        height: 60px;
+    .status-header {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .document-header {
+        padding: 16px 20px;
+        border-radius: 16px;
     }
     
-    .progress-inner {
-        width: 45px;
-        height: 45px;
+    .document-main-title {
+        font-size: 20px;
+        margin-bottom: 12px;
+        max-width: 100%;
+        line-height: 1.2;
+        word-break: break-word;
+        overflow-wrap: break-word;
+        -webkit-line-clamp: 3;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
     }
     
-    .progress-icon {
-        font-size: 22px;
+    .edit-title-btn {
+        margin-left: 2px;
+        margin-top: 2px;
+        transform: scale(0.9);
+    }
+    
+    .document-details {
+        gap: 10px;
+    }
+    
+    .detail-item {
+        min-height: 44px;
+        padding: 10px 14px;
+        font-size: 13px;
+        gap: 8px;
+        border-radius: 10px;
+    }
+    
+    .detail-icon {
+        font-size: 16px;
+        min-width: 16px;
+    }
+    
+    .detail-value {
+        font-size: 13px;
+        font-weight: 600;
+    }
+    
+    .status-card {
+        min-height: 70px;
+        padding: 14px 16px;
+        border-radius: 16px;
+    }
+    
+    .status-main-icon {
+        font-size: 20px;
+    }
+    
+    .status-text {
+        font-size: 14px;
+        line-height: 1.2;
+    }
+    
+    .status-note {
+        font-size: 10px;
+        line-height: 1.1;
+    }
+    
+    .status-label {
+        font-size: 11px;
+    }
+}
+
+/* Дополнительные стили для очень маленьких экранов */
+@media (max-width: 360px) {
+    .document-main-title {
+        font-size: 18px;
+        -webkit-line-clamp: 2;
+        line-height: 1.1;
+    }
+    
+    .detail-item {
+        min-height: 40px;
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+    
+    .detail-icon {
+        font-size: 14px;
+        min-width: 14px;
+    }
+    
+    .detail-value {
+        font-size: 12px;
+    }
+    
+    .status-card {
+        min-height: 60px;
+        padding: 12px 14px;
+    }
+    
+    .status-text {
+        font-size: 13px;
+    }
+}
+
+/* Стили для диалога редактирования заголовка */
+.edit-dialog {
+    width: 90vw;
+    max-width: 600px;
+    max-height: 85vh;
+    border-radius: 24px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+}
+
+.edit-dialog-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 24px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.edit-dialog-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.edit-dialog-icon {
+    font-size: 24px;
+}
+
+.close-btn {
+    color: white;
+}
+
+.close-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.dialog-separator {
+    background: #e2e8f0;
+    height: 1px;
+}
+
+.edit-dialog-content {
+    padding: 32px;
+    background: #ffffff;
+}
+
+.edit-dialog-actions {
+    background: #f8fafc;
+    padding: 24px 32px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 16px;
+}
+
+.cancel-btn {
+    padding: 12px 24px;
+    border-radius: 12px;
+    color: #6b7280;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.cancel-btn:hover {
+    background: #f1f5f9;
+    color: #374151;
+}
+
+.save-btn {
+    padding: 12px 32px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    transition: all 0.2s ease;
+}
+
+.save-btn:hover {
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+    transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+    .edit-dialog {
+        width: 95vw;
+        max-height: 90vh;
+        border-radius: 20px;
+    }
+    
+    .edit-dialog-header {
+        padding: 20px 24px;
+    }
+    
+    .edit-dialog-content {
+        padding: 24px 20px;
+    }
+    
+    .edit-dialog-actions {
+        padding: 20px 24px;
+        flex-direction: column;
+    }
+    
+    .cancel-btn,
+    .save-btn {
+        width: 100%;
+        justify-content: center;
     }
 }
 </style> 

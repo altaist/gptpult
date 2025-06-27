@@ -412,6 +412,25 @@ class DocumentController extends Controller
     }
 
     /**
+     * Обновить заголовок документа
+     */
+    public function updateTitle(Request $request, Document $document)
+    {
+        $this->authorize('update', $document);
+
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:30'],
+        ]);
+
+        $this->documentService->updateTitle($document, $validated['title']);
+
+        return response()->json([
+            'message' => 'Заголовок документа успешно обновлен',
+            'title' => $validated['title']
+        ]);
+    }
+
+    /**
      * Обновить цели документа
      */
     public function updateObjectives(Request $request, Document $document)

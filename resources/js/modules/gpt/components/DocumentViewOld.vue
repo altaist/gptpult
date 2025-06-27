@@ -1,68 +1,92 @@
 <template>
     <div class="document-view">
+        <div class="text-h5 q-mb-md">{{ document.topic || document.title }}</div>
 
-
-        <!-- Тема документа -->
-        <div v-if="document.structure?.topic" class="content-section">
-            <div class="section-card">
-                <div class="section-header">
-                    <div class="section-title">
-                        <q-icon name="lightbulb" class="section-icon" />
-                        Тема документа
+        <!-- Карточка с основной информацией -->
+        <q-card class="q-mb-md">
+            <q-card-section>
+                <div class="row q-col-gutter-md">
+                    <div class="col-6">
+                        <div class="text-subtitle2">Тип документа</div>
+                        <div>{{ document.document_type?.name || 'Не указан' }}</div>
                     </div>
-                    <q-btn 
-                        v-if="editable"
-                        icon="edit" 
-                        flat 
-                        round 
-                        size="sm" 
-                        @click="openEditDialog('topic', 'Тема документа', document.structure.topic)"
-                        class="edit-btn"
-                    />
-                </div>
-                <div class="section-content">
-                    {{ document.structure.topic }}
-                </div>
-            </div>
-        </div>
-
-        <!-- Цели документа -->
-        <div v-if="document.structure?.objectives && document.structure.objectives.length" class="content-section">
-            <div class="section-card">
-                <div class="section-header">
-                    <div class="section-title">
-                        <q-icon name="flag" class="section-icon" />
-                        Цели
-                    </div>
-                    <q-btn 
-                        v-if="editable"
-                        icon="edit" 
-                        flat 
-                        round 
-                        size="sm" 
-                        @click="openEditDialog('objectives', 'Цели документа', document.structure.objectives.join('\n'))"
-                        class="edit-btn"
-                    />
-                </div>
-                <div class="section-content">
-                    <div class="objectives-list">
-                        <div v-for="(objective, index) in document.structure.objectives" :key="index" class="objective-item">
-                            <div class="objective-number">{{ index + 1 }}</div>
-                            <div class="objective-text">{{ objective }}</div>
+                    <div class="col-6">
+                        <div class="text-subtitle2">Статус</div>
+                        <div>
+                            <q-item-section side>
+                                <q-icon
+                                    :name="documentStatus?.status_icon || getDefaultIcon()"
+                                    :color="documentStatus?.status_color || getDefaultColor()"
+                                    size="sm"
+                                />
+                            </q-item-section>
+                            
+                            <q-item-section>
+                                <q-item-label class="text-weight-medium">
+                                    {{ statusText }}
+                                </q-item-label>
+                                <q-item-label 
+                                    v-if="documentStatus?.status === 'pre_generated' && !documentStatus?.has_references"
+                                    caption 
+                                    class="text-warning"
+                                >
+                                    Ожидается завершение генерации ссылок
+                                </q-item-label>
+                            </q-item-section>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- Тезисы -->
-        <div v-if="document.structure?.theses" class="content-section">
-            <div class="section-card">
-                <div class="section-header">
-                    <div class="section-title">
-                        <q-icon name="format_quote" class="section-icon" />
-                        Тезисы
+            </q-card-section>
+            </q-card>
+            
+            <!-- Отдельная карточка для темы -->
+            <q-card v-if="document.structure?.topic" class="q-mb-md">
+                <q-card-section>
+                    <div class="flex items-center justify-between">
+                        <div class="text-subtitle2">Тема документа</div>
+                        <q-btn 
+                            v-if="editable"
+                            icon="edit" 
+                            flat 
+                            round 
+                            size="sm" 
+                            @click="openEditDialog('topic', 'Тема документа', document.structure.topic)"
+                            class="q-ml-auto"
+                        />
                     </div>
+                    <div class="q-mt-sm text-body1">{{ document.structure.topic }}</div>
+                </q-card-section>
+            </q-card>
+
+            <!-- Карточка для целей -->
+            <q-card v-if="document.structure?.objectives && document.structure.objectives.length" class="q-mb-md">
+                <q-card-section>
+                    <div class="flex items-center justify-between">
+                        <div class="text-subtitle2">Цели</div>
+                        <q-btn 
+                            v-if="editable"
+                            icon="edit" 
+                            flat 
+                            round 
+                            size="sm" 
+                            @click="openEditDialog('objectives', 'Цели документа', document.structure.objectives.join('\n'))"
+                            class="q-ml-auto"
+                        />
+                    </div>
+                    <div class="q-mt-sm">
+                        <ul>
+                            <li v-for="objective in document.structure.objectives" :key="objective">
+                                {{ objective }}
+                            </li>
+                        </ul>
+                    </div>
+                </q-card-section>
+            </q-card>
+
+            <q-card v-if="document.structure?.theses" class="q-mb-md">
+            <q-card-section>
+                <div class="flex items-center justify-between">
+                    <div class="text-subtitle2">Тезисы</div>
                     <q-btn 
                         v-if="editable"
                         icon="edit" 
@@ -70,21 +94,17 @@
                         round 
                         size="sm" 
                         @click="openEditDialog('theses', 'Тезисы документа', document.structure.theses)"
-                        class="edit-btn"
+                        class="q-ml-auto"
                     />
                 </div>
-                <div class="section-content">
-                    {{ document.structure.theses }}
-                </div>
-            </div>
-        </div>
+                <div class="q-mt-sm">{{ document.structure.theses }}</div>
+            </q-card-section>
+        </q-card>
 
-        <!-- Содержание документа -->
         <document-contents-view 
             v-if="document.structure?.contents" 
             :contents="document.structure.contents" 
-            :editable="canEditContents"
-            :is-completed="isFullGenerationComplete || document?.status === 'full_generated'"
+            :editable="editable"
             @edit-contents="openContentsEditDialog"
         />
 
@@ -96,45 +116,51 @@
             @references-updated="handleReferencesUpdated"
         />
 
-        <!-- Современный диалог для редактирования -->
+        <!-- Унифицированный диалог для редактирования -->
         <q-dialog v-model="editDialog.show" persistent>
-            <q-card class="edit-dialog">
-                <q-card-section class="edit-dialog-header">
-                    <div class="edit-dialog-title">
-                        <q-icon name="edit" class="edit-dialog-icon" />
-                        {{ editDialog.title }}
-                    </div>
-                    <q-btn icon="close" flat round dense v-close-popup class="close-btn" />
+            <q-card class="edit-dialog-card">
+                <q-card-section class="row items-center q-pb-sm edit-header">
+                    <q-icon name="edit" size="24px" class="q-mr-sm text-primary" />
+                    <div class="text-h6 text-weight-medium">{{ editDialog.title }}</div>
+                    <q-space />
+                    <q-btn icon="close" flat round dense v-close-popup />
                 </q-card-section>
 
-                <q-separator class="dialog-separator" />
+                <q-separator />
 
-                <q-card-section class="edit-dialog-content">
-                    <CustomInput
+                <q-card-section class="edit-content">
+                    <q-input
                         v-if="editDialog.type === 'topic'"
                         v-model="editDialog.value"
+                        outlined
                         type="text"
                         label="Тема документа"
-                        :autofocus="true"
+                        autofocus
+                        class="text-input"
+                        hide-bottom-space
                     />
-                    <CustomInput
+                    <q-input
                         v-else
                         v-model="editDialog.value"
+                        outlined
                         type="textarea"
                         :rows="getTextareaRows()"
-                        :autofocus="true"
+                        autofocus
+                        class="textarea-input"
                         :placeholder="getTextareaPlaceholder()"
+                        hide-bottom-space
                     />
                 </q-card-section>
 
-                <q-separator class="dialog-separator" />
+                <q-separator />
 
-                <q-card-actions class="edit-dialog-actions">
+                <q-card-actions align="right" class="q-pa-lg">
                     <q-btn 
                         flat 
                         label="Отмена" 
+                        color="grey-6" 
                         @click="closeEditDialog" 
-                        class="cancel-btn"
+                        class="q-px-lg"
                         no-caps
                     />
                     <q-btn 
@@ -143,7 +169,7 @@
                         color="primary" 
                         @click="saveEdit" 
                         :loading="editDialog.loading" 
-                        class="save-btn"
+                        class="q-px-xl q-ml-sm"
                         no-caps
                     />
                 </q-card-actions>
@@ -158,7 +184,6 @@ import { useQuasar } from 'quasar';
 import { router } from '@inertiajs/vue3';
 import DocumentContentsView from './DocumentContentsView.vue';
 import DocumentReferencesView from './DocumentReferencesView.vue';
-import CustomInput from '@/components/shared/CustomInput.vue';
 
 const props = defineProps({
     document: {
@@ -237,17 +262,6 @@ const shouldShowReferencesLoading = computed(() => {
     return hasContents && !hasReferences && !isCurrentlyGenerating;
 });
 
-// Определяем можно ли редактировать содержание документа
-const canEditContents = computed(() => {
-    // Запрещаем редактирование если документ полностью готов
-    if (props.isFullGenerationComplete || props.document?.status === 'full_generated') {
-        return false;
-    }
-    
-    // В остальных случаях используем базовое правило editable
-    return props.editable;
-});
-
 // Функции для получения иконки и цвета по умолчанию
 const getDefaultIcon = () => {
     if (props.isGenerating) return 'sync';
@@ -258,13 +272,13 @@ const getDefaultIcon = () => {
     return 'radio_button_unchecked';
 };
 
-const getStatusClass = () => {
-    if (props.isGenerating) return 'status-generating';
-    if (props.isPreGenerationComplete) return 'status-pre-complete';
-    if (props.isFullGenerationComplete) return 'status-complete';
-    if (props.isApproved) return 'status-approved';
-    if (props.hasFailed) return 'status-failed';
-    return 'status-default';
+const getDefaultColor = () => {
+    if (props.isGenerating) return 'primary';
+    if (props.isPreGenerationComplete) return 'positive';
+    if (props.isFullGenerationComplete) return 'green';
+    if (props.isApproved) return 'green-10';
+    if (props.hasFailed) return 'negative';
+    return 'grey';
 };
 
 function openEditDialog(type, title, value) {
@@ -445,382 +459,117 @@ function handleReferencesUpdated(newReferences) {
 
 <style scoped>
 .document-view {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
-/* Заголовок документа */
-.document-title {
-    font-size: 32px;
-    font-weight: 700;
-    color: #1a1a1a;
-    margin: 0;
-    line-height: 1.2;
-    letter-spacing: -0.02em;
-}
-
-/* Секция с основной информацией */
-.info-section {
-    width: 100%;
-}
-
-.info-card {
-    background: #ffffff;
-    border-radius: 20px;
-    padding: 24px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    border: 1px solid #f1f5f9;
-    transition: all 0.3s ease;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    max-width: 300px;
-}
-
-.info-card:hover {
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-    transform: translateY(-2px);
-}
-
-.info-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.info-icon {
-    font-size: 24px;
-    color: #3b82f6;
-    flex-shrink: 0;
-}
-
-.info-label {
-    font-size: 14px;
-    font-weight: 500;
-    color: #6b7280;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.info-value {
-    font-size: 18px;
-    font-weight: 600;
-    color: #1e293b;
-    line-height: 1.4;
-}
-
-/* Цвета статусов */
-.status-generating {
-    color: #3b82f6 !important;
-    animation: spin 2s linear infinite;
-}
-
-.status-pre-complete {
-    color: #10b981 !important;
-}
-
-.status-complete {
-    color: #059669 !important;
-}
-
-.status-approved {
-    color: #16a34a !important;
-}
-
-.status-failed {
-    color: #ef4444 !important;
-}
-
-.status-default {
-    color: #6b7280 !important;
-}
-
-@keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
-/* Секции контента */
-.content-section {
-    width: 100%;
-}
-
-.section-card {
-    background: #ffffff;
-    border-radius: 20px;
-    padding: 28px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    border: 1px solid #f1f5f9;
-    transition: all 0.3s ease;
-}
-
-.section-card:hover {
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-    transform: translateY(-2px);
-}
-
-.section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 20px;
-    padding-bottom: 16px;
-    border-bottom: 2px solid #f1f5f9;
-}
-
-.section-title {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-size: 20px;
-    font-weight: 600;
-    color: #1e293b;
-}
-
-.section-icon {
-    font-size: 24px;
-    color: #3b82f6;
-}
-
-.edit-btn {
-    color: #6b7280;
-    transition: all 0.2s ease;
-}
-
-.edit-btn:hover {
-    color: #3b82f6;
-    background: rgba(59, 130, 246, 0.1);
-}
-
-.section-content {
-    font-size: 16px;
-    line-height: 1.6;
-    color: #374151;
-}
-
-/* Список целей */
-.objectives-list {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.objective-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 16px;
-    padding: 16px;
-    background: #f8fafc;
-    border-radius: 12px;
-    border: 1px solid #e2e8f0;
-    transition: all 0.2s ease;
-}
-
-.objective-item:hover {
-    background: #f1f5f9;
-    border-color: #cbd5e1;
-}
-
-.objective-number {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-    color: white;
-    border-radius: 50%;
-    font-size: 14px;
-    font-weight: 600;
-    flex-shrink: 0;
-}
-
-.objective-text {
-    flex: 1;
-    font-size: 15px;
-    line-height: 1.5;
-    color: #374151;
-}
-
-/* Современный диалог */
-.edit-dialog {
+/* Стили для диалога редактирования */
+.edit-dialog-card {
     width: 90vw;
-    max-width: 800px;
+    max-width: 900px;
     max-height: 85vh;
-    border-radius: 24px;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-    overflow: hidden;
+    border-radius: 16px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
-.edit-dialog-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 24px 32px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+.edit-header {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-radius: 16px 16px 0 0;
 }
 
-.edit-dialog-title {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-size: 20px;
-    font-weight: 600;
-}
-
-.edit-dialog-icon {
-    font-size: 24px;
-}
-
-.close-btn {
-    color: white;
-}
-
-.close-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-}
-
-.dialog-separator {
-    background: #e2e8f0;
-    height: 1px;
-}
-
-.edit-dialog-content {
-    padding: 32px;
+.edit-content {
+    padding: 24px;
     background: #ffffff;
 }
 
-.edit-dialog-actions {
-    background: #f8fafc;
-    padding: 24px 32px;
-    display: flex;
-    justify-content: flex-end;
-    gap: 16px;
+.text-input {
+    margin-bottom: 0;
 }
 
-.cancel-btn {
-    padding: 12px 24px;
+.text-input :deep(.q-field__control) {
+    border-radius: 8px;
+    min-height: 56px;
+    background: #ffffff;
+}
+
+.textarea-input {
+    margin-bottom: 0;
+}
+
+.textarea-input :deep(.q-field__control) {
     border-radius: 12px;
-    color: #6b7280;
+    background: #ffffff;
+}
+
+.textarea-input :deep(.q-field__native) {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    resize: vertical;
+    min-height: 200px;
+}
+
+.text-input :deep(.q-field__native) {
+    font-size: 16px;
     font-weight: 500;
+}
+
+/* Красивые границы */
+.edit-dialog-card :deep(.q-field--outlined .q-field__control) {
+    border: 2px solid #e2e8f0;
+    transition: border-color 0.2s ease;
+}
+
+.edit-dialog-card :deep(.q-field--outlined.q-field--focused .q-field__control) {
+    border-color: var(--q-primary);
+}
+
+.edit-dialog-card :deep(.q-field--outlined .q-field__control:before) {
+    border: none;
+}
+
+.edit-dialog-card :deep(.q-field--outlined .q-field__control:after) {
+    border: none;
+}
+
+/* Стили для кнопок */
+.q-card-actions {
+    background: #f8fafc;
+    border-radius: 0 0 16px 16px;
+}
+
+.q-card-actions .q-btn {
+    font-weight: 500;
+    border-radius: 8px;
     transition: all 0.2s ease;
 }
 
-.cancel-btn:hover {
-    background: #f1f5f9;
-    color: #374151;
-}
-
-.save-btn {
-    padding: 12px 32px;
-    border-radius: 12px;
-    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-    font-weight: 600;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-    transition: all 0.2s ease;
-}
-
-.save-btn:hover {
-    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+.q-card-actions .q-btn:hover {
     transform: translateY(-1px);
 }
 
-/* Адаптивность */
-@media (max-width: 1024px) {
-    .document-title {
-        font-size: 28px;
-    }
-    
-    .section-card {
-        padding: 24px;
-    }
-}
-
+/* Responsive для мобильных */
 @media (max-width: 768px) {
-    .document-view {
-        gap: 20px;
-    }
-    
-    .document-title {
-        font-size: 24px;
-    }
-    
-    .section-card {
-        padding: 20px;
-    }
-    
-    .section-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
-    }
-    
-    .objective-item {
-        padding: 12px;
-    }
-    
-    .edit-dialog {
+    .edit-dialog-card {
         width: 95vw;
         max-height: 90vh;
-        border-radius: 20px;
+        border-radius: 12px;
     }
     
-    .edit-dialog-header {
-        padding: 20px 24px;
+    .edit-header {
+        border-radius: 12px 12px 0 0;
     }
     
-    .edit-dialog-content {
-        padding: 24px 20px;
+    .q-card-actions {
+        border-radius: 0 0 12px 12px;
     }
     
-    .edit-dialog-actions {
-        padding: 20px 24px;
-    }
-}
-
-@media (max-width: 480px) {
-    .document-title {
-        font-size: 22px;
-    }
-    
-    .section-card {
+    .edit-content {
         padding: 16px;
     }
     
-    .section-title {
-        font-size: 18px;
-    }
-    
-    .objective-number {
-        width: 28px;
-        height: 28px;
-        font-size: 12px;
-    }
-    
-    .edit-dialog-header {
-        padding: 16px 20px;
-    }
-    
-    .edit-dialog-title {
-        font-size: 18px;
-    }
-    
-    .edit-dialog-content {
-        padding: 20px 16px;
-    }
-    
-    .edit-dialog-actions {
-        padding: 16px 20px;
-        flex-direction: column;
-    }
-    
-    .cancel-btn,
-    .save-btn {
-        width: 100%;
-        justify-content: center;
+    .textarea-input :deep(.q-field__native) {
+        min-height: 150px;
     }
 }
-</style>
+</style> 

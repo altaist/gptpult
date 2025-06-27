@@ -79,17 +79,12 @@
                                     Опиши тему твоей работы. Чем подробнее, тем лучше будет результат (минимум 10 символов)
                                 </p>
                                 <div class="input-container">
-                                    <q-input
+                                    <CustomInput
                                         v-model="form.topic"
-                                        placeholder="Введите тему документа..."
                                         type="textarea"
-                                        outlined
-                                        class="topic-input"
+                                        placeholder="Введите тему документа..."
                                         :rows="4"
-                                        :error="hasError('topic')"
-                                        :error-message="getError('topic')"
-                                        hide-bottom-space
-                                        borderless
+                                        :error="hasError('topic') ? getError('topic') : ''"
                                     />
                                 </div>
                             </div>
@@ -184,6 +179,7 @@ import { router } from '@inertiajs/vue3';
 import PageLayout from '@/components/shared/PageLayout.vue';
 import { Head } from '@inertiajs/vue3';
 import { apiClient, isLoading, useLaravelErrors } from '@/composables/api';
+import CustomInput from '@/components/shared/CustomInput.vue';
 
 const props = defineProps({
     document_types: {
@@ -619,65 +615,6 @@ onUnmounted(() => {
 /* Поле ввода темы */
 .input-container {
     position: relative;
-}
-
-.topic-input {
-    width: 100%;
-}
-
-.topic-input :deep(.q-field__control) {
-    border-radius: 16px;
-    border: 2px solid #e2e8f0;
-    background: #ffffff;
-    min-height: 120px;
-    box-shadow: none;
-    outline: none;
-}
-
-.topic-input :deep(.q-field__control):hover {
-    border-color: #3b82f6;
-}
-
-.topic-input :deep(.q-field--focused .q-field__control) {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.topic-input :deep(.q-field__native) {
-    padding: 16px;
-    font-size: 15px;
-    line-height: 1.5;
-    resize: vertical;
-    color: #000000 !important;
-    border: none;
-    outline: none;
-    box-shadow: none;
-}
-
-.topic-input :deep(.q-field__control):before,
-.topic-input :deep(.q-field__control):after {
-    display: none !important;
-}
-
-.topic-input :deep(.q-field__control .q-field__outline) {
-    display: none !important;
-}
-
-.topic-input :deep(.q-placeholder) {
-    color: #9ca3af;
-}
-
-.topic-input :deep(.q-field--error .q-field__control) {
-    border-color: #ef4444;
-}
-
-.topic-input :deep(.q-field--error .q-field__control):hover {
-    border-color: #ef4444;
-}
-
-.topic-input :deep(.q-field--error.q-field--focused .q-field__control) {
-    border-color: #ef4444;
-    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
 }
 
 /* Счетчик страниц */

@@ -1,140 +1,55 @@
 <template>
-    <div class="document-references">
-        <q-card class="q-mt-md">
-            <q-card-section>
-                <!-- Загрузочный блок -->
-                <div v-if="isLoading" class="loading-block">
-                    <div class="text-center q-py-xl">
-                        <!-- Убираем спиннер с точками -->
-                        <div class="text-h6 q-mb-sm">Генерируем ссылки</div>
-                        <div class="text-body2 text-grey-6 q-mb-lg">
-                            {{ loadingText }}
+    <div class="content-section">
+        <div class="section-card">
+            <div class="section-header">
+                <div class="section-title">
+                    <q-icon name="link" class="section-icon" />
+                    Ссылки
+                </div>
+            </div>
+            
+            <div class="section-content">
+                <!-- Загрузочное состояние -->
+                <div v-if="isLoading" class="loading-container">
+                    <div class="loading-content">
+                        <div class="loading-icon">
+                            <q-icon name="autorenew" class="spinning-icon" />
                         </div>
-                        
-                        <!-- Прогресс-бар -->
-                        <div class="loading-progress q-mb-md">
-                            <q-linear-progress 
-                                :value="loadingProgress" 
-                                color="primary" 
-                                size="4px"
-                                class="q-mb-sm"
-                            />
-                            <div class="text-caption text-grey-6">
-                                {{ progressText }}
-                            </div>
+                        <div class="loading-text">Генерируем ссылки на полезные ресурсы...</div>
+                        <div class="loading-subtitle">Это займет несколько секунд</div>
+                    </div>
+                </div>
+
+                <!-- Список ссылок -->
+                <div v-else-if="references && references.length" class="references-list">
+                    <div 
+                        v-for="(reference, index) in references" 
+                        :key="index"
+                        class="reference-item"
+                        @click="openLink(reference.url)"
+                    >
+                        <div class="reference-content">
+                            <div class="reference-title">{{ reference.title }}</div>
+                            <div v-if="reference.author && reference.author.trim()" class="reference-author">{{ reference.author }}</div>
                         </div>
-                        
-                        <!-- Имитация генерируемых ссылок -->
-                        <div class="generating-items">
-                            <q-list>
-                                <q-item 
-                                    v-for="n in 3" 
-                                    :key="n"
-                                    class="skeleton-item"
-                                >
-                                    <q-item-section avatar>
-                                        <q-skeleton type="QAvatar" />
-                                    </q-item-section>
-                                    <q-item-section>
-                                        <q-skeleton type="text" width="60%" />
-                                        <q-skeleton type="text" width="40%" />
-                                        <q-skeleton type="text" width="80%" />
-                                    </q-item-section>
-                                    <q-item-section side>
-                                        <q-skeleton type="QBtn" />
-                                    </q-item-section>
-                                </q-item>
-                            </q-list>
+                        <div class="reference-action">
+                            <q-icon name="open_in_new" class="action-icon" />
                         </div>
                     </div>
                 </div>
 
-                <!-- Основной контент со ссылками с анимацией -->
-                <div v-else-if="references && references.length" class="references-container">
-                    <div class="flex items-center justify-between q-mb-md">
-                        <div class="text-h6">
-                            <q-icon name="link" class="q-mr-sm" />
-                            Ссылки
-                        </div>
-                        <q-chip 
-                            :label="`${references.length} ресурсов`" 
-                            color="primary" 
-                            text-color="white" 
-                            size="sm"
-                        />
-                    </div>
-                    
-                    <div class="text-body2 text-grey-7 q-mb-md">
-                        Релевантные источники для изучения темы
-                    </div>
-
-                    <q-list separator>
-                        <q-item 
-                            v-for="(reference, index) in references" 
-                            :key="index"
-                            clickable
-                            @click="openLink(reference.url)"
-                            class="reference-item"
-                            :style="{ animationDelay: `${index * 100}ms` }"
-                        >
-                            <q-item-section avatar>
-                                <q-icon 
-                                    :name="getTypeIcon(reference.type)" 
-                                    :color="getTypeColor(reference.type)" 
-                                    size="md" 
-                                />
-                            </q-item-section>
-                            
-                            <q-item-section>
-                                <q-item-label class="text-weight-medium reference-title">
-                                    {{ reference.title }}
-                                </q-item-label>
-                                
-                                <q-item-label caption class="reference-description">
-                                    {{ reference.description }}
-                                </q-item-label>
-                                
-                                <q-item-label caption class="text-grey-6 q-mt-xs">
-                                    <div class="row items-center q-gutter-sm">
-                                        <q-chip 
-                                            :label="getTypeLabel(reference.type)" 
-                                            size="sm" 
-                                            outline 
-                                            :color="getTypeColor(reference.type)"
-                                        />
-                                        
-                                        <span v-if="reference.author" class="text-caption">
-                                            <q-icon name="person" size="xs" class="q-mr-xs" />
-                                            {{ reference.author }}
-                                        </span>
-                                        
-                                        <span v-if="reference.publication_date" class="text-caption">
-                                            <q-icon name="event" size="xs" class="q-mr-xs" />
-                                            {{ reference.publication_date }}
-                                        </span>
-                                    </div>
-                                </q-item-label>
-                            </q-item-section>
-                            
-                            <q-item-section side>
-                                <q-icon name="open_in_new" color="grey-5" />
-                            </q-item-section>
-                        </q-item>
-                    </q-list>
+                <!-- Пустое состояние -->
+                <div v-else class="empty-state">
+                    <q-icon name="link_off" class="empty-icon" />
+                    <div class="empty-text">Ссылки пока недоступны</div>
                 </div>
-
-                <!-- Сообщение когда нет ссылок -->
-                <div v-else-if="!isLoading" class="text-center q-py-lg text-grey-6">
-                    <q-icon name="link_off" size="48px" class="q-mb-md" />
-                    <div class="text-body1">Ссылки пока недоступны</div>
-                </div>
-            </q-card-section>
-        </q-card>
+            </div>
+        </div>
     </div>
 </template>
 
 <script setup>
-import { defineProps, ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { defineProps, ref, onMounted, onUnmounted, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { apiClient } from '@/composables/api';
 
@@ -157,34 +72,7 @@ const props = defineProps({
 const emit = defineEmits(['references-updated']);
 
 const $q = useQuasar();
-
-// Состояние загрузки
-const loadingProgress = ref(0);
-const currentLoadingStep = ref(0);
 const statusCheckInterval = ref(null);
-
-const loadingSteps = [
-    'Анализируем тему документа...',
-    'Ищем релевантные источники...',
-    'Проверяем качество ссылок...',
-    'Формируем список ресурсов...',
-    'Добавляем описания...',
-    'Завершаем подготовку ссылок...'
-];
-
-const loadingText = computed(() => {
-    return loadingSteps[currentLoadingStep.value] || 'Генерируем ссылки...';
-});
-
-// Текст прогресса - не показываем проценты после 85%
-const progressText = computed(() => {
-    if (loadingProgress.value >= 0.85) {
-        return 'Осталось немного...';
-    }
-    return `${Math.round(loadingProgress.value * 100)}% завершено`;
-});
-
-let loadingTimer = null;
 
 // Проверка статуса документа
 const checkDocumentStatus = async () => {
@@ -200,23 +88,6 @@ const checkDocumentStatus = async () => {
     } catch (error) {
         console.error('Ошибка при проверке статуса документа:', error);
     }
-};
-
-// Симуляция процесса загрузки - ограничиваем до 85%
-const simulateLoading = () => {
-    if (!props.isLoading) return;
-    
-    loadingTimer = setInterval(() => {
-        if (loadingProgress.value < 0.85) { // Ограничиваем до 85%
-            loadingProgress.value += 0.015; // Увеличиваем на 1.5% каждые 300ms
-            
-            // Меняем текст каждые ~15%
-            const stepIndex = Math.floor(loadingProgress.value * loadingSteps.length);
-            if (stepIndex < loadingSteps.length) {
-                currentLoadingStep.value = stepIndex;
-            }
-        }
-    }, 300);
 };
 
 // Запускаем периодическую проверку статуса
@@ -238,28 +109,19 @@ const stopStatusPolling = () => {
 // Следим за изменением isLoading
 watch(() => props.isLoading, (newValue) => {
     if (newValue) {
-        simulateLoading();
         startStatusPolling();
     } else {
-        if (loadingTimer) {
-            clearInterval(loadingTimer);
-            loadingTimer = null;
-        }
         stopStatusPolling();
     }
 });
 
 onMounted(() => {
     if (props.isLoading) {
-        simulateLoading();
         startStatusPolling();
     }
 });
 
 onUnmounted(() => {
-    if (loadingTimer) {
-        clearInterval(loadingTimer);
-    }
     stopStatusPolling();
 });
 
@@ -275,140 +137,249 @@ const openLink = (url) => {
         });
     }
 };
-
-// Функция для получения иконки типа ресурса
-const getTypeIcon = (type) => {
-    const icons = {
-        'article': 'article',
-        'pdf': 'picture_as_pdf',
-        'book': 'menu_book',
-        'website': 'language',
-        'research_paper': 'science',
-        'other': 'link'
-    };
-    return icons[type] || 'link';
-};
-
-// Функция для получения цвета типа ресурса
-const getTypeColor = (type) => {
-    const colors = {
-        'article': 'blue',
-        'pdf': 'red',
-        'book': 'green',
-        'website': 'purple',
-        'research_paper': 'orange',
-        'other': 'grey'
-    };
-    return colors[type] || 'grey';
-};
-
-// Функция для получения русского названия типа
-const getTypeLabel = (type) => {
-    const labels = {
-        'article': 'Статья',
-        'pdf': 'PDF',
-        'book': 'Книга',
-        'website': 'Сайт',
-        'research_paper': 'Исследование',
-        'other': 'Другое'
-    };
-    return labels[type] || 'Ресурс';
-};
 </script>
 
 <style scoped>
+/* Основной контейнер секции */
+.content-section {
+    width: 100%;
+}
+
+.section-card {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 28px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid #f1f5f9;
+    transition: all 0.3s ease;
+}
+
+.section-card:hover {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #f1f5f9;
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 20px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.section-icon {
+    font-size: 24px;
+    color: #3b82f6;
+}
+
+.section-content {
+    font-size: 16px;
+    line-height: 1.6;
+    color: #374151;
+}
+
+/* Загрузочное состояние */
+.loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px 20px;
+}
+
+.loading-content {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.loading-icon {
+    margin-bottom: 8px;
+}
+
+.spinning-icon {
+    font-size: 32px;
+    color: #3b82f6;
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.loading-text {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.loading-subtitle {
+    font-size: 14px;
+    color: #6b7280;
+}
+
+/* Список ссылок */
+.references-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
 .reference-item {
-    transition: background-color 0.2s ease;
-    border-radius: 8px;
-    margin: 4px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
 .reference-item:hover {
-    background-color: #f5f5f5;
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    transform: translateX(4px);
+}
+
+.reference-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.reference-content > *:not(:last-child) {
+    margin-bottom: 4px;
 }
 
 .reference-title {
-    color: #1976d2;
-    text-decoration: none;
-}
-
-.reference-description {
-    margin-top: 4px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e293b;
     line-height: 1.4;
 }
 
-.document-references {
-    margin-top: 1.5rem;
+.reference-author {
+    font-size: 14px;
+    color: #6b7280;
+    font-weight: 500;
 }
 
-/* Стили для загрузочного блока */
-.loading-block {
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-    border-radius: 12px;
-    border: 1px solid #e2e8f0;
-}
-
-.loading-progress {
-    max-width: 300px;
-    margin: 0 auto;
-}
-
-.generating-items {
-    max-width: 500px;
-    margin: 0 auto;
-}
-
-.skeleton-item {
-    margin-bottom: 8px;
-    padding: 12px;
-    background: rgba(255, 255, 255, 0.7);
+.reference-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: #ffffff;
     border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
 }
 
-/* Анимация появления ссылок */
-.references-container {
-    animation: fadeInUp 0.6s ease-out;
+.reference-item:hover .reference-action {
+    background: #3b82f6;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
-.reference-item {
-    animation: slideInFromLeft 0.5s ease-out both;
+.action-icon {
+    font-size: 16px;
+    color: #6b7280;
+    transition: color 0.2s ease;
 }
 
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
+.reference-item:hover .action-icon {
+    color: #ffffff;
+}
+
+/* Пустое состояние */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #6b7280;
+}
+
+.empty-icon {
+    font-size: 48px;
+    color: #d1d5db;
+    margin-bottom: 16px;
+}
+
+.empty-text {
+    font-size: 16px;
+    font-weight: 500;
+    color: #6b7280;
+}
+
+/* Адаптивность */
+@media (max-width: 1024px) {
+    .section-card {
+        padding: 24px;
     }
 }
 
-@keyframes slideInFromLeft {
-    from {
-        opacity: 0;
-        transform: translateX(-30px);
+@media (max-width: 768px) {
+    .section-card {
+        padding: 20px;
     }
-    to {
-        opacity: 1;
-        transform: translateX(0);
+    
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .reference-item {
+        padding: 14px 16px;
+    }
+    
+    .reference-title {
+        font-size: 15px;
+    }
+    
+    .reference-author {
+        font-size: 13px;
     }
 }
 
-/* Анимация для загрузочного блока */
-@keyframes fade-in-up {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
+@media (max-width: 480px) {
+    .section-card {
+        padding: 16px;
     }
-    to {
-        opacity: 1;
-        transform: translateY(0);
+    
+    .section-title {
+        font-size: 18px;
     }
-}
-
-.loading-block {
-    animation: fade-in-up 0.5s ease-out;
+    
+    .reference-item {
+        padding: 12px 14px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .reference-action {
+        align-self: flex-end;
+        width: 28px;
+        height: 28px;
+    }
+    
+    .action-icon {
+        font-size: 14px;
+    }
 }
 </style> 

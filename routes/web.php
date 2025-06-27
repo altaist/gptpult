@@ -51,6 +51,7 @@ Route::middleware(['auth'])->group(function () {
         
         // Маршруты для редактирования отдельных частей структуры
         Route::patch('/{document}/topic', [DocumentController::class, 'updateTopic'])->name('update-topic');
+        Route::patch('/{document}/title', [DocumentController::class, 'updateTitle'])->name('update-title');
         Route::patch('/{document}/objectives', [DocumentController::class, 'updateObjectives'])->name('update-objectives');
         Route::patch('/{document}/theses', [DocumentController::class, 'updateTheses'])->name('update-theses');
         Route::patch('/{document}/contents', [DocumentController::class, 'updateContents'])->name('update-contents');

@@ -27,11 +27,7 @@ class ChargeUserForFullGeneration
             $amount = OrderService::DEFAULT_PRICE;
 
             // Списываем средства
-            $this->transitionService->debitUser(
-                $user,
-                $amount,
-                "Оплата за полную генерацию документа #{$document->id}"
-            );
+            
 
             Log::info('Списаны средства за полную генерацию', [
                 'document_id' => $document->id,
