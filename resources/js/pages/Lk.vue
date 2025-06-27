@@ -394,29 +394,29 @@ const sortedDocuments = computed(() => {
 
 <style scoped>
 .lk-container {
-    max-width: 1400px;
+    max-width: 1600px;
     margin: 0 auto;
-    padding: 40px 24px;
+    padding: 40px 32px;
     min-height: 100vh;
 }
 
 /* Заголовок */
 .header-section {
-    margin-bottom: 40px;
+    margin-bottom: 48px;
     text-align: center;
 }
 
 .page-title {
-    font-size: 48px;
+    font-size: 52px;
     font-weight: 700;
     color: #1a1a1a;
-    margin: 0 0 12px 0;
+    margin: 0 0 16px 0;
     letter-spacing: -0.02em;
     line-height: 1.1;
 }
 
 .page-subtitle {
-    font-size: 18px;
+    font-size: 20px;
     color: #6b7280;
     margin: 0;
     font-weight: 400;
@@ -425,8 +425,8 @@ const sortedDocuments = computed(() => {
 /* Сетка контента */
 .content-grid {
     display: grid;
-    grid-template-columns: 400px 1fr;
-    gap: 40px;
+    grid-template-columns: 420px 1fr;
+    gap: 48px;
     align-items: start;
 }
 
@@ -434,15 +434,15 @@ const sortedDocuments = computed(() => {
 .left-column {
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 28px;
     position: sticky;
-    top: 100px;
+    top: 120px;
 }
 
 .right-column {
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 28px;
 }
 
 /* Базовые стили карточек */
@@ -527,14 +527,18 @@ const sortedDocuments = computed(() => {
 
 .telegram-connect-simple {
     width: 100%;
-    padding: 14px 24px;
+    padding: 16px 24px;
     border-radius: 12px;
     background: #0088cc;
     color: white;
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 600;
     box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3);
     transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
 }
 
 .telegram-connect-simple:hover {
@@ -544,8 +548,8 @@ const sortedDocuments = computed(() => {
 }
 
 .telegram-btn-icon {
-    margin-right: 8px;
     font-size: 20px;
+    flex-shrink: 0;
 }
 
 /* Пустое состояние */
@@ -576,19 +580,21 @@ const sortedDocuments = computed(() => {
 .documents-list {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
 }
 
 .document-item {
     display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 20px;
+    align-items: flex-start;
+    gap: 20px;
+    padding: 24px;
     background: #f8fafc;
     border-radius: 16px;
     border: 1px solid #e2e8f0;
     cursor: pointer;
     transition: all 0.2s ease;
+    width: 100%;
+    min-height: 96px;
 }
 
 .document-item:hover {
@@ -602,43 +608,51 @@ const sortedDocuments = computed(() => {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 48px;
-    height: 48px;
+    width: 52px;
+    height: 52px;
     background: #ffffff;
     border-radius: 12px;
     color: #6b7280;
     font-size: 24px;
     flex-shrink: 0;
     border: 1px solid #e2e8f0;
+    margin-top: 2px;
 }
 
 .document-content {
     flex: 1;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .document-title {
-    font-size: 16px;
+    font-size: 17px;
     font-weight: 600;
     color: #1e293b;
-    margin-bottom: 8px;
-    line-height: 1.3;
+    line-height: 1.4;
+    max-width: 100%;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    word-break: break-word;
+    hyphens: auto;
 }
 
 .document-meta {
     display: flex;
-    flex-direction: column;
-    gap: 4px;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
 }
 
 .document-date {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 13px;
+    font-size: 14px;
     color: #6b7280;
 }
 
@@ -665,7 +679,24 @@ const sortedDocuments = computed(() => {
 }
 
 /* Адаптивность */
+@media (max-width: 1400px) {
+    .lk-container {
+        max-width: 1200px;
+        padding: 32px 20px;
+    }
+    
+    .content-grid {
+        grid-template-columns: 380px 1fr;
+        gap: 36px;
+    }
+}
+
 @media (max-width: 1200px) {
+    .lk-container {
+        max-width: 1000px;
+        padding: 28px 18px;
+    }
+    
     .content-grid {
         grid-template-columns: 350px 1fr;
         gap: 32px;
@@ -674,47 +705,96 @@ const sortedDocuments = computed(() => {
     .page-title {
         font-size: 42px;
     }
+    
+    .left-column {
+        top: 80px;
+    }
 }
 
 @media (max-width: 1024px) {
+    .lk-container {
+        padding: 24px 16px;
+    }
+    
     .content-grid {
-        grid-template-columns: 1fr;
-        gap: 32px;
+        grid-template-columns: 320px 1fr;
+        gap: 28px;
+    }
+    
+    .page-title {
+        font-size: 38px;
     }
     
     .left-column {
-        position: static;
-        order: 1;
+        top: 70px;
     }
     
-    .right-column {
-        order: 0;
+    .new-document-btn {
+        font-size: 16px;
+        padding: 18px 28px;
     }
 }
 
 @media (max-width: 768px) {
     .lk-container {
-        padding: 24px 16px;
+        padding: 20px 12px;
     }
     
     .header-section {
-        margin-bottom: 32px;
+        margin-bottom: 24px;
     }
     
     .page-title {
-        font-size: 36px;
+        font-size: 32px;
     }
     
     .page-subtitle {
         font-size: 16px;
     }
     
+    /* Мобильная сетка - вертикальная раскладка */
     .content-grid {
-        gap: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .left-column {
+        position: static;
+        order: 0; /* Показываем первыми на мобильных */
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+    
+    .right-column {
+        order: 1;
+    }
+    
+    /* Мобильная раскладка левой колонки */
+    .new-document-section {
+        width: 100%;
+        order: 1;
+    }
+    
+    .balance-card {
+        width: calc(50% - 8px);
+        order: 2;
+    }
+    
+    .telegram-connected-info,
+    .telegram-connect-simple {
+        width: calc(50% - 8px);
+        order: 3;
+    }
+    
+    .new-document-btn {
+        width: 100%;
+        padding: 16px 24px;
+        font-size: 16px;
     }
     
     .balance-card,
-    .telegram-card,
     .documents-card {
         padding: 20px;
         border-radius: 16px;
@@ -723,7 +803,7 @@ const sortedDocuments = computed(() => {
     .balance-content {
         flex-direction: column;
         align-items: flex-start;
-        gap: 16px;
+        gap: 12px;
     }
     
     .balance-btn {
@@ -733,35 +813,73 @@ const sortedDocuments = computed(() => {
     .telegram-connected-info {
         flex-direction: column;
         align-items: flex-start;
-        gap: 12px;
+        gap: 8px;
+        padding: 12px;
     }
     
     .telegram-connect-simple {
-        width: 100%;
-    }
-    
-    .new-document-btn {
-        padding: 16px 24px;
-        font-size: 16px;
+        padding: 12px 16px;
+        font-size: 14px;
     }
     
     .document-item {
-        padding: 16px;
+        padding: 20px;
+        gap: 16px;
+        min-height: 84px;
     }
     
     .document-title {
         font-size: 15px;
     }
+    
+    .document-icon {
+        width: 44px;
+        height: 44px;
+        font-size: 20px;
+    }
+    
+    .document-meta {
+        gap: 10px;
+    }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 640px) {
+    .lk-container {
+        padding: 16px 8px;
+    }
+    
+    .header-section {
+        margin-bottom: 20px;
+    }
+    
     .page-title {
         font-size: 28px;
+    }
+    
+    .content-grid {
+        gap: 16px;
+    }
+    
+    .left-column {
+        gap: 12px;
+    }
+    
+    /* На малых экранах делаем все элементы во всю ширину */
+    .balance-card,
+    .telegram-connected-info,
+    .telegram-connect-simple {
+        width: 100%;
     }
     
     .balance-card,
     .documents-card {
         padding: 16px;
+        border-radius: 14px;
+    }
+    
+    .new-document-btn {
+        padding: 14px 20px;
+        font-size: 15px;
     }
     
     .card-title {
@@ -778,9 +896,149 @@ const sortedDocuments = computed(() => {
         font-size: 20px;
     }
     
-    .telegram-connect-simple {
+    .document-item {
+        padding: 16px;
+        gap: 12px;
+        min-height: 80px;
+    }
+    
+    .document-title {
+        font-size: 15px;
+    }
+    
+    .document-meta {
+        gap: 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .lk-container {
+        padding: 12px 6px;
+    }
+    
+    .page-title {
+        font-size: 24px;
+    }
+    
+    .page-subtitle {
         font-size: 14px;
-        padding: 12px 20px;
+    }
+    
+    .balance-card,
+    .documents-card {
+        padding: 14px;
+        border-radius: 12px;
+    }
+    
+    .card-title {
+        font-size: 16px;
+    }
+    
+    .balance-amount {
+        font-size: 24px;
+    }
+    
+    .new-document-btn {
+        padding: 12px 18px;
+        font-size: 14px;
+    }
+    
+    .telegram-connect-simple {
+        font-size: 13px;
+        padding: 10px 14px;
+    }
+    
+    .document-item {
+        padding: 12px;
+        gap: 10px;
+        min-height: 76px;
+    }
+    
+    .document-title {
+        font-size: 14px;
+    }
+    
+    .document-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 18px;
+    }
+    
+    .document-meta {
+        gap: 6px;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .document-date {
+        font-size: 12px;
+    }
+    
+    .document-status {
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 360px) {
+    .lk-container {
+        padding: 10px 4px;
+    }
+    
+    .page-title {
+        font-size: 22px;
+    }
+    
+    .header-section {
+        margin-bottom: 16px;
+    }
+    
+    .balance-card,
+    .documents-card {
+        padding: 12px;
+        border-radius: 10px;
+    }
+    
+    .new-document-btn {
+        padding: 10px 16px;
+        font-size: 13px;
+    }
+    
+    .balance-amount {
+        font-size: 22px;
+    }
+    
+    .card-title {
+        font-size: 15px;
+    }
+    
+    .document-item {
+        padding: 10px;
+        gap: 8px;
+        min-height: 72px;
+    }
+    
+    .document-title {
+        font-size: 13px;
+    }
+    
+    .document-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 16px;
+    }
+    
+    .document-meta {
+        gap: 4px;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .document-date {
+        font-size: 11px;
+    }
+    
+    .document-status {
+        font-size: 11px;
     }
 }
 

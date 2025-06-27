@@ -92,18 +92,34 @@
 
             <!-- Если генерация НЕ идет или нет автозагрузки -->
             <template v-else>
-                <!-- Шапка документа -->
-                <document-header 
-                    :document="currentDocument"
-                    :document-status="documentStatus"
-                    :status-text="getDisplayStatusText()"
-                    :is-generating="getIsGenerating()"
-                    :is-pre-generation-complete="isPreGenerationComplete()"
-                    :is-full-generation-complete="getIsFullGenerationComplete()"
-                    :has-failed="hasFailed()"
-                    :editable="canEdit"
-                    @updated="handleDocumentUpdate"
-                />
+                <!-- Заголовок с кнопкой возврата -->
+                <div class="header-section">
+                    <!-- Кнопка возврата в личный кабинет -->
+                    <div class="back-to-dashboard">
+                        <q-btn
+                            @click="goToDashboard"
+                            class="dashboard-btn"
+                            unelevated
+                            no-caps
+                        >
+                            <q-icon name="arrow_back" />
+                            <span>Личный кабинет</span>
+                        </q-btn>
+                    </div>
+
+                    <!-- Шапка документа -->
+                    <document-header 
+                        :document="currentDocument"
+                        :document-status="documentStatus"
+                        :status-text="getDisplayStatusText()"
+                        :is-generating="getIsGenerating()"
+                        :is-pre-generation-complete="isPreGenerationComplete()"
+                        :is-full-generation-complete="getIsFullGenerationComplete()"
+                        :has-failed="hasFailed()"
+                        :editable="canEdit"
+                        @updated="handleDocumentUpdate"
+                    />
+                </div>
 
                 <!-- Основной контент -->
                 <div class="main-content">
@@ -768,9 +784,55 @@ const getEstimatedTime = () => {
     
     return null;
 };
+
+// Функция возврата в личный кабинет
+const goToDashboard = () => {
+    router.visit('/lk');
+};
 </script>
 
 <style scoped>
+/* Секция заголовка с кнопкой возврата */
+.header-section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+.back-to-dashboard {
+    display: flex;
+    justify-content: flex-start;
+}
+
+.dashboard-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border-radius: 12px;
+    background: #f8fafc;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.dashboard-btn:hover {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.dashboard-btn .q-icon {
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
 /* Основной контейнер */
 .modern-container {
     max-width: 1400px;
@@ -1483,6 +1545,19 @@ const getEstimatedTime = () => {
     .document-main-title {
         font-size: 28px;
     }
+    
+    .modern-container {
+        padding: 24px 20px;
+    }
+    
+    .dashboard-btn {
+        padding: 10px 18px;
+        font-size: 13px;
+    }
+    
+    .dashboard-btn .q-icon {
+        font-size: 16px;
+    }
 }
 
 @media (max-width: 1024px) {
@@ -1519,11 +1594,51 @@ const getEstimatedTime = () => {
     .detail-icon {
         font-size: 16px;
     }
+    
+    .modern-container {
+        padding: 20px 16px;
+    }
+    
+    .header-section {
+        gap: 14px;
+        margin-bottom: 28px;
+    }
+    
+    .dashboard-btn {
+        padding: 10px 16px;
+        font-size: 13px;
+        gap: 6px;
+    }
+    
+    .dashboard-btn .q-icon {
+        font-size: 16px;
+    }
 }
 
 @media (max-width: 768px) {
     .modern-container {
         padding: 20px 16px;
+    }
+    
+    /* Адаптация секции заголовка */
+    .header-section {
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+    
+    .back-to-dashboard {
+        margin-bottom: 4px;
+    }
+    
+    .dashboard-btn {
+        padding: 8px 14px;
+        font-size: 12px;
+        gap: 6px;
+        border-radius: 10px;
+    }
+    
+    .dashboard-btn .q-icon {
+        font-size: 15px;
     }
     
     .document-header {
@@ -1637,6 +1752,70 @@ const getEstimatedTime = () => {
     }
 }
 
+@media (max-width: 640px) {
+    .modern-container {
+        padding: 16px 12px;
+    }
+    
+    .header-section {
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+    
+    .dashboard-btn {
+        padding: 8px 12px;
+        font-size: 11px;
+        gap: 5px;
+        border-radius: 8px;
+    }
+    
+    .dashboard-btn .q-icon {
+        font-size: 14px;
+    }
+    
+    .document-header {
+        padding: 16px 20px;
+        border-radius: 16px;
+    }
+    
+    .document-main-title {
+        font-size: 20px;
+        margin-bottom: 12px;
+    }
+    
+    .document-card {
+        padding: 20px 16px;
+        border-radius: 14px;
+    }
+    
+    .action-card {
+        padding: 16px;
+        border-radius: 14px;
+    }
+    
+    .typewriter-container {
+        margin-top: 30px;
+        height: 170px;
+    }
+    
+    .typewriter {
+        width: 280px;
+        height: 170px;
+    }
+    
+    .machine-body {
+        width: 240px;
+        height: 100px;
+        margin-bottom: 18px;
+    }
+    
+    .paper {
+        width: 180px;
+        height: 70px;
+        top: -30px;
+    }
+}
+
 @media (max-width: 480px) {
     .generation-card {
         padding: 24px 20px;
@@ -1644,6 +1823,52 @@ const getEstimatedTime = () => {
     
     .generation-title {
         font-size: 22px;
+    }
+    
+    .modern-container {
+        padding: 16px 8px;
+    }
+    
+    /* Кнопка возврата на мобильных */
+    .header-section {
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+    
+    .dashboard-btn {
+        padding: 6px 10px;
+        font-size: 10px;
+        gap: 4px;
+        border-radius: 8px;
+        min-height: 32px;
+    }
+    
+    .dashboard-btn .q-icon {
+        font-size: 13px;
+    }
+    
+    .dashboard-btn span {
+        font-size: 10px;
+    }
+    
+    .document-header {
+        padding: 14px 16px;
+        border-radius: 14px;
+    }
+    
+    .document-main-title {
+        font-size: 18px;
+        margin-bottom: 10px;
+    }
+    
+    .document-card {
+        padding: 16px 12px;
+        border-radius: 12px;
+    }
+    
+    .action-card {
+        padding: 14px;
+        border-radius: 12px;
     }
     
     /* Адаптация блока машинки для мобильных */
@@ -1731,6 +1956,100 @@ const getEstimatedTime = () => {
     .cursor {
         height: 10px;
         width: 1px;
+    }
+}
+
+@media (max-width: 360px) {
+    .modern-container {
+        padding: 12px 6px;
+    }
+    
+    .header-section {
+        gap: 6px;
+        margin-bottom: 12px;
+    }
+    
+    .dashboard-btn {
+        padding: 5px 8px;
+        font-size: 9px;
+        gap: 3px;
+        border-radius: 6px;
+        min-height: 28px;
+    }
+    
+    .dashboard-btn .q-icon {
+        font-size: 12px;
+    }
+    
+    .dashboard-btn span {
+        font-size: 9px;
+    }
+    
+    .document-header {
+        padding: 12px 14px;
+        border-radius: 12px;
+    }
+    
+    .document-main-title {
+        font-size: 16px;
+        margin-bottom: 8px;
+    }
+    
+    .document-card {
+        padding: 14px 10px;
+        border-radius: 10px;
+    }
+    
+    .action-card {
+        padding: 12px;
+        border-radius: 10px;
+    }
+    
+    .generation-card {
+        padding: 18px 14px;
+        border-radius: 16px;
+    }
+    
+    .generation-title {
+        font-size: 18px;
+    }
+    
+    .generation-subtitle {
+        font-size: 13px;
+    }
+    
+    .typewriter-container {
+        margin-top: 15px;
+        height: 120px;
+    }
+    
+    .typewriter {
+        width: 200px;
+        height: 120px;
+    }
+    
+    .machine-body {
+        width: 170px;
+        height: 70px;
+        margin-bottom: 12px;
+    }
+    
+    .paper {
+        width: 130px;
+        height: 50px;
+        top: -20px;
+    }
+    
+    .keys {
+        gap: 2px;
+    }
+    
+    .key {
+        font-size: 8px;
+        max-width: 36px;
+        max-height: 14px;
+        min-width: 32px;
+        min-height: 12px;
     }
 }
 </style> 
