@@ -1,6 +1,5 @@
 <template>
     <page-layout
-        title="Документ"
         :is-sticky="true"
         :auto-auth="true"
     >

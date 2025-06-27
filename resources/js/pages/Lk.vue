@@ -243,6 +243,13 @@ const topUpBalance = async () => {
   }
 };
 
+// Открыть Telegram бот
+const openTelegramBot = () => {
+  // URL бота (замените на ваш реальный URL)
+  const botUrl = 'https://t.me/gptpult_bot';
+  window.open(botUrl, '_blank');
+};
+
 // Computed для отсортированных документов
 const sortedDocuments = computed(() => {
   return [...props.documents].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
@@ -253,7 +260,6 @@ const sortedDocuments = computed(() => {
     <Head title="Личный кабинет" />
 
     <page-layout 
-        title="Личный кабинет"
         :auto-auth="true"
         left-btn-icon=""
         :left-btn-go-back="false"
@@ -263,7 +269,6 @@ const sortedDocuments = computed(() => {
             <!-- Заголовок -->
             <div class="header-section">
                 <h1 class="page-title">Личный кабинет</h1>
-                <p class="page-subtitle">Управляйте своими документами и настройками</p>
             </div>
 
             <!-- Основной контент -->
@@ -309,23 +314,36 @@ const sortedDocuments = computed(() => {
                         </div>
                     </div>
 
-                    <!-- Кнопка Telegram -->
-                    <div v-if="telegramStatus.is_linked" class="telegram-connected-info">
-                        <div class="telegram-status-text">
-                            <q-icon name="fab fa-telegram" class="telegram-status-icon" />
-                            <span>Telegram подключен (@{{ telegramStatus.telegram_username || 'Связан' }})</span>
-                        </div>
+                    <!-- Блок Telegram -->
+                    <div v-if="telegramStatus.is_linked" class="telegram-connected-block">
+                        <!-- Кнопка перехода в Telegram -->
                         <q-btn
-                            v-if="isDevelopment"
-                            color="negative"
-                            label="Отвязать"
-                            size="sm"
-                            @click="unlinkTelegram"
-                            :loading="telegramLoading"
-                            class="telegram-disconnect-simple"
-                            flat
+                            @click="openTelegramBot"
+                            class="telegram-go-btn"
+                            unelevated
                             no-caps
-                        />
+                        >
+                            <q-icon name="fab fa-telegram" class="telegram-go-icon" />
+                            <span>Перейти в Телеграм</span>
+                        </q-btn>
+                        
+                        <!-- Информация и кнопка отвязки -->
+                        <div class="telegram-info-row">
+                            <div class="telegram-status-info">
+                                <span class="telegram-username">@{{ telegramStatus.telegram_username || 'Связан' }}</span>
+                            </div>
+                            <q-btn
+                                v-if="isDevelopment"
+                                color="negative"
+                                label="Отвязать"
+                                size="sm"
+                                @click="unlinkTelegram"
+                                :loading="telegramLoading"
+                                class="telegram-disconnect-btn"
+                                flat
+                                no-caps
+                            />
+                        </div>
                     </div>
                     
                     <q-btn
@@ -390,7 +408,7 @@ const sortedDocuments = computed(() => {
             </div>
         </div>
     </page-layout>
-</template>
+</template> 
 
 <style scoped>
 .lk-container {
@@ -484,44 +502,77 @@ const sortedDocuments = computed(() => {
 }
 
 /* Информация о подключенном Telegram */
-.telegram-connected-info {
+.telegram-connected-block {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px;
+    background: #f0f9ff;
+    border-radius: 12px;
+    border: 1px solid #bae6fd;
+}
+
+.telegram-go-btn {
+    width: 100%;
+    padding: 14px 20px;
+    border-radius: 10px;
+    background: #0088cc;
+    color: white;
+    font-size: 15px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3);
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    min-height: 48px;
+}
+
+.telegram-go-btn:hover {
+    background: #006699;
+    box-shadow: 0 6px 16px rgba(0, 136, 204, 0.4);
+    transform: translateY(-1px);
+}
+
+.telegram-go-icon {
+    font-size: 18px;
+    flex-shrink: 0;
+    margin-right: 8px;
+}
+
+.telegram-info-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    padding: 12px 16px;
-    background: #f0f9ff;
-    border-radius: 12px;
-    border: 1px solid #bae6fd;
-    margin-bottom: 8px;
+    padding: 0 4px;
 }
 
-.telegram-status-text {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+.telegram-status-info {
     flex: 1;
     font-size: 14px;
-    color: #0f172a;
+    color: #64748b;
     font-weight: 500;
 }
 
-.telegram-status-icon {
-    font-size: 18px;
-    color: #0088cc;
-    flex-shrink: 0;
+.telegram-username {
+    font-weight: 600;
+    color: #0f172a;
+    font-size: 14px;
 }
 
-.telegram-disconnect-simple {
+.telegram-disconnect-btn {
     border-radius: 8px;
     font-weight: 500;
-    padding: 6px 12px;
+    padding: 8px 14px;
     color: #ef4444;
     transition: all 0.2s ease;
     font-size: 12px;
+    min-height: 32px;
 }
 
-.telegram-disconnect-simple:hover {
+.telegram-disconnect-btn:hover {
     background: #fef2f2;
 }
 
@@ -538,7 +589,8 @@ const sortedDocuments = computed(() => {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: 16px;
+    min-height: 52px;
 }
 
 .telegram-connect-simple:hover {
@@ -550,6 +602,7 @@ const sortedDocuments = computed(() => {
 .telegram-btn-icon {
     font-size: 20px;
     flex-shrink: 0;
+    margin-right: 10px;
 }
 
 /* Пустое состояние */
@@ -782,10 +835,27 @@ const sortedDocuments = computed(() => {
         order: 2;
     }
     
-    .telegram-connected-info,
+    .telegram-connected-block,
     .telegram-connect-simple {
         width: calc(50% - 8px);
         order: 3;
+    }
+    
+    .telegram-connected-block {
+        padding: 16px;
+        gap: 12px;
+    }
+    
+    .telegram-go-btn {
+        padding: 12px 16px;
+        font-size: 14px;
+        min-height: 44px;
+    }
+    
+    .telegram-connect-simple {
+        padding: 14px 20px;
+        font-size: 15px;
+        min-height: 48px;
     }
     
     .new-document-btn {
@@ -810,16 +880,10 @@ const sortedDocuments = computed(() => {
         width: 100%;
     }
     
-    .telegram-connected-info {
+    .telegram-connected-block {
         flex-direction: column;
         align-items: flex-start;
         gap: 8px;
-        padding: 12px;
-    }
-    
-    .telegram-connect-simple {
-        padding: 12px 16px;
-        font-size: 14px;
     }
     
     .document-item {
@@ -866,7 +930,7 @@ const sortedDocuments = computed(() => {
     
     /* На малых экранах делаем все элементы во всю ширину */
     .balance-card,
-    .telegram-connected-info,
+    .telegram-connected-block,
     .telegram-connect-simple {
         width: 100%;
     }
@@ -941,6 +1005,11 @@ const sortedDocuments = computed(() => {
     .new-document-btn {
         padding: 12px 18px;
         font-size: 14px;
+    }
+    
+    .telegram-go-btn {
+        font-size: 13px;
+        padding: 10px 14px;
     }
     
     .telegram-connect-simple {
