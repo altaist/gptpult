@@ -317,8 +317,8 @@ const processTopUp = async () => {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-      }
+      },
+      credentials: 'include'
     });
 
     if (!paymentResponse.ok) {
@@ -358,8 +358,8 @@ const loadTransitions = async () => {
     const response = await fetch('/api/user/transitions', {
       headers: {
         'Accept': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-      }
+      },
+      credentials: 'include'
     });
 
     if (response.ok) {

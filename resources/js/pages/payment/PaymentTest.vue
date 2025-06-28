@@ -76,8 +76,8 @@ const createYookassaPayment = async (orderId) => {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-      }
+      },
+      credentials: 'include'
     })
 
     if (!response.ok) {

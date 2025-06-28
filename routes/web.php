@@ -100,14 +100,6 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/payment/yookassa/create/{orderId}', [PaymentController::class, 'createYookassaPayment'])
         ->name('payment.yookassa.create');
 
-    // API роут для создания платежей (всегда возвращает JSON)
-    Route::post('/api/payment/yookassa/create/{orderId}', [PaymentController::class, 'createYookassaPaymentApi'])
-        ->name('payment.yookassa.create.api');
-
-    // API роут для проверки статуса платежа
-    Route::get('/api/payment/status/{orderId}', [PaymentController::class, 'checkPaymentStatusApi'])
-        ->name('payment.status.api');
-
     // Роут для создания тестового заказа
     Route::post('/payment/test/create-order', [PaymentTestController::class, 'createTestOrder'])
         ->name('payment.test.create-order');
@@ -149,15 +141,5 @@ Route::get('/payment/waiting-test', function () {
 // Telegram бот роуты (веб-хук должен быть без auth middleware)
 Route::post('/telegram/webhook', [TelegramController::class, 'webhook'])->name('telegram.webhook');
 Route::get('/telegram/test-mode', [TelegramController::class, 'testMode'])->name('telegram.test-mode');
-
-// API роут для получения истории транзакций
-Route::get('/api/user/transitions', [LkController::class, 'getTransitionHistory'])
-    ->name('user.transitions.api')
-    ->middleware('auth');
-
-// API роут для тестового уменьшения баланса (только для development)
-Route::post('/api/user/test-decrement-balance', [LkController::class, 'testDecrementBalance'])
-    ->name('user.test-decrement-balance.api')
-    ->middleware('auth');
 
 require __DIR__.'/auth.php';
