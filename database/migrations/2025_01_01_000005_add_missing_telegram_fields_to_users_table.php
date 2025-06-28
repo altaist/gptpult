@@ -12,11 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            // Поля telegram_id, telegram_username, telegram_connected_at уже существуют
-            // Добавляем только недостающие поля
-            $table->string('telegram_link_token')->nullable()->after('telegram_username');
-            // Переименовываем telegram_connected_at в telegram_linked_at
-            $table->renameColumn('telegram_connected_at', 'telegram_linked_at');
+            // Добавляем недостающие telegram поля
+            $table->string('telegram_id')->nullable()->after('statistics');
+            $table->string('telegram_username')->nullable()->after('telegram_id');
+            $table->timestamp('telegram_linked_at')->nullable()->after('telegram_link_token');
         });
     }
 
@@ -26,8 +25,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('telegram_link_token');
-            $table->renameColumn('telegram_linked_at', 'telegram_connected_at');
+            $table->dropColumn(['telegram_id', 'telegram_username', 'telegram_linked_at']);
         });
     }
 }; 
