@@ -30,6 +30,33 @@ export function useTelegramMiniApp() {
           initData: tg.initData
         })
         
+        // Проверяем localStorage на наличие данных авторизации
+        const storedUserId = localStorage.getItem('telegram_auth_user_id')
+        const storedTimestamp = localStorage.getItem('telegram_auth_timestamp')
+        
+        // Если есть сохраненные данные, отправляем их с заголовками
+        if (storedUserId && storedTimestamp) {
+          console.log('useTelegramMiniApp: Found stored auth data, sending with headers')
+          
+          // Отправляем запрос с заголовками для восстановления сессии
+          fetch(window.location.href, {
+            method: 'GET',
+            headers: {
+              'X-Telegram-Auth-User-Id': storedUserId,
+              'X-Telegram-Auth-Timestamp': storedTimestamp,
+              'X-Requested-With': 'XMLHttpRequest'
+            }
+          }).then(response => {
+            console.log('useTelegramMiniApp: Auth restoration response:', response.status)
+            if (response.ok && window.location.pathname === '/login') {
+              // Если успешно и мы на странице логина, перенаправляем
+              window.location.href = '/lk'
+            }
+          }).catch(error => {
+            console.error('useTelegramMiniApp: Auth restoration failed:', error)
+          })
+        }
+        
         // Проверяем, авторизован ли пользователь уже (через Inertia props)
         const isAlreadyAuthenticated = window?.Laravel?.auth?.user || document.querySelector('meta[name="user-authenticated"]')?.content === 'true'
         
@@ -121,6 +148,11 @@ export function useTelegramMiniApp() {
           
           if (data.success && data.user) {
             console.log('useTelegramMiniApp: User authenticated via API')
+            
+            // Сохраняем информацию об авторизации в localStorage для Telegram WebApp
+            localStorage.setItem('telegram_auth_user_id', data.user.id)
+            localStorage.setItem('telegram_auth_timestamp', Date.now())
+            
             // Перезагружаем страницу для применения авторизации
             window.location.reload()
             return
