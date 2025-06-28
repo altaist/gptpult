@@ -58,6 +58,8 @@ onMounted(async () => {
   // Если это Telegram Mini App, настраиваем интерфейс
   if (isTelegramMiniApp.value) {
     console.log('Running in Telegram Mini App mode');
+    // Добавляем CSS класс для Telegram WebApp стилей
+    document.body.classList.add('tg-viewport');
   }
 });
 
@@ -488,7 +490,10 @@ const sortedDocuments = computed(() => {
 
 // Очистка интервалов при размонтировании компонента
 onUnmounted(() => {
-  // Очистка не требуется, так как старая логика модального окна удалена
+  // Удаляем CSS класс при размонтировании
+  if (isTelegramMiniApp.value) {
+    document.body.classList.remove('tg-viewport');
+  }
 });
 </script>
 
@@ -1266,7 +1271,8 @@ onUnmounted(() => {
 
 @media (max-width: 768px) {
     .lk-container {
-        padding: 20px 12px 100px 12px;
+        padding: 16px 8px 100px 8px;
+        max-width: 100%;
     }
     
     .header-section {
@@ -1298,14 +1304,23 @@ onUnmounted(() => {
     
     .right-column {
         order: 1;
+        width: 100%;
+    }
+    
+    /* Улучшения для блока документов на мобильных */
+    .documents-card {
+        width: 100%;
+        margin: 0;
+        padding: 20px;
+        border-radius: 16px;
     }
     
     /* Фиксированная кнопка в мобильной версии */
     .new-document-section {
         position: fixed;
         bottom: 32px;
-        left: 12px;
-        right: 12px;
+        left: 8px;
+        right: 8px;
         z-index: 1000;
         width: auto;
         order: 0;
@@ -1408,7 +1423,8 @@ onUnmounted(() => {
 
 @media (max-width: 640px) {
     .lk-container {
-        padding: 16px 8px 90px 8px;
+        padding: 12px 4px 90px 4px;
+        max-width: 100%;
     }
     
     .header-section {
@@ -1436,8 +1452,10 @@ onUnmounted(() => {
     
     .balance-card,
     .documents-card {
-        padding: 16px;
+        padding: 18px;
         border-radius: 14px;
+        width: 100%;
+        margin: 0;
     }
     
     .new-document-btn {
@@ -1464,6 +1482,7 @@ onUnmounted(() => {
         padding: 16px;
         gap: 12px;
         min-height: 80px;
+        width: 100%;
     }
     
     .document-title {
@@ -1476,14 +1495,15 @@ onUnmounted(() => {
     
     .new-document-section {
         bottom: 24px;
-        left: 8px;
-        right: 8px;
+        left: 4px;
+        right: 4px;
     }
 }
 
 @media (max-width: 480px) {
     .lk-container {
-        padding: 12px 6px 85px 6px;
+        padding: 8px 2px 85px 2px;
+        max-width: 100%;
     }
     
     .page-title {
@@ -1496,8 +1516,10 @@ onUnmounted(() => {
     
     .balance-card,
     .documents-card {
-        padding: 14px;
+        padding: 16px;
         border-radius: 12px;
+        width: 100%;
+        margin: 0;
     }
     
     .card-title {
@@ -1525,9 +1547,10 @@ onUnmounted(() => {
     }
     
     .document-item {
-        padding: 12px;
-        gap: 10px;
+        padding: 14px;
+        gap: 12px;
         min-height: 76px;
+        width: 100%;
     }
     
     .document-title {
@@ -1556,14 +1579,15 @@ onUnmounted(() => {
     
     .new-document-section {
         bottom: 20px;
-        left: 6px;
-        right: 6px;
+        left: 2px;
+        right: 2px;
     }
 }
 
 @media (max-width: 360px) {
     .lk-container {
-        padding: 10px 4px 80px 4px;
+        padding: 6px 1px 80px 1px;
+        max-width: 100%;
     }
     
     .page-title {
@@ -1576,8 +1600,10 @@ onUnmounted(() => {
     
     .balance-card,
     .documents-card {
-        padding: 12px;
+        padding: 14px;
         border-radius: 10px;
+        width: 100%;
+        margin: 0;
     }
     
     .new-document-btn {
@@ -1595,9 +1621,10 @@ onUnmounted(() => {
     }
     
     .document-item {
-        padding: 10px;
-        gap: 8px;
+        padding: 12px;
+        gap: 10px;
         min-height: 72px;
+        width: 100%;
     }
     
     .document-title {
@@ -1623,83 +1650,6 @@ onUnmounted(() => {
     .document-status {
         font-size: 11px;
     }
-}
-
-/* Секция создания документа */
-.new-document-section {
-    margin-bottom: 0;
-}
-
-.new-document-btn {
-    width: 100%;
-    padding: 20px 32px;
-    border-radius: 16px;
-    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-    color: white;
-    font-size: 18px;
-    font-weight: 600;
-    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
-    transition: all 0.3s ease;
-}
-
-.new-document-btn:hover {
-    box-shadow: 0 12px 32px rgba(59, 130, 246, 0.4);
-    transform: translateY(-3px);
-}
-
-.btn-icon {
-    margin-right: 12px;
-    font-size: 24px;
-}
-
-/* Карточка баланса */
-.balance-content {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    align-items: flex-start;
-}
-
-.balance-amount {
-    font-size: 32px;
-    font-weight: 700;
-    color: #1e293b;
-    line-height: 1;
-    text-align: left;
-}
-
-.balance-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    width: 100%;
-}
-
-.balance-btn {
-    border-radius: 12px;
-    font-weight: 600;
-    padding: 12px 24px;
-    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-    transition: all 0.2s ease;
-    width: 100%;
-}
-
-.balance-btn:hover {
-    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
-    transform: translateY(-1px);
-}
-
-.history-btn {
-    border-radius: 8px;
-    font-weight: 500;
-    padding: 8px 16px;
-    font-size: 13px;
-    width: 100%;
-}
-
-.history-btn:hover {
-    background: #f8fafc;
 }
 
 /* Стили для модальных окон */
@@ -2283,5 +2233,108 @@ onUnmounted(() => {
     color: #10b981;
     font-size: 18px;
     flex-shrink: 0;
+}
+
+/* Специальные стили для Telegram WebApp */
+body.tg-viewport .lk-container {
+    padding-left: 4px;
+    padding-right: 4px;
+    max-width: 100%;
+}
+
+body.tg-viewport .documents-card {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 16px !important;
+}
+
+body.tg-viewport .document-item {
+    width: 100% !important;
+    padding: 14px !important;
+    margin: 0 !important;
+}
+
+body.tg-viewport .balance-card,
+body.tg-viewport .telegram-connected-block,
+body.tg-viewport .telegram-connect-simple {
+    width: 100% !important;
+    margin: 0 !important;
+}
+
+/* Секция создания документа */
+.new-document-section {
+    margin-bottom: 0;
+}
+
+.new-document-btn {
+    width: 100%;
+    padding: 20px 32px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: white;
+    font-size: 18px;
+    font-weight: 600;
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
+    transition: all 0.3s ease;
+}
+
+.new-document-btn:hover {
+    box-shadow: 0 12px 32px rgba(59, 130, 246, 0.4);
+    transform: translateY(-3px);
+}
+
+.btn-icon {
+    margin-right: 12px;
+    font-size: 24px;
+}
+
+/* Карточка баланса */
+.balance-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.balance-amount {
+    font-size: 32px;
+    font-weight: 700;
+    color: #1e293b;
+    line-height: 1;
+    text-align: left;
+}
+
+.balance-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+}
+
+.balance-btn {
+    border-radius: 12px;
+    font-weight: 600;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    transition: all 0.2s ease;
+    width: 100%;
+}
+
+.balance-btn:hover {
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+    transform: translateY(-1px);
+}
+
+.history-btn {
+    border-radius: 8px;
+    font-weight: 500;
+    padding: 8px 16px;
+    font-size: 13px;
+    width: 100%;
+}
+
+.history-btn:hover {
+    background: #f8fafc;
 }
 </style> 
