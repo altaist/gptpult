@@ -44,12 +44,6 @@
                     </div>
                     <div class="status-content">
                         <span class="status-text">{{ getDisplayStatusText() }}</span>
-                        <div 
-                            v-if="documentStatus?.status === 'pre_generated' && !documentStatus?.has_references"
-                            class="status-note"
-                        >
-                            Ожидается завершение генерации ссылок
-                        </div>
                     </div>
                 </div>
             </div>
@@ -442,13 +436,6 @@ const saveTitleEdit = async () => {
     line-height: 1.3;
 }
 
-.status-note {
-    font-size: 11px;
-    color: #fbbf24;
-    font-weight: 500;
-    line-height: 1.2;
-}
-
 /* Цвета статусов */
 .status-generating {
     color: #60a5fa !important;
@@ -640,11 +627,6 @@ const saveTitleEdit = async () => {
     .status-text {
         font-size: 14px;
         line-height: 1.2;
-    }
-    
-    .status-note {
-        font-size: 10px;
-        line-height: 1.1;
     }
     
     .status-label {

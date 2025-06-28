@@ -61,13 +61,10 @@ class PaymentService
                 ], $paymentData)
             ]);
 
-            // Если платеж автоматически завершается, пополняем баланс и меняем статус заказа
+            // Если платеж автоматически завершается, меняем статус заказа
+            // ВНИМАНИЕ: Средства не начисляются здесь, так как это внутренний платеж
+            // Начисление происходит только через внешние платежные системы (ЮКасса)
             if ($autoComplete) {
-                $this->transitionService->creditUser(
-                    $order->user,
-                    $amount,
-                    $order->document ? "Платеж #{$payment->id} за документ \"{$order->document->title}\"" : "Платеж #{$payment->id} за заказ #{$order->id}"
-                );
                 $order->update(['status' => OrderStatus::PAID]);
             }
 
@@ -76,7 +73,7 @@ class PaymentService
     }
 
     /**
-     * Подтвердить платеж и пополнить баланс
+     * Подтвердить платеж и обновить статус заказа
      *
      * @param Payment $payment
      * @return Payment
@@ -92,12 +89,11 @@ class PaymentService
             // Обновляем статус платежа
             $payment->update(['status' => 'completed']);
 
-            // Пополняем баланс пользователя
-            $this->transitionService->creditUser(
-                $payment->user,
-                $payment->amount,
-                "Платеж #{$payment->id} за заказ #{$payment->order_id}"
-            );
+            // Обновляем статус заказа
+            $payment->order->update(['status' => OrderStatus::PAID]);
+
+            // ВНИМАНИЕ: Средства не начисляются здесь, так как это внутренний платеж
+            // Начисление происходит только через внешние платежные системы (ЮКасса)
 
             return $payment->fresh();
         });

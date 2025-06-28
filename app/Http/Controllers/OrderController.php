@@ -38,6 +38,7 @@ class OrderController extends Controller
             // Если передан документ, проверяем права доступа
             if ($document && $document->user_id !== $user->id) {
                 return response()->json([
+                    'success' => false,
                     'error' => 'У вас нет доступа к этому документу'
                 ], 403);
             }
@@ -45,17 +46,36 @@ class OrderController extends Controller
             // Создаем заказ (с документом или без него)
             $order = $this->orderService->createOrder($user, $document, $amount, $orderData);
 
-            // Загружаем отношение document для использования в PaymentProcessHelper
-            if ($document) {
-                $order->load('document');
-            }
-
-            // Создаем ссылку для оплаты
-            $paymentUrl = $this->paymentHelper->createPaymentLink($order);
-
-            return response()->json([
-                'redirect' => $paymentUrl
+            Log::info('Заказ успешно создан', [
+                'order_id' => $order->id,
+                'user_id' => $user->id,
+                'amount' => $order->amount,
+                'document_id' => $document?->id,
+                'order_data' => $orderData
             ]);
+
+            // Проверяем, это запрос на пополнение баланса или для документа
+            $isPurposeBalanceTopUp = isset($orderData['purpose']) && $orderData['purpose'] === 'balance_top_up';
+
+            if ($isPurposeBalanceTopUp || !$document) {
+                // Для пополнения баланса возвращаем данные заказа
+                return response()->json([
+                    'success' => true,
+                    'order_id' => $order->id,
+                    'amount' => $order->amount
+                ]);
+            } else {
+                // Для документов - старая логика с PaymentProcessHelper
+                // Загружаем отношение document для использования в PaymentProcessHelper
+                $order->load('document');
+
+                // Создаем ссылку для оплаты
+                $paymentUrl = $this->paymentHelper->createPaymentLink($order);
+
+                return response()->json([
+                    'redirect' => $paymentUrl
+                ]);
+            }
 
         } catch (Exception $e) {
             // Логируем детальную информацию об ошибке
@@ -69,6 +89,7 @@ class OrderController extends Controller
             ]);
 
             return response()->json([
+                'success' => false,
                 'error' => 'Ошибка при создании заказа: ' . $e->getMessage()
             ], 422);
         }

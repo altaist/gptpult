@@ -1,0 +1,333 @@
+<?php
+
+namespace App\Services\Orders;
+
+use App\Models\Order;
+use App\Models\Payment;
+use App\Enums\OrderStatus;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use YooKassa\Client;
+use Exception;
+
+class YookassaPaymentService
+{
+    protected Client $client;
+    protected TransitionService $transitionService;
+
+    public function __construct(TransitionService $transitionService)
+    {
+        $this->transitionService = $transitionService;
+        
+        // Проверяем наличие обязательных настроек
+        $shopId = config('services.yookassa.shop_id');
+        $secretKey = config('services.yookassa.secret_key');
+        
+        if (empty($shopId) || empty($secretKey)) {
+            throw new Exception(
+                'ЮКасса не настроена. Проверьте переменные YOOKASSA_SHOP_ID и YOOKASSA_SECRET_KEY в .env файле. ' .
+                'Подробные инструкции см. в файле YOOKASSA_SETUP.md'
+            );
+        }
+        
+        $this->client = new Client();
+        $this->client->setAuth($shopId, $secretKey);
+    }
+
+    /**
+     * Создать платеж в ЮКасса
+     *
+     * @param Order $order
+     * @param array $paymentOptions
+     * @return array
+     * @throws Exception
+     */
+    public function createPayment(Order $order, array $paymentOptions = []): array
+    {
+        try {
+            $paymentData = [
+                'amount' => [
+                    'value' => $order->amount,
+                    'currency' => 'RUB'
+                ],
+                'confirmation' => [
+                    'type' => 'redirect',
+                    'return_url' => route('payment.complete', $order->id)
+                ],
+                'metadata' => [
+                    'order_id' => $order->id,
+                    'user_id' => $order->user_id,
+                    'document_id' => $order->document_id,
+                ]
+            ];
+
+            // Если есть данные клиента
+            if ($order->user) {
+                $paymentData['metadata']['user_email'] = $order->user->email;
+            }
+
+            // Создаем платеж
+            $response = $this->client->createPayment($paymentData, uniqid('', true));
+
+            Log::info('ЮКасса платеж создан', [
+                'order_id' => $order->id,
+                'payment_id' => $response->getId(),
+                'status' => $response->getStatus(),
+                'amount' => $response->getAmount()->getValue()
+            ]);
+
+            // Сохраняем информацию о платеже в базе
+            $payment = $this->savePaymentToDatabase($order, $response);
+
+            return [
+                'success' => true,
+                'payment_id' => $response->getId(),
+                'confirmation_url' => $response->getConfirmation()->getConfirmationUrl(),
+                'status' => $response->getStatus(),
+                'payment' => $payment
+            ];
+
+        } catch (Exception $e) {
+            Log::error('Ошибка создания платежа ЮКасса', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            throw new Exception('Ошибка при создании платежа: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Обработать webhook уведомление от ЮКасса
+     *
+     * @param array $requestBody
+     * @return bool
+     * @throws Exception
+     */
+    public function handleWebhook(array $requestBody): bool
+    {
+        try {
+            // Получаем данные о платеже из уведомления
+            if (!isset($requestBody['object'])) {
+                throw new Exception('Отсутствует объект платежа в webhook');
+            }
+
+            $paymentData = $requestBody['object'];
+            $eventType = $requestBody['event'] ?? '';
+
+            Log::info('Получено webhook уведомление от ЮКасса', [
+                'event' => $eventType,
+                'payment_id' => $paymentData['id'] ?? 'unknown',
+                'status' => $paymentData['status'] ?? 'unknown'
+            ]);
+
+            // Находим заказ по метаданным
+            $metadata = $paymentData['metadata'] ?? [];
+            if (!isset($metadata['order_id'])) {
+                throw new Exception('Order ID не найден в метаданных платежа');
+            }
+
+            $order = Order::find($metadata['order_id']);
+            if (!$order) {
+                throw new Exception('Заказ не найден: ' . $metadata['order_id']);
+            }
+
+            // Обрабатываем уведомление в зависимости от события
+            switch ($eventType) {
+                case 'payment.succeeded':
+                    return $this->handleSuccessfulPayment($order, $paymentData);
+
+                case 'payment.waiting_for_capture':
+                    return $this->handlePaymentWaitingForCapture($order, $paymentData);
+
+                default:
+                    Log::warning('Неизвестный тип webhook события', [
+                        'event' => $eventType,
+                        'payment_id' => $paymentData['id'] ?? 'unknown'
+                    ]);
+                    return true;
+            }
+
+        } catch (Exception $e) {
+            Log::error('Ошибка обработки webhook ЮКасса', [
+                'error' => $e->getMessage(),
+                'request_body' => $requestBody,
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            throw $e;
+        }
+    }
+
+    /**
+     * Получить статус платежа
+     *
+     * @param string $paymentId
+     * @return array
+     * @throws Exception
+     */
+    public function getPaymentInfo(string $paymentId): array
+    {
+        try {
+            $payment = $this->client->getPaymentInfo($paymentId);
+
+            return [
+                'id' => $payment->getId(),
+                'status' => $payment->getStatus(),
+                'amount' => $payment->getAmount()->getValue(),
+                'currency' => $payment->getAmount()->getCurrency(),
+                'metadata' => $payment->getMetadata(),
+                'created_at' => $payment->getCreatedAt()->format('Y-m-d H:i:s'),
+            ];
+
+        } catch (Exception $e) {
+            Log::error('Ошибка получения информации о платеже', [
+                'payment_id' => $paymentId,
+                'error' => $e->getMessage()
+            ]);
+
+            throw new Exception('Ошибка при получении информации о платеже: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Принудительно обработать успешный платеж (публичный метод)
+     *
+     * @param Order $order
+     * @param array $paymentData
+     * @return bool
+     */
+    public function forceHandleSuccessfulPayment(Order $order, array $paymentData): bool
+    {
+        return $this->handleSuccessfulPayment($order, $paymentData);
+    }
+
+    /**
+     * Сохранить информацию о платеже в базе данных
+     *
+     * @param Order $order
+     * @param mixed $yookassaPayment
+     * @return Payment
+     */
+    protected function savePaymentToDatabase(Order $order, $yookassaPayment): Payment
+    {
+        return Payment::create([
+            'order_id' => $order->id,
+            'user_id' => $order->user_id,
+            'amount' => $yookassaPayment->getAmount()->getValue(),
+            'status' => 'pending',
+            'payment_data' => [
+                'yookassa_payment_id' => $yookassaPayment->getId(),
+                'yookassa_status' => $yookassaPayment->getStatus(),
+                'confirmation_url' => $yookassaPayment->getConfirmation() ? $yookassaPayment->getConfirmation()->getConfirmationUrl() : null,
+                'payment_method' => 'yookassa',
+                'created_at' => now()->toISOString()
+            ]
+        ]);
+    }
+
+    /**
+     * Обработать успешный платеж
+     *
+     * @param Order $order
+     * @param array $paymentData
+     * @return bool
+     */
+    protected function handleSuccessfulPayment(Order $order, array $paymentData): bool
+    {
+        return DB::transaction(function () use ($order, $paymentData) {
+            // Обновляем статус платежа в базе
+            $localPayment = Payment::where('order_id', $order->id)
+                ->whereJsonContains('payment_data->yookassa_payment_id', $paymentData['id'])
+                ->first();
+
+            if ($localPayment) {
+                $paymentDataLocal = $localPayment->payment_data;
+                $paymentDataLocal['yookassa_status'] = $paymentData['status'];
+                $paymentDataLocal['paid_at'] = now()->format('Y-m-d H:i:s');
+
+                $localPayment->update([
+                    'status' => 'completed',
+                    'payment_data' => $paymentDataLocal
+                ]);
+            }
+
+            // Пополняем баланс пользователя
+            $amount = $paymentData['amount']['value'] ?? $order->amount;
+            $this->transitionService->creditUser(
+                $order->user,
+                $amount,
+                $order->document ? "Платеж за документ \"{$order->document->title}\"" : "Пополнение баланса"
+            );
+
+            // Обновляем статус заказа
+            $order->update(['status' => OrderStatus::PAID]);
+
+            Log::info('Платеж успешно обработан', [
+                'order_id' => $order->id,
+                'payment_id' => $paymentData['id'],
+                'amount' => $amount
+            ]);
+
+            return true;
+        });
+    }
+
+    /**
+     * Обработать платеж, ожидающий подтверждения
+     *
+     * @param Order $order
+     * @param array $paymentData
+     * @return bool
+     */
+    protected function handlePaymentWaitingForCapture(Order $order, array $paymentData): bool
+    {
+        try {
+            // Для двухэтапных платежей - автоматически подтверждаем
+            $captureData = [
+                'amount' => $paymentData['amount']
+            ];
+
+            $response = $this->client->capturePayment($captureData, $paymentData['id'], uniqid('', true));
+
+            Log::info('Платеж автоматически подтвержден', [
+                'order_id' => $order->id,
+                'payment_id' => $paymentData['id'],
+                'capture_status' => $response->getStatus()
+            ]);
+
+            return true;
+
+        } catch (Exception $e) {
+            Log::error('Ошибка при подтверждении платежа', [
+                'order_id' => $order->id,
+                'payment_id' => $paymentData['id'],
+                'error' => $e->getMessage()
+            ]);
+
+            return false;
+        }
+    }
+
+    /**
+     * Проверить подпись webhook
+     *
+     * @param string $httpBody
+     * @param string $signature
+     * @return bool
+     */
+    public function verifyWebhookSignature(string $httpBody, string $signature): bool
+    {
+        $webhookSecret = config('services.yookassa.webhook_secret');
+        
+        if (!$webhookSecret) {
+            Log::warning('Webhook secret не настроен для ЮКасса');
+            return true; // В dev режиме пропускаем проверку
+        }
+
+        $calculatedSignature = hash_hmac('sha256', $httpBody, $webhookSecret);
+        
+        return hash_equals($calculatedSignature, $signature);
+    }
+} 

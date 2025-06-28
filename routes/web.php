@@ -12,6 +12,7 @@ use App\Http\Controllers\FilesController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PaymentTestController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\YookassaWebhookController;
 use App\Http\Controllers\TelegramController;
 use App\Http\Controllers\TelegramLinkController;
 
@@ -94,7 +95,27 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/unlink', [TelegramLinkController::class, 'unlink'])->name('telegram.unlink');
         Route::get('/status', [TelegramLinkController::class, 'status'])->name('telegram.status');
     });
+
+    // Новые маршруты для ЮКасса
+    Route::post('/payment/yookassa/create/{orderId}', [PaymentController::class, 'createYookassaPayment'])
+        ->name('payment.yookassa.create');
+
+    // API роут для создания платежей (всегда возвращает JSON)
+    Route::post('/api/payment/yookassa/create/{orderId}', [PaymentController::class, 'createYookassaPaymentApi'])
+        ->name('payment.yookassa.create.api');
+
+    // API роут для проверки статуса платежа
+    Route::get('/api/payment/status/{orderId}', [PaymentController::class, 'checkPaymentStatusApi'])
+        ->name('payment.status.api');
+
+    // Роут для создания тестового заказа
+    Route::post('/payment/test/create-order', [PaymentTestController::class, 'createTestOrder'])
+        ->name('payment.test.create-order');
 });
+
+// Webhook для ЮКасса (без middleware auth)
+Route::post('/payment/yookassa/webhook', [YookassaWebhookController::class, 'handleWebhook'])
+    ->name('payment.yookassa.webhook');
 
 // Страница создания документа (доступна всем, но с проверкой авторизации в компоненте)
 Route::get('/new', NewDocumentController::class)->name('documents.new');
@@ -108,9 +129,6 @@ Route::get('/auto-login/{auth_token}', [App\Http\Controllers\Auth\AutoAuthContro
 // Маршруты для платежей
 Route::get('/payment/complete/{orderId}', [PaymentController::class, 'handlePaymentComplete'])
     ->name('payment.complete');
-// Обратная совместимость для заказов без документа
-Route::get('/payment/complete-without-document/{orderId}', [PaymentController::class, 'handlePaymentComplete'])
-    ->name('payment.complete-without-document');
 
 // Тестовая страница оплаты
 Route::get('/payment/test', [PaymentTestController::class, 'show'])->name('payment.test');
@@ -118,5 +136,10 @@ Route::get('/payment/test', [PaymentTestController::class, 'show'])->name('payme
 // Telegram бот роуты (веб-хук должен быть без auth middleware)
 Route::post('/telegram/webhook', [TelegramController::class, 'webhook'])->name('telegram.webhook');
 Route::get('/telegram/test-mode', [TelegramController::class, 'testMode'])->name('telegram.test-mode');
+
+// API роут для получения истории транзакций
+Route::get('/api/user/transitions', [LkController::class, 'getTransitionHistory'])
+    ->name('user.transitions.api')
+    ->middleware('auth');
 
 require __DIR__.'/auth.php';

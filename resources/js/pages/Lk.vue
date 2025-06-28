@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, onUnmounted } from 'vue';
 import { Head } from '@inertiajs/vue3';
 import { router } from '@inertiajs/vue3';
 import { useQuasar } from 'quasar';
@@ -36,6 +36,19 @@ const telegramStatus = ref({
 });
 const telegramLoading = ref(false);
 
+// Состояния для модальных окон пополнения
+const showTopUpModal = ref(false);
+const showPaymentStatusModal = ref(false);
+const topUpAmount = ref(1000);
+const isCreatingOrder = ref(false);
+const paymentStatusData = ref(null);
+const paymentCheckInterval = ref(null);
+
+// Состояния для истории транзакций
+const showTransitionsModal = ref(false);
+const transitions = ref([]);
+const isLoadingTransitions = ref(false);
+
 // Загрузить статус Telegram при монтировании компонента
 onMounted(async () => {
   await loadTelegramStatus();
@@ -43,6 +56,26 @@ onMounted(async () => {
   // Если это Telegram Mini App, настраиваем интерфейс
   if (isTelegramMiniApp.value) {
     console.log('Running in Telegram Mini App mode');
+  }
+  
+  // Проверяем URL параметры для возврата с оплаты
+  const urlParams = new URLSearchParams(window.location.search);
+  const paymentReturn = urlParams.get('payment_return');
+  const orderId = urlParams.get('order_id');
+  
+  if (paymentReturn === 'true' && orderId) {
+    // Возвращаемся с оплаты, начинаем проверку статуса
+    paymentStatusData.value = {
+      order_id: parseInt(orderId),
+      payment_id: urlParams.get('payment_id'),
+      amount: urlParams.get('amount')
+    };
+    
+    startPaymentStatusCheck();
+    
+    // Очищаем URL от параметров
+    const cleanUrl = window.location.pathname;
+    window.history.replaceState({}, document.title, cleanUrl);
   }
 });
 
@@ -214,33 +247,244 @@ const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString('ru-RU');
 };
 
-// Функция для пополнения баланса
+// Автоматическое округление суммы до кратного 100
+const roundToHundred = (value) => {
+  return Math.round(value / 100) * 100;
+};
+
+// Следить за изменением суммы и автоматически округлять
+const onAmountChange = (value) => {
+  if (value && value !== roundToHundred(value)) {
+    topUpAmount.value = roundToHundred(value);
+  }
+};
+
+// Функция для пополнения баланса - открыть модальное окно
 const topUpBalance = async () => {
+  showTopUpModal.value = true;
+};
+
+// Создать заказ на пополнение и перейти на оплату
+const processTopUp = async () => {
+  if (topUpAmount.value < 100) {
+    $q.notify({
+      type: 'negative',
+      message: 'Минимальная сумма пополнения 100₽',
+      position: 'top'
+    });
+    return;
+  }
+
+  isCreatingOrder.value = true;
+
   try {
-    const response = await fetch('/orders/process', {
+    // Создаем заказ на пополнение
+    const orderResponse = await fetch('/orders/process', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
       },
       body: JSON.stringify({
+        amount: topUpAmount.value,
         order_data: {
-          description: "Пополнение баланса",
+          description: `Пополнение баланса на ${topUpAmount.value}₽`,
           purpose: "balance_top_up"
         }
       })
     });
+
+    if (!orderResponse.ok) {
+      throw new Error(`HTTP Error: ${orderResponse.status}`);
+    }
+
+    const orderData = await orderResponse.json();
     
-    const data = await response.json();
+    if (!orderData.success || !orderData.order_id) {
+      throw new Error(orderData.error || 'Ошибка создания заказа');
+    }
+
+    // Создаем платеж ЮКасса
+    const paymentResponse = await fetch(`/api/payment/yookassa/create/${orderData.order_id}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+      }
+    });
+
+    if (!paymentResponse.ok) {
+      const errorData = await paymentResponse.json().catch(() => ({}));
+      throw new Error(errorData.error || `HTTP Error: ${paymentResponse.status}`);
+    }
+
+    const paymentData = await paymentResponse.json();
+
+    if (!paymentData.success || !paymentData.payment_url) {
+      throw new Error(paymentData.error || 'Ошибка создания платежа');
+    }
+
+    // Сохраняем данные для проверки статуса
+    paymentStatusData.value = {
+      order_id: orderData.order_id,
+      payment_id: paymentData.payment_id,
+      amount: topUpAmount.value
+    };
+
+    // Закрываем модальное окно ввода суммы
+    showTopUpModal.value = false;
     
-    if (data.redirect) {
-      window.location.href = data.redirect;
-    } else if (data.error) {
-      console.error('Ошибка при создании заказа:', data.error);
+    // Перенаправляем на оплату
+    window.location.href = paymentData.payment_url;
+
+  } catch (error) {
+    console.error('Ошибка при создании платежа:', error);
+    $q.notify({
+      type: 'negative',
+      message: error.message || 'Ошибка при создании платежа',
+      position: 'top'
+    });
+  } finally {
+    isCreatingOrder.value = false;
+  }
+};
+
+// Проверить статус платежа
+const checkPaymentStatus = async (orderId) => {
+  try {
+    const response = await fetch(`/api/payment/status/${orderId}`, {
+      headers: {
+        'Accept': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+      }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return data.status || 'pending';
+    }
+    
+    return 'pending';
+  } catch (error) {
+    console.error('Ошибка проверки статуса:', error);
+    return 'error';
+  }
+};
+
+// Начать проверку статуса платежа
+const startPaymentStatusCheck = () => {
+  if (!paymentStatusData.value) return;
+
+  showPaymentStatusModal.value = true;
+  
+  // Проверяем статус каждые 3 секунды
+  paymentCheckInterval.value = setInterval(async () => {
+    const status = await checkPaymentStatus(paymentStatusData.value.order_id);
+    
+    if (status === 'completed') {
+      // Платеж успешен
+      clearInterval(paymentCheckInterval.value);
+      showPaymentStatusModal.value = false;
+      
+      $q.notify({
+        type: 'positive',
+        message: `Баланс успешно пополнен на ${paymentStatusData.value.amount}₽`,
+        position: 'top',
+        timeout: 5000
+      });
+      
+      // Перезагружаем страницу для обновления баланса
+      window.location.reload();
+      
+    } else if (status === 'failed' || status === 'canceled') {
+      // Платеж неуспешен
+      clearInterval(paymentCheckInterval.value);
+      showPaymentStatusModal.value = false;
+      
+      $q.notify({
+        type: 'negative',
+        message: 'Платеж не был завершен',
+        position: 'top'
+      });
+      
+      paymentStatusData.value = null;
+    }
+  }, 3000);
+};
+
+// Отменить проверку статуса
+const cancelPaymentStatusCheck = () => {
+  if (paymentCheckInterval.value) {
+    clearInterval(paymentCheckInterval.value);
+  }
+  showPaymentStatusModal.value = false;
+  paymentStatusData.value = null;
+};
+
+// Загрузить историю транзакций
+const loadTransitions = async () => {
+  isLoadingTransitions.value = true;
+  
+  try {
+    const response = await fetch('/api/user/transitions', {
+      headers: {
+        'Accept': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+      }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      transitions.value = data.transitions || [];
+    } else {
+      $q.notify({
+        type: 'negative',
+        message: 'Ошибка при загрузке истории операций',
+        position: 'top'
+      });
     }
   } catch (error) {
-    console.error('Ошибка при пополнении баланса:', error);
+    console.error('Ошибка при загрузке транзакций:', error);
+    $q.notify({
+      type: 'negative',
+      message: 'Ошибка при загрузке истории операций',
+      position: 'top'
+    });
+  } finally {
+    isLoadingTransitions.value = false;
   }
+};
+
+// Открыть модальное окно истории транзакций
+const openTransitionsHistory = async () => {
+  showTransitionsModal.value = true;
+  await loadTransitions();
+};
+
+// Форматировать сумму операции
+const formatTransitionAmount = (transition) => {
+  const amount = Math.abs(transition.difference);
+  const sign = transition.is_credit ? '+' : '-';
+  return `${sign}${amount.toLocaleString('ru-RU')} ₽`;
+};
+
+// Получить цвет для суммы операции
+const getTransitionAmountColor = (transition) => {
+  return transition.is_credit ? '#16a34a' : '#ef4444'; // Зеленый для пополнения, красный для списания
+};
+
+// Форматировать дату транзакции
+const formatTransitionDate = (dateString) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
 };
 
 // Открыть Telegram бот
@@ -253,6 +497,11 @@ const openTelegramBot = () => {
 // Computed для отсортированных документов
 const sortedDocuments = computed(() => {
   return [...props.documents].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+});
+
+// Очистка интервала проверки статуса платежа при размонтировании компонента
+onUnmounted(() => {
+  cancelPaymentStatusCheck();
 });
 </script>
 
@@ -302,15 +551,28 @@ const sortedDocuments = computed(() => {
                             <div class="balance-amount">
                                 {{ balance?.toLocaleString('ru-RU') || '0' }} ₽
                             </div>
-                            <q-btn
-                                color="primary"
-                                label="Пополнить"
-                                size="md"
-                                @click="topUpBalance"
-                                class="balance-btn"
-                                unelevated
-                                no-caps
-                            />
+                            <div class="balance-buttons">
+                                <q-btn
+                                    color="primary"
+                                    label="Пополнить"
+                                    size="md"
+                                    @click="topUpBalance"
+                                    class="balance-btn"
+                                    unelevated
+                                    no-caps
+                                />
+                                <q-btn
+                                    color="grey-7"
+                                    label="История операций"
+                                    size="sm"
+                                    @click="openTransitionsHistory"
+                                    class="history-btn"
+                                    flat
+                                    no-caps
+                                >
+                                    <q-icon name="history" class="q-mr-xs" />
+                                </q-btn>
+                            </div>
                         </div>
                     </div>
 
@@ -407,6 +669,186 @@ const sortedDocuments = computed(() => {
                 </div>
             </div>
         </div>
+
+        <!-- Модальное окно ввода суммы пополнения -->
+        <q-dialog v-model="showTopUpModal">
+            <q-card class="top-up-modal">
+                <q-card-section class="modal-header">
+                    <div class="modal-title">
+                        <q-icon name="account_balance_wallet" class="modal-icon" />
+                        Пополнение баланса
+                    </div>
+                </q-card-section>
+
+                <q-card-section class="modal-content">
+                    <div class="amount-input-section">
+                        <div class="custom-input-wrapper">
+                            <label class="custom-input-label">Сумма пополнения</label>
+                            <div class="custom-input-container">
+                                <input
+                                    v-model.number="topUpAmount"
+                                    type="number"
+                                    min="100"
+                                    step="100"
+                                    class="custom-input"
+                                    placeholder="Введите сумму"
+                                    @input="onAmountChange"
+                                />
+                                <span class="custom-input-suffix">₽</span>
+                            </div>
+                        </div>
+                        
+                        <div class="amount-info">
+                            <q-icon name="info" class="info-icon" />
+                            <span>Сумма автоматически округляется до кратной 100₽</span>
+                        </div>
+
+                        <!-- Быстрые кнопки выбора суммы -->
+                        <div class="quick-amounts">
+                            <div class="quick-amounts-label">Быстрый выбор:</div>
+                            <div class="quick-amounts-buttons">
+                                <button 
+                                    v-for="amount in [100, 300, 500, 700]" 
+                                    :key="amount"
+                                    @click="topUpAmount = amount"
+                                    :class="['quick-amount-btn', { 'active': topUpAmount === amount }]"
+                                >
+                                    {{ amount }}₽
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </q-card-section>
+
+                <q-card-actions class="modal-actions">
+                    <q-btn 
+                        color="primary" 
+                        label="Оплатить" 
+                        @click="processTopUp"
+                        :loading="isCreatingOrder"
+                        :disable="topUpAmount < 100"
+                        unelevated
+                        no-caps
+                        class="action-btn primary-btn"
+                    />
+                    <q-btn 
+                        flat 
+                        label="Отмена" 
+                        @click="showTopUpModal = false"
+                        :disable="isCreatingOrder"
+                        no-caps
+                        class="action-btn cancel-btn"
+                    />
+                </q-card-actions>
+            </q-card>
+        </q-dialog>
+
+        <!-- Модальное окно проверки статуса платежа -->
+        <q-dialog v-model="showPaymentStatusModal" persistent>
+            <q-card class="payment-status-modal">
+                <q-card-section class="modal-header">
+                    <div class="modal-title">
+                        <q-icon name="payment" class="modal-icon" />
+                        Проверка платежа
+                    </div>
+                </q-card-section>
+
+                <q-card-section class="modal-content text-center">
+                    <div class="payment-spinner">
+                        <q-spinner-dots
+                            color="primary"
+                            size="60px"
+                        />
+                    </div>
+                    
+                    <div class="payment-status-text">
+                        <div class="status-title">Обрабатываем ваш платеж</div>
+                        <div class="status-subtitle">
+                            Сумма: {{ paymentStatusData?.amount || 0 }}₽
+                        </div>
+                        <div class="status-info">
+                            Это может занять до нескольких минут
+                        </div>
+                    </div>
+
+                    <div class="payment-tips">
+                        <q-icon name="info" class="tips-icon" />
+                        <div class="tips-text">
+                            Не закрывайте это окно до завершения проверки
+                        </div>
+                    </div>
+                </q-card-section>
+
+                <q-card-actions align="center" class="modal-actions">
+                    <q-btn 
+                        flat 
+                        label="Отменить проверку" 
+                        @click="cancelPaymentStatusCheck"
+                        color="grey-7"
+                        no-caps
+                    />
+                </q-card-actions>
+            </q-card>
+        </q-dialog>
+
+        <!-- Модальное окно истории транзакций -->
+        <q-dialog v-model="showTransitionsModal" @hide="showTransitionsModal = false">
+            <q-card class="transitions-modal">
+                <q-card-section class="modal-header">
+                    <div class="modal-title">
+                        <q-icon name="history" class="modal-icon" />
+                        История операций
+                    </div>
+                    <q-btn 
+                        flat 
+                        round 
+                        icon="close" 
+                        @click="showTransitionsModal = false"
+                        class="close-btn"
+                    />
+                </q-card-section>
+
+                <q-card-section class="transitions-content">
+                    <div v-if="isLoadingTransitions" class="loading-section">
+                        <q-spinner-dots size="40px" color="primary" />
+                        <div class="loading-text">Загружаем историю операций...</div>
+                    </div>
+
+                    <div v-else-if="transitions.length === 0" class="empty-transitions">
+                        <q-icon name="receipt_long" class="empty-icon" />
+                        <div class="empty-title">Операций не найдено</div>
+                        <div class="empty-subtitle">Пополните баланс или оплатите документы, чтобы увидеть историю</div>
+                    </div>
+
+                    <div v-else class="transitions-list">
+                        <div 
+                            v-for="transition in transitions" 
+                            :key="transition.id"
+                            class="transition-item"
+                        >
+                            <div class="transition-icon">
+                                <q-icon 
+                                    :name="transition.is_credit ? 'add_circle' : 'remove_circle'"
+                                    :color="transition.is_credit ? 'positive' : 'negative'"
+                                />
+                            </div>
+                            <div class="transition-content">
+                                <div class="transition-description">{{ transition.description }}</div>
+                                <div class="transition-date">{{ formatTransitionDate(transition.created_at) }}</div>
+                                <div class="transition-balance">
+                                    Баланс: {{ transition.amount_before.toLocaleString('ru-RU') }} ₽ 
+                                    → {{ transition.amount_after.toLocaleString('ru-RU') }} ₽
+                                </div>
+                            </div>
+                            <div class="transition-amount" :style="{ color: getTransitionAmountColor(transition) }">
+                                {{ formatTransitionAmount(transition) }}
+                            </div>
+                        </div>
+                    </div>
+                </q-card-section>
+            </q-card>
+        </q-dialog>
+
     </page-layout>
 </template> 
 
@@ -872,8 +1314,13 @@ const sortedDocuments = computed(() => {
     
     .balance-content {
         flex-direction: column;
-        align-items: flex-start;
+        align-items: center;
         gap: 12px;
+    }
+    
+    .balance-amount {
+        font-size: 28px;
+        text-align: center;
     }
     
     .balance-btn {
@@ -952,6 +1399,7 @@ const sortedDocuments = computed(() => {
     
     .balance-amount {
         font-size: 28px;
+        text-align: center;
     }
     
     .document-icon {
@@ -1000,6 +1448,7 @@ const sortedDocuments = computed(() => {
     
     .balance-amount {
         font-size: 24px;
+        text-align: center;
     }
     
     .new-document-btn {
@@ -1074,6 +1523,7 @@ const sortedDocuments = computed(() => {
     
     .balance-amount {
         font-size: 22px;
+        text-align: center;
     }
     
     .card-title {
@@ -1141,9 +1591,9 @@ const sortedDocuments = computed(() => {
 /* Карточка баланса */
 .balance-content {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    flex-direction: column;
     gap: 20px;
+    align-items: flex-start;
 }
 
 .balance-amount {
@@ -1151,6 +1601,14 @@ const sortedDocuments = computed(() => {
     font-weight: 700;
     color: #1e293b;
     line-height: 1;
+    text-align: left;
+}
+
+.balance-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
 }
 
 .balance-btn {
@@ -1160,10 +1618,639 @@ const sortedDocuments = computed(() => {
     background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
     box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
     transition: all 0.2s ease;
+    width: 100%;
 }
 
 .balance-btn:hover {
     box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
     transform: translateY(-1px);
+}
+
+.history-btn {
+    border-radius: 8px;
+    font-weight: 500;
+    padding: 8px 16px;
+    font-size: 13px;
+    width: 100%;
+}
+
+.history-btn:hover {
+    background: #f8fafc;
+}
+
+/* Стили для модальных окон */
+.top-up-modal,
+.payment-status-modal {
+    min-width: 520px;
+    max-width: 580px;
+    border-radius: 24px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    background: #ffffff;
+    overflow: hidden;
+}
+
+.modal-header {
+    padding: 32px 32px 20px 32px;
+    border-bottom: 2px solid #f1f5f9;
+    background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+}
+
+.modal-title {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 24px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.modal-icon {
+    font-size: 28px;
+    color: #3b82f6;
+    padding: 8px;
+    background: rgba(59, 130, 246, 0.1);
+    border-radius: 12px;
+}
+
+.modal-content {
+    padding: 32px;
+    background: #ffffff;
+}
+
+.modal-actions {
+    padding: 20px 32px 32px 32px;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+}
+
+.action-btn {
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 16px;
+    transition: all 0.2s ease;
+}
+
+.primary-btn {
+    width: 100%;
+    padding: 16px 32px;
+    min-height: 56px;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    color: white;
+    border: none;
+    font-size: 18px;
+    font-weight: 700;
+    order: 1;
+}
+
+.primary-btn:hover {
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+    transform: translateY(-1px);
+}
+
+.cancel-btn {
+    color: #6b7280;
+    background: transparent;
+    border: none;
+    padding: 12px 24px;
+    min-height: 44px;
+    font-size: 15px;
+    font-weight: 500;
+    order: 2;
+}
+
+.cancel-btn:hover {
+    color: #374151;
+    background: rgba(107, 114, 128, 0.05);
+    border-radius: 8px;
+}
+
+/* Стили для кастомного поля ввода */
+.custom-input-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.custom-input-label {
+    font-size: 16px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 4px;
+}
+
+.custom-input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.custom-input {
+    width: 100%;
+    padding: 16px 50px 16px 20px;
+    border: 2px solid #e2e8f0;
+    border-radius: 16px;
+    font-size: 20px;
+    font-weight: 600;
+    color: #1e293b;
+    background: #ffffff;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.custom-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.custom-input::placeholder {
+    color: #9ca3af;
+    font-weight: 400;
+}
+
+.custom-input-suffix {
+    position: absolute;
+    right: 20px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #6b7280;
+    pointer-events: none;
+}
+
+/* Стили для быстрых кнопок выбора суммы */
+.quick-amounts {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.quick-amounts-label {
+    font-size: 15px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.quick-amounts-buttons {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.quick-amount-btn {
+    flex: 1;
+    padding: 12px 20px;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #64748b;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    outline: none;
+    min-width: 0;
+}
+
+.quick-amount-btn:hover {
+    border-color: #3b82f6;
+    color: #3b82f6;
+    background: rgba(59, 130, 246, 0.05);
+    transform: translateY(-1px);
+}
+
+.quick-amount-btn.active {
+    border-color: #3b82f6;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.quick-amount-btn.active:hover {
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+}
+
+/* Стили для проверки статуса */
+.payment-spinner {
+    margin: 32px 0;
+}
+
+.payment-status-text {
+    margin: 32px 0;
+}
+
+.status-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 12px;
+}
+
+.status-subtitle {
+    font-size: 18px;
+    color: #3b82f6;
+    font-weight: 600;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.status-info {
+    font-size: 15px;
+    color: #6b7280;
+    line-height: 1.5;
+}
+
+.payment-tips {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    padding: 16px 20px;
+    border-radius: 16px;
+    margin-top: 24px;
+    border: 1px solid #f59e0b;
+}
+
+.tips-icon {
+    font-size: 18px;
+    color: #d97706;
+    background: rgba(217, 119, 6, 0.1);
+    padding: 4px;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+
+.tips-text {
+    font-size: 15px;
+    color: #92400e;
+    font-weight: 500;
+}
+
+/* Стили для модального окна истории транзакций */
+.transitions-modal {
+    background: #ffffff;
+    border-radius: 24px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    min-width: 800px;
+    max-width: 900px;
+    width: 90vw;
+    max-height: 80vh;
+}
+
+.transitions-content {
+    padding: 0;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.loading-section {
+    text-align: center;
+    padding: 80px 40px;
+}
+
+.loading-text {
+    margin-top: 20px;
+    color: #64748b;
+    font-size: 18px;
+    font-weight: 500;
+}
+
+.empty-transitions {
+    text-align: center;
+    padding: 100px 40px;
+}
+
+.empty-transitions .empty-icon {
+    font-size: 72px;
+    color: #cbd5e1;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    border-radius: 50%;
+    width: 120px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px auto;
+}
+
+.empty-transitions .empty-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 12px;
+}
+
+.empty-transitions .empty-subtitle {
+    font-size: 16px;
+    color: #64748b;
+    line-height: 1.5;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.transitions-list {
+    padding: 24px 0;
+}
+
+.transition-item {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 20px 32px;
+    border-bottom: 1px solid #f1f5f9;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.transition-item:hover {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    transform: translateX(4px);
+}
+
+.transition-item:last-child {
+    border-bottom: none;
+}
+
+.transition-icon {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    border: 1px solid #e2e8f0;
+}
+
+.transition-icon .q-icon {
+    font-size: 24px;
+}
+
+.transition-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.transition-description {
+    font-size: 17px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 6px;
+    word-break: break-word;
+    line-height: 1.4;
+}
+
+.transition-date {
+    font-size: 14px;
+    color: #64748b;
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+.transition-balance {
+    font-size: 13px;
+    color: #94a3b8;
+    font-family: 'SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', monospace;
+    background: rgba(148, 163, 184, 0.1);
+    padding: 4px 8px;
+    border-radius: 8px;
+    display: inline-block;
+}
+
+.transition-amount {
+    font-size: 20px;
+    font-weight: 700;
+    text-align: right;
+    padding: 8px 16px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.transition-amount[style*="color: #16a34a"] {
+    border-color: rgba(22, 163, 74, 0.2);
+    background: rgba(22, 163, 74, 0.05);
+}
+
+.transition-amount[style*="color: #ef4444"] {
+    border-color: rgba(239, 68, 68, 0.2);
+    background: rgba(239, 68, 68, 0.05);
+}
+
+/* Адаптивность для модальных окон */
+@media (max-width: 600px) {
+    .top-up-modal,
+    .payment-status-modal {
+        min-width: 90vw;
+        max-width: 90vw;
+        margin: 16px;
+        border-radius: 20px;
+    }
+    
+    .transitions-modal {
+        min-width: 95vw;
+        max-width: 95vw;
+        width: 95vw;
+        max-height: 85vh;
+        margin: 8px;
+        border-radius: 20px;
+    }
+    
+    .modal-header {
+        padding: 24px 20px 16px 20px;
+    }
+    
+    .modal-content {
+        padding: 24px 20px;
+    }
+    
+    .modal-actions {
+        padding: 16px 20px 24px 20px;
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .action-btn {
+        width: 100%;
+        min-width: auto;
+    }
+    
+    .primary-btn {
+        min-height: 52px;
+        font-size: 16px;
+        order: 1;
+    }
+    
+    .cancel-btn {
+        min-height: 40px;
+        font-size: 14px;
+        order: 2;
+    }
+    
+    .modal-title {
+        font-size: 20px;
+    }
+    
+    .modal-icon {
+        font-size: 24px;
+    }
+    
+    .amount-input-section {
+        gap: 20px;
+    }
+    
+    .custom-input {
+        font-size: 18px;
+        padding: 14px 45px 14px 16px;
+    }
+    
+    .custom-input-suffix {
+        right: 16px;
+        font-size: 16px;
+    }
+    
+    .quick-amounts-buttons {
+        gap: 8px;
+    }
+    
+    .quick-amount-btn {
+        flex: 1;
+        min-width: 0;
+        font-size: 14px;
+        padding: 10px 16px;
+    }
+
+    .transition-item {
+        padding: 16px 20px;
+        gap: 16px;
+    }
+
+    .transition-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+    }
+
+    .transition-icon .q-icon {
+        font-size: 20px;
+    }
+
+    .transition-description {
+        font-size: 15px;
+    }
+
+    .transition-amount {
+        font-size: 16px;
+        padding: 6px 12px;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .transitions-modal .modal-header {
+        padding: 24px 20px 16px 20px;
+    }
+    
+    .transitions-modal .modal-title {
+        font-size: 20px;
+    }
+    
+    .transitions-content {
+        max-height: 65vh;
+    }
+    
+    .loading-section {
+        padding: 60px 20px;
+    }
+    
+    .empty-transitions {
+        padding: 60px 20px;
+    }
+    
+    .empty-transitions .empty-icon {
+        font-size: 56px;
+        width: 100px;
+        height: 100px;
+    }
+    
+    .empty-transitions .empty-title {
+        font-size: 20px;
+    }
+    
+    .status-title {
+        font-size: 18px;
+    }
+    
+    .status-subtitle {
+        font-size: 16px;
+    }
+}
+
+/* Стили для ввода суммы */
+.amount-input-section {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.amount-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #6b7280;
+    font-size: 15px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    padding: 16px 20px;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+}
+
+.info-icon {
+    font-size: 18px;
+    color: #3b82f6;
+    background: rgba(59, 130, 246, 0.1);
+    padding: 4px;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+
+.transitions-modal .modal-header {
+    padding: 32px 32px 20px 32px;
+    border-bottom: 2px solid #e2e8f0;
+    background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.transitions-modal .modal-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.close-btn {
+    color: #64748b;
+    background: rgba(100, 116, 139, 0.1);
+    border-radius: 12px;
+    width: 44px;
+    height: 44px;
+    transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+    background: rgba(100, 116, 139, 0.2);
+    color: #475569;
+    transform: scale(1.05);
 }
 </style> 

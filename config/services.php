@@ -62,4 +62,11 @@ return [
         'test_app_url' => env('TELEGRAM_TEST_APP_URL', 'http://127.0.0.1:8000'),
     ],
 
+    'yookassa' => [
+        'shop_id' => env('YOOKASSA_SHOP_ID'),
+        'secret_key' => env('YOOKASSA_SECRET_KEY'),
+        'is_test' => env('YOOKASSA_IS_TEST', true),
+        'webhook_secret' => env('YOOKASSA_WEBHOOK_SECRET'),
+    ],
+
 ];
