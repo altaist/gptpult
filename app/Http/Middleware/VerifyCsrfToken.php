@@ -14,5 +14,8 @@ class VerifyCsrfToken extends Middleware
     protected $except = [
         'telegram/webhook',
         'payment/yookassa/webhook',
+        'api/payment/yookassa/create/*',
+        'api/payment/status/*',
+        'api/user/transitions',
     ];
 } 
