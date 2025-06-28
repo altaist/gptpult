@@ -337,8 +337,12 @@ const processTopUp = async () => {
       credentials: 'include'
     });
 
+    console.log('Payment response status:', paymentResponse.status);
+    console.log('Payment response headers:', Object.fromEntries(paymentResponse.headers.entries()));
+
     if (!paymentResponse.ok) {
       const errorData = await paymentResponse.json().catch(() => ({}));
+      console.error('Payment error data:', errorData);
       throw new Error(errorData.error || `HTTP Error: ${paymentResponse.status}`);
     }
 

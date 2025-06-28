@@ -17,6 +17,7 @@ class VerifyCsrfToken extends Middleware
         'api/payment/yookassa/create/*',
         'api/payment/status/*',
         'api/user/transitions',
+        'orders/process',
     ];
 
     /**
@@ -32,9 +33,34 @@ class VerifyCsrfToken extends Middleware
             return true;
         }
 
-        // Если это Telegram WebApp, пропускаем CSRF для API маршрутов
-        $isTelegram = $request->userAgent() && str_contains($request->userAgent(), 'Telegram');
-        if ($isTelegram && str_starts_with($request->path(), 'api/')) {
+        // Расширенная проверка на Telegram WebApp
+        $userAgent = $request->userAgent();
+        $isTelegram = $userAgent && (
+            str_contains($userAgent, 'Telegram') ||
+            $request->hasHeader('X-Telegram-Bot-Api-Secret-Token') ||
+            $request->hasHeader('X-Telegram-Auth-User-Id') ||
+            $request->hasHeader('X-Telegram-Cookie-telegram_auth_user_') ||
+            $request->session()->has('telegram_user_id')
+        );
+        
+        // Логируем для отладки
+        if (str_starts_with($request->path(), 'api/') || str_starts_with($request->path(), 'orders/')) {
+            \Illuminate\Support\Facades\Log::info('CSRF Check', [
+                'path' => $request->path(),
+                'user_agent' => $userAgent,
+                'is_telegram' => $isTelegram,
+                'has_telegram_headers' => [
+                    'secret_token' => $request->hasHeader('X-Telegram-Bot-Api-Secret-Token'),
+                    'user_id' => $request->hasHeader('X-Telegram-Auth-User-Id'),
+                    'cookie' => $request->hasHeader('X-Telegram-Cookie-telegram_auth_user_'),
+                    'session' => $request->session()->has('telegram_user_id')
+                ],
+                'will_skip_csrf' => $isTelegram
+            ]);
+        }
+
+        // Если это Telegram WebApp, пропускаем CSRF для API маршрутов и orders/process
+        if ($isTelegram && (str_starts_with($request->path(), 'api/') || str_starts_with($request->path(), 'orders/'))) {
             return true;
         }
 
