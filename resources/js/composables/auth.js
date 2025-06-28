@@ -106,7 +106,7 @@ const logoutLocal = () => {
 
 // Получение данных пользователя TWA
 export const getTwaUser = () => {
-    const TWA = window.TWA;
+    const TWA = window.Telegram?.WebApp;
     if (!TWA?.initDataUnsafe?.user) return null;
     
     const user = TWA.initDataUnsafe.user;

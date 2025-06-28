@@ -495,12 +495,7 @@ onUnmounted(() => {
 <template>
     <Head title="Личный кабинет" />
 
-    <page-layout 
-        :auto-auth="true"
-        left-btn-icon=""
-        :left-btn-go-back="false"
-        :logo-go-home="true"
-    >
+    <page-layout :auto-auth="true">
         <div class="lk-container">
             <!-- Заголовок -->
             <div class="header-section">
