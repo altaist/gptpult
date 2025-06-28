@@ -89,24 +89,7 @@ createInertiaApp({
         const app = createApp({ render: () => h(App, props) })
             .use(plugin)
             .use(ZiggyVue)
-            .use(Quasar, {
-                plugins: {}, // import Quasar plugins and add here
-                config: {
-                    brand: {
-                        primary: '#3b82f6',
-                        secondary: '#64748b',
-                        accent: '#9C27B0',
-                        
-                        dark: '#1d1d1d',
-                        'dark-page': '#121212',
-                        
-                        positive: '#21BA45',
-                        negative: '#C10015',
-                        info: '#31CCEC',
-                        warning: '#F2C037'
-                    }
-                }
-            })
+            .use(Quasar, quasarOptions)
             .use(ProjectPlugin);
 
         return app.mount(el);
