@@ -48,6 +48,15 @@ export function useTelegramMiniApp() {
             }
           }).then(response => {
             console.log('useTelegramMiniApp: Auth restoration response:', response.status)
+            
+            // Проверяем специальный заголовок перенаправления
+            const redirectUrl = response.headers.get('X-Telegram-Redirect')
+            if (redirectUrl) {
+              console.log('useTelegramMiniApp: Received redirect header:', redirectUrl)
+              window.location.href = redirectUrl
+              return
+            }
+            
             if (response.ok && window.location.pathname === '/login') {
               // Если успешно и мы на странице логина, перенаправляем
               window.location.href = '/lk'
@@ -121,6 +130,14 @@ export function useTelegramMiniApp() {
         status: response1.status,
         ok: response1.ok
       })
+
+      // Проверяем специальный заголовок перенаправления
+      const redirectUrl = response1.headers.get('X-Telegram-Redirect')
+      if (redirectUrl) {
+        console.log('useTelegramMiniApp: Received redirect header from main request:', redirectUrl)
+        window.location.href = redirectUrl
+        return
+      }
 
       // Способ 2: Отправляем через API эндпоинт для автологина
       try {

@@ -68,7 +68,16 @@ class TelegramMiniAppAuth
                     
                     Auth::login($user);
                     
-                    // Если это страница логина, перенаправляем
+                    // Если это страница логина и AJAX/Inertia запрос, отправляем специальный заголовок
+                    if ($request->is('login') && ($request->ajax() || $request->header('X-Inertia'))) {
+                        Log::info('TelegramMiniAppAuth: Sending redirect header for AJAX request');
+                        
+                        $response = $next($request);
+                        $response->headers->set('X-Telegram-Redirect', '/lk');
+                        return $response;
+                    }
+                    
+                    // Если это страница логина и обычный запрос, перенаправляем
                     if ($request->is('login') && !$request->ajax() && !$request->header('X-Inertia')) {
                         return redirect('/lk');
                     }
@@ -166,6 +175,13 @@ class TelegramMiniAppAuth
                 if ($request->is('login') && !$request->ajax() && !$request->header('X-Inertia')) {
                     Log::info('TelegramMiniAppAuth: Redirecting newly authenticated user from login page');
                     return redirect('/lk');
+                } elseif ($request->is('login') && ($request->ajax() || $request->header('X-Inertia'))) {
+                    // Для AJAX/Inertia запросов отправляем специальный заголовок
+                    Log::info('TelegramMiniAppAuth: Sending redirect header for newly authenticated AJAX user');
+                    
+                    $response = $next($request);
+                    $response->headers->set('X-Telegram-Redirect', '/lk');
+                    return $response;
                 }
             } else {
                 Log::warning('User not found for Telegram ID', ['telegram_id' => $telegramData['id']]);
