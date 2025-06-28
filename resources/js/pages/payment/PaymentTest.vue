@@ -99,7 +99,13 @@ const createYookassaPayment = async (orderId) => {
 
     if (data.success) {
       // Перенаправляем на страницу оплаты ЮКасса
-      window.location.href = data.payment_url
+      if (window.Telegram?.WebApp?.openLink) {
+        // В Telegram WebApp используем специальный метод для открытия внешних ссылок
+        window.Telegram.WebApp.openLink(data.payment_url);
+      } else {
+        // В обычном браузере используем стандартное перенаправление
+        window.location.href = data.payment_url;
+      }
     } else {
       throw new Error(data.error || 'Ошибка создания платежа')
     }

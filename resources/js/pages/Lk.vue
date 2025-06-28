@@ -355,8 +355,32 @@ const processTopUp = async () => {
     // Закрываем модальное окно ввода суммы
     showTopUpModal.value = false;
     
+    // Уведомляем пользователя о перенаправлении
+    $q.notify({
+      type: 'positive',
+      message: 'Перенаправляем на оплату...',
+      position: 'top',
+      timeout: 2000
+    });
+    
     // Перенаправляем на оплату ЮКасса
-    window.location.href = paymentData.payment_url;
+    if (window.Telegram?.WebApp?.openLink) {
+      // В Telegram WebApp используем специальный метод для открытия внешних ссылок
+      console.log('Opening payment URL in Telegram WebApp:', paymentData.payment_url);
+      
+      // Показываем кнопку "Назад" в Telegram
+      if (isTelegramMiniApp.value && showBackButton) {
+        showBackButton(() => {
+          // При нажатии на "Назад" возвращаемся в ЛК
+          window.location.href = '/lk';
+        });
+      }
+      
+      window.Telegram.WebApp.openLink(paymentData.payment_url);
+    } else {
+      // В обычном браузере используем стандартное перенаправление
+      window.location.href = paymentData.payment_url;
+    }
 
   } catch (error) {
     console.error('Ошибка при создании платежа:', error);
