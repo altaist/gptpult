@@ -1,7 +1,7 @@
 <template>
     <div class="modern-page-layout">
         <!-- Современная шапка -->
-        <page-header-modern
+        <page-header
             :title="title"
             :left-btn-icon="leftBtnIcon"
             :left-btn-route="leftBtnRoute"
@@ -34,7 +34,7 @@
 </template>
 
 <script setup>
-import PageHeaderModern from '@/components/shared/PageHeaderModern.vue';
+import PageHeader from '@/components/shared/PageHeader.vue';
 import PageFooter from '@/components/shared/PageFooter.vue';
 import { onMounted } from 'vue';
 import { checkAuth } from '@/composables/auth';

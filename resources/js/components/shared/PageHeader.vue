@@ -1,21 +1,43 @@
 <template>
-    <div class="page-header q-pa-md bg-white border">
-        <div class="max-width-container">
-            <div class="row items-center">
-                <div class="col">
+    <div class="page-header">
+        <div class="header-container">
+            <div class="header-content">
+                <!-- Левая часть - Логотип -->
+                <div class="logo-section">
                     <div class="logo-container" @click="onLogoClick">
-                        <i class="fas fa-tv"></i>
+                        <i class="fas fa-tv logo-icon"></i>
                         <span class="logo-text">GPT Пульт</span>
                     </div>
                 </div>
-                <div class="col text-center">
-                    <page-title v-if="title" @page-title-click="emit('click:title')">{{title}}</page-title>
+                
+                <!-- Центральная часть - Заголовок -->
+                <div class="title-section">
+                    <page-title v-if="title" @page-title-click="emit('click:title')" class="header-title">
+                        {{ title }}
+                    </page-title>
                 </div>
-                <div class="col text-right" v-if="rightBtnIcon"><btn :icon="rightBtnIcon" @click="onRightBtnClick"/></div>
+                
+                <!-- Правая часть - Кнопки -->
+                <div class="actions-section">
+                    <!-- Кнопка поддержки с подписью -->
+                    <button class="support-btn" @click="openSupport" title="Поддержка">
+                        <i class="fas fa-headset"></i>
+                        <span class="support-text">Поддержка</span>
+                    </button>
+                    
+                    <!-- Основная правая кнопка -->
+                    <btn 
+                        v-if="rightBtnIcon" 
+                        :icon="rightBtnIcon" 
+                        @click="onRightBtnClick"
+                        class="main-action-btn"
+                    />
+                </div>
             </div>
         </div>
     </div>
 </template>
+
 <script setup>
 import { user } from '@/composables/auth';
 import { router } from '@inertiajs/vue3';
@@ -30,7 +52,6 @@ const props = defineProps({
         type: String,
         default: 'primary'
     },
-
     leftBtnIcon: {
         type: String,
     },
@@ -41,14 +62,12 @@ const props = defineProps({
         type: Boolean,
         default: true
     },
-
     rightBtnIcon: {
         type: String
     },
     rightBtnRoute: {
         type: String
     },
-    
     logoGoHome: {
         type: Boolean,
         default: false
@@ -59,14 +78,13 @@ const emit = defineEmits(['click:left', 'click:right', 'click:title']);
 
 const onLogoClick = () => {
     if (props.logoGoHome) {
-        //router.visit('/');
         window.location.href = '/';
     } else {
         window.history.back();
     }
 };
 
-const onLeftBtnlick = () => {
+const onLeftBtnClick = () => {
     if(props.leftBtnRoute) {
         return redirect(props.leftBtnRoute);
     }
@@ -82,58 +100,183 @@ const onRightBtnClick = () => {
     }
     return emit("click:right")
 }
+
+const openSupport = () => {
+    // Открытие поддержки
+    window.open('https://t.me/gptpult_support_bot', '_blank');
+};
 </script>
 
 <style scoped>
+/* Подключение шрифта Bowler */
+@font-face {
+    font-family: 'Bowler';
+    src: url('/fonts/Bowler.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
 .page-header {
     position: sticky;
     top: 0;
     z-index: 1000;
     width: 100%;
+    background: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.header-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    gap: 20px;
+}
+
+/* Логотип */
+.logo-section {
+    flex: 0 0 auto;
 }
 
 .logo-container {
     display: flex;
     align-items: center;
     cursor: pointer;
-    transition: all 0.3s ease;
-    padding: 8px 12px;
+    padding: 10px 16px;
     border-radius: 12px;
-    width: fit-content;
 }
 
-.logo-container:hover {
-    background-color: rgba(59, 130, 246, 0.05);
-    transform: translateX(-2px);
-}
-
-.logo-container i {
-    font-size: 20px;
+.logo-icon {
+    font-size: 22px;
     color: #3b82f6;
-    margin-right: 8px;
-    transition: all 0.3s ease;
+    margin-right: 10px;
 }
 
 .logo-text {
     font-family: 'Bowler', 'Inter', sans-serif;
     font-weight: 800;
-    font-size: 16px;
-    color: #3b82f6;
+    font-size: 18px;
+    color: #1e293b;
     line-height: 1;
-    transition: all 0.3s ease;
 }
 
-.logo-container:hover i,
-.logo-container:hover .logo-text {
-    color: #2563eb;
+/* Заголовок */
+.title-section {
+    flex: 1;
+    text-align: center;
 }
 
+.header-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0;
+}
+
+/* Действия */
+.actions-section {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.support-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 12px;
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.support-btn i {
+    font-size: 16px;
+}
+
+.support-text {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.main-action-btn {
+    border-radius: 12px;
+}
+
+/* Адаптивность */
 @media (max-width: 768px) {
-    .logo-container {
-        padding: 6px 8px;
+    .header-container {
+        padding: 0 16px;
     }
     
-    .logo-container i {
+    .header-content {
+        height: 56px;
+        gap: 12px;
+    }
+    
+    .logo-container {
+        padding: 8px 12px;
+    }
+    
+    .logo-icon {
+        font-size: 20px;
+        margin-right: 8px;
+    }
+    
+    .logo-text {
+        font-size: 16px;
+    }
+    
+    .header-title {
+        font-size: 18px;
+    }
+    
+    .support-btn {
+        padding: 8px 12px;
+        gap: 6px;
+    }
+    
+    .support-btn i {
+        font-size: 14px;
+    }
+    
+    .support-text {
+        font-size: 13px;
+    }
+    
+    .actions-section {
+        gap: 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .header-container {
+        padding: 0 12px;
+    }
+    
+    .header-content {
+        height: 52px;
+        gap: 8px;
+    }
+    
+    .logo-container {
+        padding: 6px 10px;
+    }
+    
+    .logo-icon {
         font-size: 18px;
         margin-right: 6px;
     }
@@ -141,20 +284,22 @@ const onRightBtnClick = () => {
     .logo-text {
         font-size: 14px;
     }
-}
-
-@media (max-width: 480px) {
-    .logo-text {
-        display: block;
-        font-size: 14px;
+    
+    .header-title {
+        font-size: 16px;
     }
     
-    .logo-container i {
-        margin-right: 8px;
-    }
-
-    .logo-container {
+    .support-btn {
         padding: 6px 10px;
+        gap: 4px;
+    }
+    
+    .support-btn i {
+        font-size: 12px;
+    }
+    
+    .support-text {
+        font-size: 12px;
     }
 }
 </style>

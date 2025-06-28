@@ -3,14 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Enums\DocumentStatus;
-use App\Jobs\StartFullGenerateDocument;
 use App\Models\Document;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use App\Services\Documents\DocumentJobService;
+use App\Services\Orders\TransitionService;
 
 class DocumentGenerationController extends Controller
 {
     use AuthorizesRequests;
+
+    public function __construct(
+        protected DocumentJobService $documentJobService,
+        protected TransitionService $transitionService
+    ) {}
 
     /**
      * Запустить полную генерацию документа
@@ -36,16 +42,13 @@ class DocumentGenerationController extends Controller
         }
 
         try {
-            // Сразу изменяем статус на full_generating
-            $document->update(['status' => DocumentStatus::FULL_GENERATING]);
-            
-            // Запускаем Job для полной генерации
-            StartFullGenerateDocument::dispatch($document);
+            // Используем DocumentJobService для запуска полной генерации с автоматическим списанием
+            $this->documentJobService->startFullGeneration($document, $this->transitionService);
 
             return response()->json([
                 'message' => 'Полная генерация документа запущена',
                 'document_id' => $document->id,
-                'status' => DocumentStatus::FULL_GENERATING->value // Возвращаем новый статус
+                'status' => DocumentStatus::FULL_GENERATING->value
             ]);
 
         } catch (\Exception $e) {

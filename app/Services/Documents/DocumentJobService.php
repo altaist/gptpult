@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use App\Services\Orders\OrderService;
 use App\Services\Orders\TransitionService;
+use App\Enums\DocumentStatus;
 
 class DocumentJobService
 {
@@ -56,7 +57,7 @@ class DocumentJobService
             throw new \Exception('Для этого документа уже запущена задача генерации');
         }
 
-        if ($document->status !== 'full_generation_failed' && $transitionService) {
+        if ($document->status !== DocumentStatus::FULL_GENERATION_FAILED && $transitionService) {
             $user = $document->user;
             $amount = OrderService::FULL_GENERATION_PRICE;
 
@@ -65,7 +66,25 @@ class DocumentJobService
                 $amount,
                 "Оплата за полную генерацию документа #{$document->id}"
             );
+
+            Log::info('Списаны средства за полную генерацию документа', [
+                'document_id' => $document->id,
+                'user_id' => $user->id,
+                'amount' => $amount,
+                'status' => $document->status->value
+            ]);
+        } else {
+            Log::info('Средства не списаны за полную генерацию документа', [
+                'document_id' => $document->id,
+                'status' => $document->status->value,
+                'reason' => $document->status === DocumentStatus::FULL_GENERATION_FAILED 
+                    ? 'Повторная генерация после ошибки (бесплатно)' 
+                    : 'TransitionService не передан'
+            ]);
         }
+
+        // Обновляем статус документа на full_generating
+        $document->update(['status' => DocumentStatus::FULL_GENERATING]);
 
         Log::info('Запуск полной генерации документа', [
             'document_id' => $document->id,
@@ -114,9 +133,10 @@ class DocumentJobService
      * Безопасный запуск полной генерации (без выброса исключения)
      *
      * @param Document $document
+     * @param TransitionService|null $transitionService
      * @return array ['success' => bool, 'message' => string]
      */
-    public function safeStartFullGeneration(Document $document): array
+    public function safeStartFullGeneration(Document $document, TransitionService $transitionService = null): array
     {
         try {
             if ($this->hasActiveJob($document)) {
@@ -126,7 +146,7 @@ class DocumentJobService
                 ];
             }
 
-            $this->startFullGeneration($document);
+            $this->startFullGeneration($document, $transitionService);
 
             return [
                 'success' => true,

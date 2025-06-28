@@ -1,4 +1,50 @@
 <template>
+    <!-- Современные уведомления - ВЫНЕСЕНЫ НА САМЫЙ ВЕРХ -->
+    <div class="modern-notifications-container">
+        <TransitionGroup name="notification" tag="div" class="notifications-list">
+            <div
+                v-for="notification in notifications"
+                :key="notification.id"
+                :class="[
+                    'modern-notification',
+                    `notification-${notification.type}`,
+                    `notification-${notification.position}`
+                ]"
+                @click="removeNotification(notification.id)"
+            >
+                <!-- Иконка -->
+                <div class="notification-icon">
+                    <q-icon :name="notification.icon" />
+                </div>
+                
+                <!-- Содержимое -->
+                <div class="notification-content">
+                    <div v-if="notification.title" class="notification-title">
+                        {{ notification.title }}
+                    </div>
+                    <div class="notification-message">
+                        {{ notification.message }}
+                    </div>
+                </div>
+                
+                <!-- Кнопка закрытия -->
+                <div class="notification-close">
+                    <q-icon name="close" />
+                </div>
+                
+                <!-- Прогресс-бар -->
+                <div 
+                    v-if="notification.showProgress && notification.timeout > 0"
+                    class="notification-progress"
+                    :style="{ 
+                        animationDuration: `${notification.timeout}ms`,
+                        animationDelay: '100ms'
+                    }"
+                ></div>
+            </div>
+        </TransitionGroup>
+    </div>
+
     <page-layout
         :is-sticky="true"
         :auto-auth="true"
@@ -64,6 +110,11 @@
                     <div class="time-estimate">
                         <q-icon name="schedule" class="time-icon" />
                         <span>Примерное время: {{ currentDocument.status === 'full_generating' ? '5-8' : '1-3' }} минут</span>
+                    </div>
+
+                    <!-- Подпись о возможности закрыть страницу -->
+                    <div class="close-page-hint">
+                        <span>Вы можете закрыть эту страницу — уведомление о готовности придет в Telegram</span>
                     </div>
 
                     <!-- Советы пользователю -->
@@ -178,6 +229,56 @@ const isDownloading = ref(false);
 const isStartingFullGeneration = ref(false);
 const isPollingActive = ref(false); // Флаг активного отслеживания
 
+// Система современных уведомлений
+const notifications = ref([]);
+let notificationId = 0;
+
+// Функция для показа современного уведомления
+const showModernNotification = (options) => {
+    const id = ++notificationId;
+    const notification = {
+        id,
+        type: options.type || 'info', // positive, negative, warning, info
+        title: options.title || '',
+        message: options.message || '',
+        icon: options.icon || getDefaultIcon(options.type),
+        timeout: options.timeout || 4000,
+        position: options.position || 'top-right',
+        showProgress: options.showProgress !== false,
+        createdAt: Date.now()
+    };
+
+    notifications.value.push(notification);
+
+    // Автоматическое удаление через timeout
+    if (notification.timeout > 0) {
+        setTimeout(() => {
+            removeNotification(id);
+        }, notification.timeout);
+    }
+
+    return id;
+};
+
+// Функция для получения иконки по умолчанию
+const getDefaultIcon = (type) => {
+    const icons = {
+        positive: 'check_circle',
+        negative: 'error',
+        warning: 'warning',
+        info: 'info'
+    };
+    return icons[type] || 'info';
+};
+
+// Функция для удаления уведомления
+const removeNotification = (id) => {
+    const index = notifications.value.findIndex(n => n.id === id);
+    if (index > -1) {
+        notifications.value.splice(index, 1);
+    }
+};
+
 const props = defineProps({
     document: {
         type: Object,
@@ -232,17 +333,19 @@ const {
     {
         autoStart: shouldAutoload, // Включаем автозапуск только при наличии параметра autoload=1
         onComplete: (status) => {
-            $q.notify({
+            showModernNotification({
                 type: 'positive',
+                title: 'Готово!',
                 message: 'Базовая генерация документа завершена!',
-                position: 'top'
+                icon: 'task_alt'
             });
         },
         onFullComplete: (status) => {
-            $q.notify({
+            showModernNotification({
                 type: 'positive',
+                title: 'Успех!',
                 message: 'Полная генерация документа завершена!',
-                position: 'top'
+                icon: 'celebration'
             });
             isPollingActive.value = false; // Останавливаем флаг отслеживания
         },
@@ -255,10 +358,11 @@ const {
             checkAndRedirectToLoadingScreen();
         },
         onError: (err) => {
-            $q.notify({
+            showModernNotification({
                 type: 'negative',
+                title: 'Ошибка',
                 message: 'Ошибка при отслеживании статуса: ' + err.message,
-                position: 'top'
+                icon: 'error_outline'
             });
             isPollingActive.value = false; // Останавливаем флаг отслеживания при ошибке
         }
@@ -415,10 +519,11 @@ const canResumeTracking = () => {
 const resumeTracking = () => {
     startPolling();
     isPollingActive.value = true;
-    $q.notify({
+    showModernNotification({
         type: 'info',
+        title: 'Отслеживание',
         message: 'Отслеживание статуса возобновлено',
-        position: 'top'
+        icon: 'play_circle'
     });
 };
 
@@ -426,10 +531,11 @@ const resumeTracking = () => {
 const stopTracking = () => {
     stopPolling();
     isPollingActive.value = false;
-    $q.notify({
+    showModernNotification({
         type: 'info',
+        title: 'Отслеживание',
         message: 'Отслеживание статуса остановлено',
-        position: 'top'
+        icon: 'pause_circle'
     });
 };
 
@@ -494,10 +600,11 @@ const startFullGeneration = async () => {
         isPollingActive.value = true;
         resumeTracking();
         
-        $q.notify({
+        showModernNotification({
             type: 'positive',
+            title: 'Генерация запущена',
             message: response.message || 'Полная генерация запущена',
-            position: 'top'
+            icon: 'auto_awesome'
         });
 
         // Небольшая задержка для завершения локального обновления
@@ -509,10 +616,11 @@ const startFullGeneration = async () => {
         }, 200);
         
     } catch (error) {
-        $q.notify({
+        showModernNotification({
             type: 'negative',
+            title: 'Ошибка генерации',
             message: error.response?.data?.message || 'Ошибка при запуске полной генерации',
-            position: 'top'
+            icon: 'error'
         });
     } finally {
         isStartingFullGeneration.value = false;
@@ -532,14 +640,18 @@ const downloadWord = async () => {
         link.click();
         document.body.removeChild(link);
 
-        $q.notify({
+        showModernNotification({
             type: 'positive',
-            message: 'Документ успешно сгенерирован'
+            title: 'Документ готов',
+            message: 'Документ успешно сгенерирован и скачан',
+            icon: 'download_done'
         });
     } catch (error) {
-        $q.notify({
+        showModernNotification({
             type: 'negative',
-            message: error.response?.data?.message || 'Ошибка при генерации документа'
+            title: 'Ошибка скачивания',
+            message: error.response?.data?.message || 'Ошибка при генерации документа',
+            icon: 'download_for_offline'
         });
     } finally {
         isDownloading.value = false;
@@ -562,10 +674,11 @@ const retryGeneration = async () => {
             currentDocument.value.status = 'pre_generating';
             currentDocument.value.status_label = 'Генерируется структура...';
             
-            $q.notify({
+            showModernNotification({
                 type: 'positive',
+                title: 'Повторная генерация',
                 message: 'Повторная генерация структуры запущена',
-                position: 'top'
+                icon: 'refresh'
             });
             
         } else if (status === 'full_generation_failed') {
@@ -578,10 +691,11 @@ const retryGeneration = async () => {
             currentDocument.value.status = 'full_generating';
             currentDocument.value.status_label = 'Генерируется содержимое...';
             
-            $q.notify({
+            showModernNotification({
                 type: 'positive',
+                title: 'Повторная генерация',
                 message: 'Повторная полная генерация запущена',
-                position: 'top'
+                icon: 'refresh'
             });
         }
         
@@ -590,10 +704,11 @@ const retryGeneration = async () => {
         resumeTracking();
         
     } catch (error) {
-        $q.notify({
+        showModernNotification({
             type: 'negative',
+            title: 'Ошибка повтора',
             message: error.response?.data?.message || 'Ошибка при запуске повторной генерации',
-            position: 'top'
+            icon: 'error'
         });
     } finally {
         isStartingFullGeneration.value = false;
@@ -638,26 +753,29 @@ const linkTelegram = async () => {
             // Открываем ссылку на бота в новой вкладке
             window.open(data.bot_url, '_blank');
             
-            $q.notify({
+            showModernNotification({
                 type: 'positive',
+                title: 'Telegram',
                 message: 'Перейдите в Telegram и нажмите "Старт"',
+                icon: 'fab fa-telegram-plane',
                 timeout: 5000
             });
             
         } else {
-            $q.notify({
+            showModernNotification({
                 type: 'negative',
-                message: data.error || 'Ошибка при создании ссылки',
-                timeout: 3000
+                title: 'Ошибка связи',
+                message: data.message || 'Ошибка при связывании с Telegram',
+                icon: 'link_off'
             });
         }
         
     } catch (error) {
-        console.error('Ошибка при связке с Telegram:', error);
-        $q.notify({
+        showModernNotification({
             type: 'negative',
-            message: 'Ошибка при связке с Telegram',
-            timeout: 3000
+            title: 'Ошибка',
+            message: 'Произошла ошибка при связывании с Telegram',
+            icon: 'error'
         });
     } finally {
         telegramLoading.value = false;
@@ -921,11 +1039,11 @@ const goToDashboard = () => {
     justify-content: flex-end;
     width: 420px;
     height: 270px;
-    background: linear-gradient(145deg, #4a5568 0%, #2d3748 100%);
+    background: linear-gradient(145deg, #7dd3fc 0%, #38bdf8 100%);
     border-radius: 24px 24px 12px 12px;
     z-index: 2;
     box-shadow: 
-        0 20px 40px rgba(74, 85, 104, 0.4),
+        0 20px 40px rgba(56, 189, 248, 0.4),
         inset 0 -2px 8px rgba(0, 0, 0, 0.2);
     animation: typewriterBounce 4s ease-in-out infinite;
 }
@@ -939,11 +1057,11 @@ const goToDashboard = () => {
     position: relative;
     width: 360px;
     height: 150px;
-    background: linear-gradient(145deg, #374151 0%, #1f2937 100%);
+    background: linear-gradient(145deg, #0ea5e9 0%, #0284c7 100%);
     border-radius: 18px;
     padding: 12px;
     margin-bottom: 30px;
-    box-shadow: 0 8px 16px rgba(74, 85, 104, 0.2);
+    box-shadow: 0 8px 16px rgba(14, 165, 233, 0.3);
 }
 
 .keys {
@@ -2050,5 +2168,352 @@ const goToDashboard = () => {
         min-width: 32px;
         min-height: 12px;
     }
+}
+
+/* ===== СОВРЕМЕННЫЕ УВЕДОМЛЕНИЯ ===== */
+
+.modern-notifications-container {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2147483647 !important;
+    pointer-events: none;
+    max-width: 420px;
+    width: 100%;
+}
+
+.notifications-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+}
+
+.modern-notification {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.08);
+    border: none;
+    backdrop-filter: blur(10px);
+    min-width: 320px;
+    max-width: 400px;
+    position: relative;
+    cursor: pointer;
+    pointer-events: auto;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    transform: translateY(0);
+}
+
+.modern-notification:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15), 0 6px 20px rgba(0, 0, 0, 0.1);
+}
+
+.modern-notification::before {
+    display: none;
+}
+
+/* Типы уведомлений */
+.notification-positive {
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+}
+
+.notification-positive .notification-icon {
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.15);
+}
+
+.notification-negative {
+    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+}
+
+.notification-negative .notification-icon {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.15);
+}
+
+.notification-warning {
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+}
+
+.notification-warning .notification-icon {
+    color: #f59e0b;
+    background: rgba(245, 158, 11, 0.15);
+}
+
+.notification-info {
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+}
+
+.notification-info .notification-icon {
+    color: #3b82f6;
+    background: rgba(59, 130, 246, 0.15);
+}
+
+/* Компоненты уведомления */
+.modern-notification {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.notification-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    font-size: 20px;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+}
+
+.notification-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.notification-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e293b;
+    line-height: 1.2;
+    margin: 0;
+}
+
+.notification-message {
+    font-size: 14px;
+    color: #64748b;
+    line-height: 1.4;
+    margin: 0;
+    word-wrap: break-word;
+}
+
+.notification-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    color: #94a3b8;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    margin-top: -2px;
+}
+
+.notification-close:hover {
+    background: rgba(148, 163, 184, 0.1);
+    color: #64748b;
+}
+
+/* Прогресс-бар */
+.notification-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: currentColor;
+    border-radius: 0 0 16px 16px;
+    opacity: 0.6;
+    animation: notificationProgress linear forwards;
+    width: 100%;
+    transform-origin: left center;
+}
+
+@keyframes notificationProgress {
+    from {
+        transform: scaleX(1);
+    }
+    to {
+        transform: scaleX(0);
+    }
+}
+
+/* Анимации появления/исчезновения */
+.notification-enter-active {
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.notification-leave-active {
+    transition: all 0.3s cubic-bezier(0.55, 0.085, 0.68, 0.53);
+}
+
+.notification-enter-from {
+    opacity: 0;
+    transform: translateY(-50px) scale(0.9);
+}
+
+.notification-leave-to {
+    opacity: 0;
+    transform: translateY(-30px) scale(0.95);
+}
+
+.notification-move {
+    transition: transform 0.3s ease;
+}
+
+/* Позиционирование */
+.notification-top-left {
+    /* Будет реализовано при необходимости */
+}
+
+.notification-top-right {
+    /* По умолчанию */
+}
+
+.notification-bottom-left {
+    /* Будет реализовано при необходимости */
+}
+
+.notification-bottom-right {
+    /* Будет реализовано при необходимости */
+}
+
+/* Адаптивность уведомлений */
+@media (max-width: 768px) {
+    .modern-notifications-container {
+        top: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+        max-width: calc(100vw - 32px);
+        width: auto;
+        right: auto;
+    }
+    
+    .modern-notification {
+        min-width: 280px;
+        max-width: calc(100vw - 40px);
+        padding: 16px;
+        border-radius: 12px;
+    }
+    
+    .notification-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 18px;
+        border-radius: 10px;
+    }
+    
+    .notification-title {
+        font-size: 15px;
+    }
+    
+    .notification-message {
+        font-size: 13px;
+    }
+    
+    .notification-close {
+        width: 20px;
+        height: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .modern-notifications-container {
+        top: 70px;
+        left: 50%;
+        transform: translateX(-50%);
+        max-width: calc(100vw - 24px);
+    }
+    
+    .modern-notification {
+        min-width: 260px;
+        max-width: calc(100vw - 32px);
+        padding: 14px;
+        gap: 12px;
+    }
+    
+    .notification-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 16px;
+        border-radius: 8px;
+    }
+    
+    .notification-title {
+        font-size: 14px;
+    }
+    
+    .notification-message {
+        font-size: 12px;
+        line-height: 1.3;
+    }
+    
+    .notification-close {
+        width: 18px;
+        height: 18px;
+    }
+}
+
+/* Эффекты при наведении на разные типы уведомлений */
+.notification-positive:hover {
+    box-shadow: 0 12px 40px rgba(16, 185, 129, 0.2), 0 6px 20px rgba(16, 185, 129, 0.15);
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+}
+
+.notification-negative:hover {
+    box-shadow: 0 12px 40px rgba(239, 68, 68, 0.2), 0 6px 20px rgba(239, 68, 68, 0.15);
+    background: linear-gradient(135deg, #fef1f1 0%, #fecaca 100%);
+}
+
+.notification-warning:hover {
+    box-shadow: 0 12px 40px rgba(245, 158, 11, 0.2), 0 6px 20px rgba(245, 158, 11, 0.15);
+    background: linear-gradient(135deg, #fefce8 0%, #fef08a 100%);
+}
+
+.notification-info:hover {
+    box-shadow: 0 12px 40px rgba(59, 130, 246, 0.2), 0 6px 20px rgba(59, 130, 246, 0.15);
+    background: linear-gradient(135deg, #f0f9ff 0%, #bfdbfe 100%);
+}
+
+/* Улучшенная анимация прогресс-бара */
+.notification-progress {
+    background: linear-gradient(90deg, 
+        currentColor 0%, 
+        currentColor 70%, 
+        transparent 100%
+    );
+    filter: brightness(1.2);
+}
+
+.notification-positive .notification-progress {
+    background: linear-gradient(90deg, #34d399 0%, #10b981 70%, transparent 100%);
+}
+
+.notification-negative .notification-progress {
+    background: linear-gradient(90deg, #f87171 0%, #ef4444 70%, transparent 100%);
+}
+
+.notification-warning .notification-progress {
+    background: linear-gradient(90deg, #fbbf24 0%, #f59e0b 70%, transparent 100%);
+}
+
+.notification-info .notification-progress {
+    background: linear-gradient(90deg, #60a5fa 0%, #3b82f6 70%, transparent 100%);
+}
+
+/* Подпись о возможности закрыть страницу */
+.close-page-hint {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 16px;
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.hint-icon {
+    font-size: 18px;
+    color: #f59e0b;
 }
 </style> 
