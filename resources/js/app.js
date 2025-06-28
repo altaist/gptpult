@@ -19,12 +19,52 @@ window.debug = (...t) => console.log(...t);
 window.redirect =  (path) => window.location = path;
 window.goBack =  () => history.back();
 
+// Функция для добавления Telegram заголовков
+const addTelegramHeaders = (headers = {}) => {
+    // Проверяем localStorage
+    const storedUserId = localStorage.getItem('telegram_auth_user_id')
+    const storedTimestamp = localStorage.getItem('telegram_auth_timestamp')
+    
+    if (storedUserId && storedTimestamp) {
+        headers['X-Telegram-Auth-User-Id'] = storedUserId
+        headers['X-Telegram-Auth-Timestamp'] = storedTimestamp
+    }
+    
+    // Проверяем куки Telegram
+    if (document.cookie) {
+        document.cookie.split(';').forEach(cookie => {
+            const trimmed = cookie.trim()
+            if (trimmed.startsWith('telegram_auth_user_')) {
+                const [name, value] = trimmed.split('=')
+                if (name && value) {
+                    headers['X-Telegram-Cookie-' + name] = value
+                }
+            }
+        })
+    }
+    
+    return headers
+}
+
 // Добавляем глобальный перехватчик для Telegram WebApp перенаправлений
 if (window.Telegram?.WebApp) {
     // Перехватываем все fetch запросы
     const originalFetch = window.fetch;
-    window.fetch = function(...args) {
-        return originalFetch.apply(this, args).then(response => {
+    window.fetch = function(url, options = {}) {
+        // Автоматически добавляем Telegram заголовки к каждому запросу
+        if (!options.headers) {
+            options.headers = {};
+        }
+        
+        // Добавляем Telegram заголовки
+        options.headers = addTelegramHeaders(options.headers);
+        
+        // Убеждаемся что куки отправляются
+        if (!options.credentials) {
+            options.credentials = 'include';
+        }
+        
+        return originalFetch.apply(this, [url, options]).then(response => {
             // Проверяем заголовок перенаправления
             const redirectUrl = response.headers.get('X-Telegram-Redirect');
             if (redirectUrl && window.location.pathname !== redirectUrl) {
@@ -34,6 +74,8 @@ if (window.Telegram?.WebApp) {
             return response;
         });
     };
+    
+    console.log('Telegram WebApp fetch interceptor initialized');
 }
 
 createInertiaApp({
