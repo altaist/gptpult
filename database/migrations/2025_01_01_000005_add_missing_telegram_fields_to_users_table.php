@@ -15,6 +15,7 @@ return new class extends Migration
             // Добавляем недостающие telegram поля
             $table->string('telegram_id')->nullable()->after('statistics');
             $table->string('telegram_username')->nullable()->after('telegram_id');
+            $table->string('telegram_link_token')->nullable()->after('telegram_username');
             $table->timestamp('telegram_linked_at')->nullable()->after('telegram_link_token');
         });
     }
@@ -25,7 +26,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn(['telegram_id', 'telegram_username', 'telegram_linked_at']);
+            $table->dropColumn(['telegram_id', 'telegram_username', 'telegram_link_token', 'telegram_linked_at']);
         });
     }
 }; 
