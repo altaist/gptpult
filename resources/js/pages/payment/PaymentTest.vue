@@ -13,7 +13,7 @@ const props = defineProps({
 const $q = useQuasar()
 const isCreatingOrder = ref(false)
 const isProcessingPayment = ref(false)
-const testAmount = ref(100)
+const testAmount = ref(300)
 
 // Создать тестовый заказ
 const createTestOrder = async () => {
@@ -197,10 +197,10 @@ const goToDashboard = () => {
           v-model.number="testAmount"
           label="Сумма для тестирования (₽)"
           type="number"
-          min="1"
+          min="300"
           max="10000"
           outlined
-          :rules="[val => val > 0 || 'Сумма должна быть больше 0']"
+          :rules="[val => val >= 300 || 'Минимальная сумма 300₽']"
         />
       </q-card-section>
     </q-card>

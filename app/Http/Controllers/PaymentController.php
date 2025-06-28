@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Exception;
+use Inertia\Inertia;
 
 class PaymentController extends Controller
 {
@@ -205,6 +206,30 @@ class PaymentController extends Controller
             // Используем принудительную проверку статуса
             $paymentStatus = $this->forceCheckPaymentStatusFromYookassa($order);
 
+            // Если платеж успешен и это платеж за документ, запускаем генерацию
+            if ($paymentStatus === 'completed' && $order->document_id && $order->document) {
+                $document = $order->document;
+                
+                // Проверяем, можно ли запустить полную генерацию
+                if ($document->status->canStartFullGenerationWithReferences($document)) {
+                    try {
+                        // Запускаем полную генерацию автоматически
+                        $this->documentJobService->startFullGeneration($document, $this->transitionService);
+                        
+                        Log::info('Автоматически запущена полная генерация после подтверждения оплаты', [
+                            'document_id' => $document->id,
+                            'order_id' => $order->id
+                        ]);
+                    } catch (Exception $e) {
+                        Log::error('Ошибка при автоматическом запуске генерации после подтверждения оплаты', [
+                            'document_id' => $document->id,
+                            'order_id' => $order->id,
+                            'error' => $e->getMessage()
+                        ]);
+                    }
+                }
+            }
+
             return response()->json([
                 'success' => true,
                 'status' => $paymentStatus,
@@ -248,84 +273,16 @@ class PaymentController extends Controller
                 throw new Exception('Заказ не найден');
             }
 
-            // ПРИНУДИТЕЛЬНО проверяем статус оплаты в ЮКасса (не полагаемся только на webhook)
-            $paymentStatus = $this->forceCheckPaymentStatusFromYookassa($order);
-
-            // Если это запрос только для проверки статуса
-            if ($request->has('check_only')) {
-                if ($request->wantsJson()) {
-                    return response()->json([
-                        'success' => true,
-                        'status' => $paymentStatus
-                    ]);
-                }
-            }
-
-            if ($paymentStatus === 'completed') {
-                // Если заказ связан с документом
-                if ($order->document_id && $order->document) {
-                    $document = $order->document;
-                    
-                    // Проверяем, можно ли запустить полную генерацию
-                    if ($document->status->canStartFullGenerationWithReferences($document)) {
-                        try {
-                            // Запускаем полную генерацию автоматически
-                            $this->documentJobService->startFullGeneration($document, $this->transitionService);
-                            
-                            Log::info('Автоматически запущена полная генерация после оплаты ЮКасса', [
-                                'document_id' => $document->id,
-                                'order_id' => $order->id
-                            ]);
-
-                            return redirect()->route('documents.show', $order->document_id)
-                                ->with('success', 'Оплата успешно завершена. Генерация документа запущена автоматически.');
-                        } catch (Exception $e) {
-                            Log::error('Ошибка при автоматическом запуске генерации после оплаты ЮКасса', [
-                                'document_id' => $document->id,
-                                'order_id' => $order->id,
-                                'error' => $e->getMessage()
-                            ]);
-
-                            return redirect()->route('documents.show', $order->document_id)
-                                ->with('success', 'Оплата успешно завершена.')
-                                ->with('warning', 'Генерация документа не была запущена автоматически. Вы можете запустить её вручную.');
-                        }
-                    } else {
-                        Log::info('Автоматический запуск генерации невозможен - документ не готов', [
-                            'document_id' => $document->id,
-                            'order_id' => $order->id,
-                            'document_status' => $document->status->value
-                        ]);
-
-                        return redirect()->route('documents.show', $order->document_id)
-                            ->with('success', 'Оплата успешно завершена');
-                    }
-                }
-
-                // Если заказ без документа (пополнение баланса), перенаправляем в ЛК с параметрами
-                $redirectUrl = route('dashboard') . '?payment_return=true&order_id=' . $order->id;
-                if ($order->amount) {
-                    $redirectUrl .= '&amount=' . $order->amount;
-                }
-                return redirect($redirectUrl);
-
-            } else if ($paymentStatus === 'pending') {
-                // Для пополнения баланса перенаправляем в ЛК с проверкой статуса
-                if (!$order->document_id) {
-                    $redirectUrl = route('dashboard') . '?payment_return=true&order_id=' . $order->id;
-                    if ($order->amount) {
-                        $redirectUrl .= '&amount=' . $order->amount;
-                    }
-                    return redirect($redirectUrl);
-                }
-                
-                return redirect()->route('dashboard')
-                    ->with('info', 'Платеж обрабатывается. Мы уведомим вас о результате.');
-
-            } else {
-                return redirect()->route('dashboard')
-                    ->with('error', 'Платеж не был завершен. Попробуйте еще раз.');
-            }
+            // Перенаправляем на страницу ожидания оплаты
+            return Inertia::render('payment/PaymentWaiting', [
+                'orderId' => $order->id,
+                'orderInfo' => [
+                    'id' => $order->id,
+                    'amount' => $order->amount
+                ],
+                'isDocument' => (bool) $order->document_id,
+                'documentId' => $order->document_id
+            ]);
 
         } catch (Exception $e) {
             Log::error('Ошибка при обработке возврата с оплаты ЮКасса', [
@@ -333,14 +290,6 @@ class PaymentController extends Controller
                 'error' => $e->getMessage(),
                 'request_params' => $request->all()
             ]);
-
-            // Если это AJAX запрос для проверки статуса
-            if ($request->has('check_only') && $request->wantsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'status' => 'error'
-                ], 500);
-            }
 
             // Определяем куда перенаправить в случае ошибки
             $redirectRoute = $order && $order->document_id 

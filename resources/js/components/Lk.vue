@@ -499,8 +499,9 @@ const topUpBalance = async () => {
         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
       },
       body: JSON.stringify({
+        amount: 300, // Минимальная сумма пополнения
         order_data: {
-          description: "Пополнение баланса",
+          description: "Пополнение баланса на 300₽",
           purpose: "balance_top_up"
         }
       })

@@ -38,16 +38,18 @@ const telegramLoading = ref(false);
 
 // Состояния для модальных окон пополнения
 const showTopUpModal = ref(false);
-const showPaymentStatusModal = ref(false);
-const topUpAmount = ref(1000);
+const topUpAmount = ref(300);
 const isCreatingOrder = ref(false);
-const paymentStatusData = ref(null);
-const paymentCheckInterval = ref(null);
 
 // Состояния для истории транзакций
 const showTransitionsModal = ref(false);
 const transitions = ref([]);
 const isLoadingTransitions = ref(false);
+
+// Состояния для тестового уменьшения баланса
+const showDecrementModal = ref(false);
+const decrementAmount = ref(100);
+const isDecrementingBalance = ref(false);
 
 // Загрузить статус Telegram при монтировании компонента
 onMounted(async () => {
@@ -56,26 +58,6 @@ onMounted(async () => {
   // Если это Telegram Mini App, настраиваем интерфейс
   if (isTelegramMiniApp.value) {
     console.log('Running in Telegram Mini App mode');
-  }
-  
-  // Проверяем URL параметры для возврата с оплаты
-  const urlParams = new URLSearchParams(window.location.search);
-  const paymentReturn = urlParams.get('payment_return');
-  const orderId = urlParams.get('order_id');
-  
-  if (paymentReturn === 'true' && orderId) {
-    // Возвращаемся с оплаты, начинаем проверку статуса
-    paymentStatusData.value = {
-      order_id: parseInt(orderId),
-      payment_id: urlParams.get('payment_id'),
-      amount: urlParams.get('amount')
-    };
-    
-    startPaymentStatusCheck();
-    
-    // Очищаем URL от параметров
-    const cleanUrl = window.location.pathname;
-    window.history.replaceState({}, document.title, cleanUrl);
   }
 });
 
@@ -253,10 +235,32 @@ const roundToHundred = (value) => {
 };
 
 // Следить за изменением суммы и автоматически округлять
-const onAmountChange = (value) => {
-  if (value && value !== roundToHundred(value)) {
-    topUpAmount.value = roundToHundred(value);
+const onAmountChange = (event) => {
+  const value = parseInt(event.target.value) || 0;
+  topUpAmount.value = value;
+};
+
+// Округлить сумму при потере фокуса
+const onAmountBlur = (event) => {
+  let value = parseInt(event.target.value) || 0;
+  if (value > 0) {
+    value = roundToHundred(value);
+    // Проверяем минимальную сумму
+    if (value < 300) {
+      value = 300;
+    }
+    topUpAmount.value = value;
   }
+};
+
+// Выбрать сумму и обновить преимущества
+const selectAmount = (amount) => {
+  topUpAmount.value = amount;
+};
+
+// Получить количество генераций в зависимости от суммы
+const getGenerationsCount = (amount) => {
+  return Math.floor(amount / 100);
 };
 
 // Функция для пополнения баланса - открыть модальное окно
@@ -266,10 +270,10 @@ const topUpBalance = async () => {
 
 // Создать заказ на пополнение и перейти на оплату
 const processTopUp = async () => {
-  if (topUpAmount.value < 100) {
+  if (topUpAmount.value < 300) {
     $q.notify({
       type: 'negative',
-      message: 'Минимальная сумма пополнения 100₽',
+      message: 'Минимальная сумма пополнения 300₽',
       position: 'top'
     });
     return;
@@ -326,17 +330,10 @@ const processTopUp = async () => {
       throw new Error(paymentData.error || 'Ошибка создания платежа');
     }
 
-    // Сохраняем данные для проверки статуса
-    paymentStatusData.value = {
-      order_id: orderData.order_id,
-      payment_id: paymentData.payment_id,
-      amount: topUpAmount.value
-    };
-
     // Закрываем модальное окно ввода суммы
     showTopUpModal.value = false;
     
-    // Перенаправляем на оплату
+    // Перенаправляем на оплату ЮКасса
     window.location.href = paymentData.payment_url;
 
   } catch (error) {
@@ -349,78 +346,6 @@ const processTopUp = async () => {
   } finally {
     isCreatingOrder.value = false;
   }
-};
-
-// Проверить статус платежа
-const checkPaymentStatus = async (orderId) => {
-  try {
-    const response = await fetch(`/api/payment/status/${orderId}`, {
-      headers: {
-        'Accept': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-      }
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      return data.status || 'pending';
-    }
-    
-    return 'pending';
-  } catch (error) {
-    console.error('Ошибка проверки статуса:', error);
-    return 'error';
-  }
-};
-
-// Начать проверку статуса платежа
-const startPaymentStatusCheck = () => {
-  if (!paymentStatusData.value) return;
-
-  showPaymentStatusModal.value = true;
-  
-  // Проверяем статус каждые 3 секунды
-  paymentCheckInterval.value = setInterval(async () => {
-    const status = await checkPaymentStatus(paymentStatusData.value.order_id);
-    
-    if (status === 'completed') {
-      // Платеж успешен
-      clearInterval(paymentCheckInterval.value);
-      showPaymentStatusModal.value = false;
-      
-      $q.notify({
-        type: 'positive',
-        message: `Баланс успешно пополнен на ${paymentStatusData.value.amount}₽`,
-        position: 'top',
-        timeout: 5000
-      });
-      
-      // Перезагружаем страницу для обновления баланса
-      window.location.reload();
-      
-    } else if (status === 'failed' || status === 'canceled') {
-      // Платеж неуспешен
-      clearInterval(paymentCheckInterval.value);
-      showPaymentStatusModal.value = false;
-      
-      $q.notify({
-        type: 'negative',
-        message: 'Платеж не был завершен',
-        position: 'top'
-      });
-      
-      paymentStatusData.value = null;
-    }
-  }, 3000);
-};
-
-// Отменить проверку статуса
-const cancelPaymentStatusCheck = () => {
-  if (paymentCheckInterval.value) {
-    clearInterval(paymentCheckInterval.value);
-  }
-  showPaymentStatusModal.value = false;
-  paymentStatusData.value = null;
 };
 
 // Загрузить историю транзакций
@@ -463,6 +388,68 @@ const openTransitionsHistory = async () => {
   await loadTransitions();
 };
 
+// Тестовое уменьшение баланса (только для development)
+const testDecrementBalance = async () => {
+  if (decrementAmount.value < 1) {
+    $q.notify({
+      type: 'negative',
+      message: 'Минимальная сумма для списания 1₽',
+      position: 'top'
+    });
+    return;
+  }
+
+  isDecrementingBalance.value = true;
+
+  try {
+    const response = await fetch('/api/user/test-decrement-balance', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+      },
+      body: JSON.stringify({
+        amount: decrementAmount.value
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      $q.notify({
+        type: 'positive',
+        message: `Баланс успешно уменьшен на ${decrementAmount.value}₽`,
+        position: 'top',
+        timeout: 3000
+      });
+
+      // Закрываем модальное окно
+      showDecrementModal.value = false;
+      
+      // Перезагружаем страницу для обновления баланса
+      window.location.reload();
+      
+    } else {
+      $q.notify({
+        type: 'negative',
+        message: data.error || 'Ошибка при уменьшении баланса',
+        position: 'top'
+      });
+    }
+
+  } catch (error) {
+    console.error('Ошибка при уменьшении баланса:', error);
+    $q.notify({
+      type: 'negative',
+      message: 'Ошибка при уменьшении баланса',
+      position: 'top'
+    });
+  } finally {
+    isDecrementingBalance.value = false;
+  }
+};
+
 // Форматировать сумму операции
 const formatTransitionAmount = (transition) => {
   const amount = Math.abs(transition.difference);
@@ -499,9 +486,9 @@ const sortedDocuments = computed(() => {
   return [...props.documents].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 });
 
-// Очистка интервала проверки статуса платежа при размонтировании компонента
+// Очистка интервалов при размонтировании компонента
 onUnmounted(() => {
-  cancelPaymentStatusCheck();
+  // Очистка не требуется, так как старая логика модального окна удалена
 });
 </script>
 
@@ -559,6 +546,16 @@ onUnmounted(() => {
                                     @click="topUpBalance"
                                     class="balance-btn"
                                     unelevated
+                                    no-caps
+                                />
+                                <q-btn
+                                    v-if="isDevelopment"
+                                    color="negative"
+                                    label="Списать"
+                                    size="md"
+                                    @click="showDecrementModal = true"
+                                    class="balance-btn"
+                                    outline
                                     no-caps
                                 />
                                 <q-btn
@@ -688,11 +685,12 @@ onUnmounted(() => {
                                 <input
                                     v-model.number="topUpAmount"
                                     type="number"
-                                    min="100"
+                                    min="300"
                                     step="100"
                                     class="custom-input"
                                     placeholder="Введите сумму"
                                     @input="onAmountChange"
+                                    @blur="onAmountBlur"
                                 />
                                 <span class="custom-input-suffix">₽</span>
                             </div>
@@ -700,7 +698,7 @@ onUnmounted(() => {
                         
                         <div class="amount-info">
                             <q-icon name="info" class="info-icon" />
-                            <span>Сумма автоматически округляется до кратной 100₽</span>
+                            <span>Минимум 300₽. Сумма округляется до кратной 100₽ при завершении ввода</span>
                         </div>
 
                         <!-- Быстрые кнопки выбора суммы -->
@@ -708,13 +706,30 @@ onUnmounted(() => {
                             <div class="quick-amounts-label">Быстрый выбор:</div>
                             <div class="quick-amounts-buttons">
                                 <button 
-                                    v-for="amount in [100, 300, 500, 700]" 
+                                    v-for="amount in [300, 500, 1000, 1500]" 
                                     :key="amount"
-                                    @click="topUpAmount = amount"
+                                    @click="selectAmount(amount)"
                                     :class="['quick-amount-btn', { 'active': topUpAmount === amount }]"
                                 >
                                     {{ amount }}₽
                                 </button>
+                            </div>
+                        </div>
+
+                        <!-- Преимущества абонемента -->
+                        <div v-if="topUpAmount >= 300" class="subscription-benefits">
+                            <div class="benefits-title">Что входит в абонемент:</div>
+                            <div class="benefit-item">
+                                <q-icon name="check_circle" class="benefit-icon" />
+                                <span>{{ getGenerationsCount(topUpAmount) }} генераций документов</span>
+                            </div>
+                            <div class="benefit-item">
+                                <q-icon name="check_circle" class="benefit-icon" />
+                                <span>Полное содержание с деталями</span>
+                            </div>
+                            <div class="benefit-item">
+                                <q-icon name="check_circle" class="benefit-icon" />
+                                <span>Скачивание в формате Word</span>
                             </div>
                         </div>
                     </div>
@@ -726,7 +741,7 @@ onUnmounted(() => {
                         label="Оплатить" 
                         @click="processTopUp"
                         :loading="isCreatingOrder"
-                        :disable="topUpAmount < 100"
+                        :disable="topUpAmount < 300"
                         unelevated
                         no-caps
                         class="action-btn primary-btn"
@@ -738,54 +753,6 @@ onUnmounted(() => {
                         :disable="isCreatingOrder"
                         no-caps
                         class="action-btn cancel-btn"
-                    />
-                </q-card-actions>
-            </q-card>
-        </q-dialog>
-
-        <!-- Модальное окно проверки статуса платежа -->
-        <q-dialog v-model="showPaymentStatusModal" persistent>
-            <q-card class="payment-status-modal">
-                <q-card-section class="modal-header">
-                    <div class="modal-title">
-                        <q-icon name="payment" class="modal-icon" />
-                        Проверка платежа
-                    </div>
-                </q-card-section>
-
-                <q-card-section class="modal-content text-center">
-                    <div class="payment-spinner">
-                        <q-spinner-dots
-                            color="primary"
-                            size="60px"
-                        />
-                    </div>
-                    
-                    <div class="payment-status-text">
-                        <div class="status-title">Обрабатываем ваш платеж</div>
-                        <div class="status-subtitle">
-                            Сумма: {{ paymentStatusData?.amount || 0 }}₽
-                        </div>
-                        <div class="status-info">
-                            Это может занять до нескольких минут
-                        </div>
-                    </div>
-
-                    <div class="payment-tips">
-                        <q-icon name="info" class="tips-icon" />
-                        <div class="tips-text">
-                            Не закрывайте это окно до завершения проверки
-                        </div>
-                    </div>
-                </q-card-section>
-
-                <q-card-actions align="center" class="modal-actions">
-                    <q-btn 
-                        flat 
-                        label="Отменить проверку" 
-                        @click="cancelPaymentStatusCheck"
-                        color="grey-7"
-                        no-caps
                     />
                 </q-card-actions>
             </q-card>
@@ -846,6 +813,78 @@ onUnmounted(() => {
                         </div>
                     </div>
                 </q-card-section>
+            </q-card>
+        </q-dialog>
+
+        <!-- Модальное окно тестового списания баланса (только для development) -->
+        <q-dialog v-model="showDecrementModal" v-if="isDevelopment">
+            <q-card class="top-up-modal">
+                <q-card-section class="modal-header">
+                    <div class="modal-title">
+                        <q-icon name="remove_circle" class="modal-icon" />
+                        Тестовое списание баланса
+                    </div>
+                </q-card-section>
+
+                <q-card-section class="modal-content">
+                    <div class="amount-input-section">
+                        <div class="custom-input-wrapper">
+                            <label class="custom-input-label">Сумма для списания</label>
+                            <div class="custom-input-container">
+                                <input
+                                    v-model.number="decrementAmount"
+                                    type="number"
+                                    min="1"
+                                    step="10"
+                                    class="custom-input"
+                                    placeholder="Введите сумму"
+                                />
+                                <span class="custom-input-suffix">₽</span>
+                            </div>
+                        </div>
+                        
+                        <div class="amount-info">
+                            <q-icon name="warning" class="info-icon" />
+                            <span>Эта функция доступна только в режиме разработки</span>
+                        </div>
+
+                        <!-- Быстрые кнопки выбора суммы -->
+                        <div class="quick-amounts">
+                            <div class="quick-amounts-label">Быстрый выбор:</div>
+                            <div class="quick-amounts-buttons">
+                                <button 
+                                    v-for="amount in [50, 100, 200, 500]" 
+                                    :key="amount"
+                                    @click="decrementAmount = amount"
+                                    :class="['quick-amount-btn', { 'active': decrementAmount === amount }]"
+                                >
+                                    {{ amount }}₽
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </q-card-section>
+
+                <q-card-actions class="modal-actions">
+                    <q-btn 
+                        color="negative" 
+                        label="Списать" 
+                        @click="testDecrementBalance"
+                        :loading="isDecrementingBalance"
+                        :disable="decrementAmount < 1"
+                        unelevated
+                        no-caps
+                        class="action-btn primary-btn"
+                    />
+                    <q-btn 
+                        flat 
+                        label="Отмена" 
+                        @click="showDecrementModal = false"
+                        :disable="isDecrementingBalance"
+                        no-caps
+                        class="action-btn cancel-btn"
+                    />
+                </q-card-actions>
             </q-card>
         </q-dialog>
 
@@ -1232,7 +1271,7 @@ onUnmounted(() => {
 
 @media (max-width: 768px) {
     .lk-container {
-        padding: 20px 12px;
+        padding: 20px 12px 100px 12px;
     }
     
     .header-section {
@@ -1266,10 +1305,28 @@ onUnmounted(() => {
         order: 1;
     }
     
-    /* Мобильная раскладка левой колонки */
+    /* Фиксированная кнопка в мобильной версии */
     .new-document-section {
+        position: fixed;
+        bottom: 32px;
+        left: 12px;
+        right: 12px;
+        z-index: 1000;
+        width: auto;
+        order: 0;
+    }
+    
+    .new-document-btn {
         width: 100%;
-        order: 1;
+        padding: 16px 24px;
+        font-size: 16px;
+        box-shadow: 0 8px 32px rgba(59, 130, 246, 0.4);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    /* Добавляем отступ снизу для контента, чтобы он не скрывался за кнопкой */
+    .lk-container {
+        padding-bottom: 100px;
     }
     
     .balance-card {
@@ -1356,7 +1413,7 @@ onUnmounted(() => {
 
 @media (max-width: 640px) {
     .lk-container {
-        padding: 16px 8px;
+        padding: 16px 8px 90px 8px;
     }
     
     .header-section {
@@ -1421,11 +1478,17 @@ onUnmounted(() => {
     .document-meta {
         gap: 8px;
     }
+    
+    .new-document-section {
+        bottom: 24px;
+        left: 8px;
+        right: 8px;
+    }
 }
 
 @media (max-width: 480px) {
     .lk-container {
-        padding: 12px 6px;
+        padding: 12px 6px 85px 6px;
     }
     
     .page-title {
@@ -1495,11 +1558,17 @@ onUnmounted(() => {
     .document-status {
         font-size: 12px;
     }
+    
+    .new-document-section {
+        bottom: 20px;
+        left: 6px;
+        right: 6px;
+    }
 }
 
 @media (max-width: 360px) {
     .lk-container {
-        padding: 10px 4px;
+        padding: 10px 4px 80px 4px;
     }
     
     .page-title {
@@ -1639,8 +1708,7 @@ onUnmounted(() => {
 }
 
 /* Стили для модальных окон */
-.top-up-modal,
-.payment-status-modal {
+.top-up-modal {
     min-width: 520px;
     max-width: 580px;
     border-radius: 24px;
@@ -1833,65 +1901,6 @@ onUnmounted(() => {
     box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
 }
 
-/* Стили для проверки статуса */
-.payment-spinner {
-    margin: 32px 0;
-}
-
-.payment-status-text {
-    margin: 32px 0;
-}
-
-.status-title {
-    font-size: 22px;
-    font-weight: 700;
-    color: #1e293b;
-    margin-bottom: 12px;
-}
-
-.status-subtitle {
-    font-size: 18px;
-    color: #3b82f6;
-    font-weight: 600;
-    margin-bottom: 12px;
-    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.status-info {
-    font-size: 15px;
-    color: #6b7280;
-    line-height: 1.5;
-}
-
-.payment-tips {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-    padding: 16px 20px;
-    border-radius: 16px;
-    margin-top: 24px;
-    border: 1px solid #f59e0b;
-}
-
-.tips-icon {
-    font-size: 18px;
-    color: #d97706;
-    background: rgba(217, 119, 6, 0.1);
-    padding: 4px;
-    border-radius: 8px;
-    flex-shrink: 0;
-}
-
-.tips-text {
-    font-size: 15px;
-    color: #92400e;
-    font-weight: 500;
-}
-
 /* Стили для модального окна истории транзакций */
 .transitions-modal {
     background: #ffffff;
@@ -1942,7 +1951,7 @@ onUnmounted(() => {
 }
 
 .empty-transitions .empty-title {
-    font-size: 24px;
+    font-size: 20px;
     font-weight: 700;
     color: #1e293b;
     margin-bottom: 12px;
@@ -2050,8 +2059,7 @@ onUnmounted(() => {
 
 /* Адаптивность для модальных окон */
 @media (max-width: 600px) {
-    .top-up-modal,
-    .payment-status-modal {
+    .top-up-modal {
         min-width: 90vw;
         max-width: 90vw;
         margin: 16px;
@@ -2186,14 +2194,6 @@ onUnmounted(() => {
     .empty-transitions .empty-title {
         font-size: 20px;
     }
-    
-    .status-title {
-        font-size: 18px;
-    }
-    
-    .status-subtitle {
-        font-size: 16px;
-    }
 }
 
 /* Стили для ввода суммы */
@@ -2252,5 +2252,41 @@ onUnmounted(() => {
     background: rgba(100, 116, 139, 0.2);
     color: #475569;
     transform: scale(1.05);
+}
+
+/* Стили для блока преимуществ */
+.subscription-benefits {
+    padding: 20px;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    margin-top: 8px;
+}
+
+.benefits-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 16px;
+}
+
+.benefit-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    color: #64748b;
+    font-weight: 500;
+    margin-bottom: 12px;
+}
+
+.benefit-item:last-child {
+    margin-bottom: 0;
+}
+
+.benefit-icon {
+    color: #10b981;
+    font-size: 18px;
+    flex-shrink: 0;
 }
 </style> 

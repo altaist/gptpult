@@ -82,4 +82,67 @@ class LkController extends Controller
             'current_balance' => $this->transitionService->getUserBalance($user)
         ]);
     }
+
+    /**
+     * API: Тестовое уменьшение баланса (только для development)
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function testDecrementBalance(Request $request)
+    {
+        // Проверяем, что мы в development режиме
+        if (!app()->environment(['local', 'testing'])) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Функция доступна только в режиме разработки'
+            ], 403);
+        }
+
+        $user = $request->user();
+        
+        $request->validate([
+            'amount' => 'required|numeric|min:1|max:10000'
+        ]);
+
+        $amount = $request->input('amount');
+
+        try {
+            // Проверяем достаточность средств
+            $currentBalance = $this->transitionService->getUserBalance($user);
+            
+            if ($currentBalance < $amount) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Недостаточно средств на балансе'
+                ], 400);
+            }
+
+            // Списываем средства
+            $transition = $this->transitionService->debitUser(
+                $user, 
+                $amount, 
+                'Тестовое списание (режим разработки)'
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Баланс успешно уменьшен',
+                'new_balance' => $this->transitionService->getUserBalance($user),
+                'transition' => [
+                    'id' => $transition->id,
+                    'amount_before' => $transition->amount_before,
+                    'amount_after' => $transition->amount_after,
+                    'difference' => $transition->difference,
+                    'description' => $transition->description,
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 400);
+        }
+    }
 } 

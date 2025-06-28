@@ -35,6 +35,17 @@ class OrderController extends Controller
             $amount = $request->input('amount');
             $orderData = $request->input('order_data', []);
 
+            // Проверяем, это запрос на пополнение баланса
+            $isPurposeBalanceTopUp = isset($orderData['purpose']) && $orderData['purpose'] === 'balance_top_up';
+
+            // Валидация для пополнения баланса
+            if ($isPurposeBalanceTopUp && $amount && $amount < 300) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Минимальная сумма пополнения 300₽'
+                ], 422);
+            }
+
             // Если передан документ, проверяем права доступа
             if ($document && $document->user_id !== $user->id) {
                 return response()->json([
@@ -55,8 +66,6 @@ class OrderController extends Controller
             ]);
 
             // Проверяем, это запрос на пополнение баланса или для документа
-            $isPurposeBalanceTopUp = isset($orderData['purpose']) && $orderData['purpose'] === 'balance_top_up';
-
             if ($isPurposeBalanceTopUp || !$document) {
                 // Для пополнения баланса возвращаем данные заказа
                 return response()->json([
@@ -65,15 +74,12 @@ class OrderController extends Controller
                     'amount' => $order->amount
                 ]);
             } else {
-                // Для документов - старая логика с PaymentProcessHelper
-                // Загружаем отношение document для использования в PaymentProcessHelper
-                $order->load('document');
-
-                // Создаем ссылку для оплаты
-                $paymentUrl = $this->paymentHelper->createPaymentLink($order);
-
+                // Для документов возвращаем данные заказа (без PaymentProcessHelper)
                 return response()->json([
-                    'redirect' => $paymentUrl
+                    'success' => true,
+                    'order_id' => $order->id,
+                    'amount' => $order->amount,
+                    'document_id' => $document->id
                 ]);
             }
 

@@ -133,6 +133,19 @@ Route::get('/payment/complete/{orderId}', [PaymentController::class, 'handlePaym
 // Тестовая страница оплаты
 Route::get('/payment/test', [PaymentTestController::class, 'show'])->name('payment.test');
 
+// Тестовая страница ожидания оплаты (для просмотра дизайна)
+Route::get('/payment/waiting-test', function () {
+    return Inertia::render('payment/PaymentWaiting', [
+        'orderId' => 12345,
+        'orderInfo' => [
+            'id' => 12345,
+            'amount' => 500
+        ],
+        'isDocument' => true,
+        'documentId' => 67890
+    ]);
+})->name('payment.waiting.test');
+
 // Telegram бот роуты (веб-хук должен быть без auth middleware)
 Route::post('/telegram/webhook', [TelegramController::class, 'webhook'])->name('telegram.webhook');
 Route::get('/telegram/test-mode', [TelegramController::class, 'testMode'])->name('telegram.test-mode');
@@ -140,6 +153,11 @@ Route::get('/telegram/test-mode', [TelegramController::class, 'testMode'])->name
 // API роут для получения истории транзакций
 Route::get('/api/user/transitions', [LkController::class, 'getTransitionHistory'])
     ->name('user.transitions.api')
+    ->middleware('auth');
+
+// API роут для тестового уменьшения баланса (только для development)
+Route::post('/api/user/test-decrement-balance', [LkController::class, 'testDecrementBalance'])
+    ->name('user.test-decrement-balance.api')
     ->middleware('auth');
 
 require __DIR__.'/auth.php';

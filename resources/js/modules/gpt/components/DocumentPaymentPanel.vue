@@ -62,14 +62,24 @@ const handlePayment = async () => {
         loading.value = true;
         errorMessage.value = '';
 
-        const response = await apiClient.post(route('orders.process', props.document.id));
+        // Создаем заказ
+        const orderResponse = await apiClient.post(route('orders.process', props.document.id));
 
-        if (response.redirect) {
-            window.location.href = response.redirect;
+        if (!orderResponse.success || !orderResponse.order_id) {
+            throw new Error('Ошибка при создании заказа');
+        }
+
+        // Создаем платеж ЮКасса и получаем URL для оплаты
+        const paymentResponse = await apiClient.post(route('payment.yookassa.create.api', orderResponse.order_id));
+
+        if (paymentResponse.success && paymentResponse.payment_url) {
+            // Перенаправляем на оплату ЮКасса
+            window.location.href = paymentResponse.payment_url;
         } else {
-            errorMessage.value = 'Во время обработки произошла ошибка, мы разбираемся с этой проблемой';
+            throw new Error(paymentResponse.error || 'Ошибка при создании платежа');
         }
     } catch (error) {
+        console.error('Ошибка при оплате:', error);
         errorMessage.value = error.message || 'Во время обработки произошла ошибка, мы разбираемся с этой проблемой';
     } finally {
         loading.value = false;

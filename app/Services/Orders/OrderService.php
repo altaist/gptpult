@@ -14,7 +14,7 @@ class OrderService
     /**
      * Стоимость заказа по умолчанию
      */
-    const DEFAULT_PRICE = 290.00;
+    const DEFAULT_PRICE = 100.00;
     const FULL_GENERATION_PRICE = 100.00;
 
     /**

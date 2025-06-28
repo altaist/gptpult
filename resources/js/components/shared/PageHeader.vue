@@ -103,7 +103,7 @@ const onRightBtnClick = () => {
 
 const openSupport = () => {
     // Открытие поддержки
-    window.open('https://t.me/gptpult_support_bot', '_blank');
+    window.open('https://t.me/gptpult_help', '_blank');
 };
 </script>
 

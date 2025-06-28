@@ -2,10 +2,56 @@
     <div class="actions-column">
         <!-- Если не хватает баланса — панель оплаты -->
         <div v-if="canPay && document.status === 'pre_generated'">
-            <DocumentPaymentPanel
-                :amount="orderPrice"
-                :document="document"
-            />
+            <div class="payment-panel">
+                <div class="payment-header">
+                    <div class="payment-icon">
+                        <q-icon name="credit_card" />
+                    </div>
+                    <div class="payment-title">Оформить Абонемент</div>
+                </div>
+                
+                <div class="payment-content">
+                    <div class="pricing-info">
+                        <div class="price-item main-price">
+                            <div class="price-label">Стоимость</div>
+                            <div class="price-value highlight">300 ₽</div>
+                        </div>
+                    </div>
+                    
+                    <q-btn
+                        label="Оформить Абонемент"
+                        color="primary"
+                        size="lg"
+                        :loading="isProcessingPayment"
+                        @click="handleSubscriptionPayment"
+                        class="subscription-btn"
+                        unelevated
+                        no-caps
+                    />
+                    
+                    <div class="subscription-benefits">
+                        <div class="benefits-title">Что входит в абонемент:</div>
+                        <div class="benefit-item">
+                            <q-icon name="check_circle" class="benefit-icon" />
+                            <span>3 генерации документов</span>
+                        </div>
+                        <div class="benefit-item">
+                            <q-icon name="check_circle" class="benefit-icon" />
+                            <span>Полное содержание с деталями</span>
+                        </div>
+                        <div class="benefit-item">
+                            <q-icon name="check_circle" class="benefit-icon" />
+                            <span>Скачивание в формате Word</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Сообщение об ошибке -->
+                <div v-if="paymentErrorMessage" class="error-message">
+                    <q-icon name="error" class="error-icon" />
+                    {{ paymentErrorMessage }}
+                </div>
+            </div>
         </div>
         <!-- Карточка ошибки генерации -->
         <div v-if="hasGenerationError" class="action-card error-card">
@@ -106,8 +152,8 @@
 </template>
 
 <script setup>
-import { computed, defineProps, defineEmits } from 'vue';
-import DocumentPaymentPanel from '@/modules/gpt/components/DocumentPaymentPanel.vue';
+import { computed, defineProps, defineEmits, ref } from 'vue';
+import { apiClient } from '@/composables/api';
 
 const props = defineProps({
     document: {
@@ -142,6 +188,14 @@ const props = defineProps({
     isDownloading: {
         type: Boolean,
         default: false
+    },
+    isProcessingPayment: {
+        type: Boolean,
+        default: false
+    },
+    paymentErrorMessage: {
+        type: String,
+        default: ''
     }
 });
 
@@ -183,11 +237,38 @@ const canRetryGeneration = computed(() => {
     return hasGenerationError.value;
 });
 
+const isProcessingPayment = ref(false);
+const paymentErrorMessage = ref('');
+
 // Открыть бот поддержки в Telegram
 const openSupportBot = () => {
-    // URL бота поддержки (замените на ваш реальный URL)
-    const supportBotUrl = 'https://t.me/gptpult_support_bot';
+    // URL бота поддержки
+    const supportBotUrl = 'https://t.me/gptpult_help';
     window.open(supportBotUrl, '_blank');
+};
+
+const handleSubscriptionPayment = async () => {
+    try {
+        isProcessingPayment.value = true;
+        paymentErrorMessage.value = '';
+
+        // Создаем платеж на пополнение баланса на 300 рублей
+        const paymentResponse = await apiClient.post(route('payment.yookassa.balance.create'), {
+            amount: 300
+        });
+
+        if (paymentResponse.success && paymentResponse.payment_url) {
+            // Перенаправляем на оплату ЮКасса
+            window.location.href = paymentResponse.payment_url;
+        } else {
+            throw new Error(paymentResponse.error || 'Ошибка при создании платежа');
+        }
+    } catch (error) {
+        console.error('Ошибка при оплате абонемента:', error);
+        paymentErrorMessage.value = error.message || 'Во время обработки произошла ошибка, мы разбираемся с этой проблемой';
+    } finally {
+        isProcessingPayment.value = false;
+    }
 };
 </script>
 
@@ -198,12 +279,179 @@ const openSupportBot = () => {
     flex-direction: column;
     gap: 24px;
     position: sticky;
-    top: 100px;
+    top: 24px;
+}
+
+/* Панель оплаты */
+.payment-panel {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 28px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid #f1f5f9;
+    transition: all 0.3s ease;
+}
+
+.payment-panel:hover {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+}
+
+.payment-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #f1f5f9;
+}
+
+.payment-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    border-radius: 16px;
+    color: white;
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+.payment-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.payment-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.pricing-info {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.price-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.price-item.main-price {
+    padding: 20px 24px;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border: 2px solid #3b82f6;
+}
+
+.price-label {
+    font-size: 14px;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.main-price .price-label {
+    font-size: 16px;
+    color: #1e293b;
+    font-weight: 600;
+}
+
+.price-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.price-value.highlight {
+    color: #3b82f6;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.main-price .price-value.highlight {
+    font-size: 28px;
+    font-weight: 800;
+}
+
+.subscription-benefits {
+    padding: 20px;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.benefits-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 16px;
+}
+
+.benefit-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    color: #64748b;
+    font-weight: 500;
+    margin-bottom: 12px;
+}
+
+.benefit-item:last-child {
+    margin-bottom: 0;
+}
+
+.benefit-icon {
+    color: #10b981;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.subscription-btn {
+    width: 100%;
+    padding: 16px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    transition: all 0.2s ease;
+}
+
+.subscription-btn:hover {
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+    transform: translateY(-1px);
+}
+
+.error-message {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 12px;
+    color: #dc2626;
+    font-size: 14px;
+}
+
+.error-icon {
+    font-size: 18px;
+    flex-shrink: 0;
 }
 
 /* Карточки действий */
 .action-card {
-    background: white;
+    background: #ffffff;
     border-radius: 20px;
     padding: 28px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -216,36 +464,43 @@ const openSupportBot = () => {
     transform: translateY(-2px);
 }
 
+.error-card {
+    border-color: #fecaca;
+    background: linear-gradient(135deg, #fefefe 0%, #fef7f7 100%);
+}
+
+.info-card {
+    border-color: #bfdbfe;
+    background: linear-gradient(135deg, #fefefe 0%, #f0f9ff 100%);
+}
+
 .action-item {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
+    flex-direction: column;
+    gap: 20px;
 }
 
 .action-info {
-    flex: 1;
+    text-align: center;
 }
 
 .action-name {
-    font-size: 16px;
+    font-size: 20px;
     font-weight: 600;
     color: #1e293b;
-    margin: 0 0 4px 0;
+    margin-bottom: 8px;
 }
 
 .action-description {
-    font-size: 13px;
+    font-size: 14px;
     color: #64748b;
-    margin: 0;
-    line-height: 1.4;
+    line-height: 1.5;
 }
 
 .action-btn {
-    min-width: 100px;
+    padding: 16px 32px;
     border-radius: 12px;
     font-weight: 600;
-    padding: 12px 20px;
     transition: all 0.2s ease;
 }
 
@@ -269,163 +524,111 @@ const openSupportBot = () => {
     transform: translateY(-1px);
 }
 
-/* Информационная карточка */
-.info-card {
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-    border: 1px solid #e2e8f0;
-}
-
-/* Информационный элемент */
-.info-item {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-}
-
-.info-icon {
-    font-size: 24px;
-    color: #6b7280;
-    flex-shrink: 0;
-}
-
-.info-icon.generating {
-    color: #3b82f6;
-    animation: spin 2s linear infinite;
-}
-
-@keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
-.info-content {
-    flex: 1;
-}
-
-.info-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: #1e293b;
-    margin: 0 0 4px 0;
-}
-
-.info-text {
-    font-size: 14px;
-    color: #64748b;
-    margin: 0;
-}
-
-/* Карточка платежа */
-.payment-card {
-    /* Удаляем специальные стили для карточки платежа, используем стандартные */
-}
-
-/* Карточка ошибки генерации */
-.error-card {
-    border: 2px solid #ef4444;
-    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
-}
-
-/* Элементы ошибки */
-.error-item {
+/* Информационные карточки */
+.info-item, .error-item {
     display: flex;
     align-items: flex-start;
     gap: 16px;
 }
 
-.error-icon {
-    font-size: 24px;
-    color: #ef4444;
+.info-icon, .error-icon {
     flex-shrink: 0;
-    margin-top: 2px;
+    font-size: 28px;
+    margin-top: 4px;
 }
 
-.error-content {
+.info-icon {
+    color: #3b82f6;
+}
+
+.info-icon.generating {
+    animation: spin 2s linear infinite;
+}
+
+.error-icon {
+    color: #dc2626;
+}
+
+.info-content, .error-content {
     flex: 1;
 }
 
-.error-title {
-    font-size: 16px;
+.info-title, .error-title {
+    font-size: 18px;
     font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.info-title {
+    color: #1e293b;
+}
+
+.error-title {
     color: #dc2626;
-    margin: 0 0 8px 0;
+}
+
+.info-text, .error-text {
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 16px;
+}
+
+.info-text {
+    color: #64748b;
 }
 
 .error-text {
-    font-size: 14px;
     color: #7f1d1d;
-    margin: 0 0 16px 0;
-    line-height: 1.5;
 }
 
 .error-actions {
     display: flex;
+    flex-direction: column;
     gap: 12px;
-    flex-wrap: wrap;
 }
 
-.retry-btn {
-    border-radius: 8px;
-    font-weight: 600;
-    padding: 8px 16px;
-    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
-    transition: all 0.2s ease;
+.retry-btn, .support-btn {
+    border-radius: 10px;
+    font-weight: 500;
+    padding: 12px 20px;
 }
 
-.retry-btn:hover {
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-    transform: translateY(-1px);
-}
-
-.support-btn {
-    border-radius: 8px;
-    font-weight: 600;
-    padding: 8px 16px;
-    border: 2px solid #4b5563;
-    color: #4b5563;
-    transition: all 0.2s ease;
-}
-
-.support-btn:hover {
-    background: #4b5563;
-    color: white;
-    transform: translateY(-1px);
-}
-
-/* Адаптивность */
-@media (max-width: 1024px) {
-    .actions-column {
-        position: static;
-        order: -1;
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
     }
 }
 
+/* Адаптивность */
 @media (max-width: 768px) {
+    .actions-column {
+        gap: 16px;
+        position: static;
+    }
+    
+    .payment-panel,
     .action-card {
         padding: 20px;
         border-radius: 16px;
     }
     
-    .action-item {
-        flex-direction: column;
-        text-align: center;
-        gap: 12px;
+    .price-item {
+        padding: 10px 12px;
     }
     
-    .action-btn {
-        width: 100%;
-        min-width: auto;
+    .subscription-benefits {
+        padding: 12px;
+    }
+    
+    .action-item {
+        gap: 16px;
     }
     
     .error-actions {
         flex-direction: column;
-        gap: 8px;
-    }
-    
-    .retry-btn,
-    .support-btn {
-        width: 100%;
     }
 }
 </style> 
