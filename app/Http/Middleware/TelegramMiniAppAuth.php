@@ -23,12 +23,20 @@ class TelegramMiniAppAuth
             'url' => $request->url(),
             'user_agent' => $request->userAgent(),
             'is_authenticated' => Auth::check(),
-            'headers' => $request->headers->all()
+            'is_ajax' => $request->ajax(),
+            'is_inertia' => $request->header('X-Inertia')
         ]);
 
-        // Если пользователь уже авторизован, пропускаем
+        // Если пользователь уже авторизован
         if (Auth::check()) {
             Log::info('TelegramMiniAppAuth: User already authenticated', ['user_id' => Auth::id()]);
+            
+            // Если пользователь авторизован и находится на странице логина, перенаправляем его
+            if ($request->is('login') && !$request->ajax() && !$request->header('X-Inertia')) {
+                Log::info('TelegramMiniAppAuth: Redirecting authenticated user from login page');
+                return redirect('/lk');
+            }
+            
             return $next($request);
         }
 
@@ -52,8 +60,15 @@ class TelegramMiniAppAuth
                 // Логируем успешную авторизацию
                 Log::info('TelegramMiniAppAuth: User logged in successfully', [
                     'user_id' => $user->id,
-                    'auth_check' => Auth::check()
+                    'auth_check' => Auth::check(),
+                    'current_url' => $request->url()
                 ]);
+                
+                // Если это страница логина и не AJAX запрос, перенаправляем
+                if ($request->is('login') && !$request->ajax() && !$request->header('X-Inertia')) {
+                    Log::info('TelegramMiniAppAuth: Redirecting newly authenticated user from login page');
+                    return redirect('/lk');
+                }
             } else {
                 Log::warning('User not found for Telegram ID', ['telegram_id' => $telegramData['id']]);
             }

@@ -30,8 +30,16 @@ export function useTelegramMiniApp() {
           initData: tg.initData
         })
         
-        // Отправляем данные для автологина
-        sendTelegramDataToServer(tg.initData)
+        // Проверяем, авторизован ли пользователь уже (через Inertia props)
+        const isAlreadyAuthenticated = window?.Laravel?.auth?.user || document.querySelector('meta[name="user-authenticated"]')?.content === 'true'
+        
+        if (isAlreadyAuthenticated) {
+          console.log('useTelegramMiniApp: User already authenticated, skipping data sending')
+        } else {
+          console.log('useTelegramMiniApp: User not authenticated, sending data to server')
+          // Отправляем данные для автологина
+          sendTelegramDataToServer(tg.initData)
+        }
       } else {
         console.log('useTelegramMiniApp: No user data in initDataUnsafe')
       }
