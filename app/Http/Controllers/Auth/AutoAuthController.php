@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class AutoAuthController extends Controller
@@ -16,6 +17,63 @@ class AutoAuthController extends Controller
      */
     public function autoLogin(Request $request)
     {
+        // Проверяем, есть ли данные Telegram WebApp
+        $telegramInitData = $request->header('X-Telegram-Init-Data') 
+            ?? $request->input('telegram_init_data');
+            
+        if ($telegramInitData) {
+            Log::info('AutoAuth: Processing Telegram WebApp data', [
+                'init_data' => $telegramInitData,
+                'user_agent' => $request->userAgent()
+            ]);
+            
+            // Парсим данные Telegram
+            try {
+                parse_str($telegramInitData, $data);
+                
+                if (isset($data['user'])) {
+                    $userData = json_decode($data['user'], true);
+                    
+                    if ($userData && isset($userData['id'])) {
+                        Log::info('AutoAuth: Telegram user data found', ['user_data' => $userData]);
+                        
+                        // Ищем пользователя по telegram_id
+                        $user = User::where('telegram_id', $userData['id'])->first();
+                        
+                        if ($user) {
+                            Log::info('AutoAuth: User found, logging in', [
+                                'user_id' => $user->id,
+                                'telegram_id' => $userData['id']
+                            ]);
+                            
+                            Auth::login($user);
+                            
+                            return response()->json([
+                                'success' => true,
+                                'user' => $user,
+                                'message' => 'Successfully logged in via Telegram WebApp'
+                            ]);
+                        } else {
+                            Log::warning('AutoAuth: User not found for Telegram ID', [
+                                'telegram_id' => $userData['id']
+                            ]);
+                            
+                            return response()->json([
+                                'success' => false,
+                                'error' => 'User not found for Telegram ID: ' . $userData['id']
+                            ], 404);
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                Log::error('AutoAuth: Failed to parse Telegram data', [
+                    'error' => $e->getMessage(),
+                    'raw_data' => $telegramInitData
+                ]);
+            }
+        }
+        
+        // Обработка обычного токена
         $request->validate([
             'auth_token' => 'required|string'
         ]);

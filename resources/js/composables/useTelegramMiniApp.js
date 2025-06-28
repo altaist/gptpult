@@ -64,8 +64,10 @@ export function useTelegramMiniApp() {
     })
 
     try {
-      // Отправляем данные как заголовок
-      const response = await fetch(window.location.href, {
+      // Пробуем несколько способов отправки данных
+      
+      // Способ 1: Отправляем данные как заголовок к текущей странице
+      const response1 = await fetch(window.location.href, {
         method: 'GET',
         headers: {
           'X-Telegram-Init-Data': initData,
@@ -73,19 +75,53 @@ export function useTelegramMiniApp() {
         }
       })
       
-      console.log('useTelegramMiniApp: Server response', {
-        status: response.status,
-        ok: response.ok,
-        headers: Object.fromEntries(response.headers.entries())
+      console.log('useTelegramMiniApp: Header method response', {
+        status: response1.status,
+        ok: response1.ok
       })
+
+      // Способ 2: Отправляем через API эндпоинт для автологина
+      try {
+        const response2 = await fetch('/login/auto', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+            'X-Telegram-Init-Data': initData,
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: JSON.stringify({
+            telegram_init_data: initData
+          })
+        })
+        
+        console.log('useTelegramMiniApp: API method response', {
+          status: response2.status,
+          ok: response2.ok
+        })
+        
+        if (response2.ok) {
+          const data = await response2.json()
+          console.log('useTelegramMiniApp: API response data', data)
+          
+          if (data.success && data.user) {
+            console.log('useTelegramMiniApp: User authenticated via API')
+            // Перезагружаем страницу для применения авторизации
+            window.location.reload()
+            return
+          }
+        }
+      } catch (apiError) {
+        console.error('useTelegramMiniApp: API method failed', apiError)
+      }
       
-      if (response.ok) {
-        console.log('Telegram data sent successfully')
+      if (response1.ok) {
+        console.log('Telegram data sent successfully via header method')
         // Попробуем получить ответ
-        const responseText = await response.text()
+        const responseText = await response1.text()
         console.log('Response body length:', responseText.length)
       } else {
-        console.error('Server responded with error:', response.status, response.statusText)
+        console.error('Server responded with error:', response1.status, response1.statusText)
       }
     } catch (error) {
       console.error('Error sending Telegram data:', error)
