@@ -35,6 +35,13 @@ export function useTelegramMiniApp() {
         
         if (isAlreadyAuthenticated) {
           console.log('useTelegramMiniApp: User already authenticated, skipping data sending')
+          
+          // Если мы на странице логина и пользователь авторизован, принудительно перенаправляем
+          if (window.location.pathname === '/login') {
+            console.log('useTelegramMiniApp: User is on login page but authenticated, redirecting to /lk')
+            window.location.href = '/lk'
+            return
+          }
         } else {
           console.log('useTelegramMiniApp: User not authenticated, sending data to server')
           // Отправляем данные для автологина

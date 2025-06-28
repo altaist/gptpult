@@ -121,6 +121,21 @@ export const getTwaUser = () => {
 export const checkAuth = async () => {
     console.log('checkAuth: Starting authentication check...')
     
+    // Проверяем, если пользователь уже авторизован через Inertia
+    const userFromInertia = usePage().props.auth?.user
+    if (userFromInertia) {
+        console.log('checkAuth: User already authenticated via Inertia')
+        
+        // Если на странице логина - перенаправляем
+        if (window.location.pathname === '/login') {
+            console.log('checkAuth: User is on login page but authenticated, redirecting to /lk')
+            window.location.href = '/lk'
+            return setUser(userFromInertia)
+        }
+        
+        return setUser(userFromInertia)
+    }
+    
     // Проверяем, если мы в Telegram WebApp
     if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
         console.log('checkAuth: Telegram WebApp detected, user data available')
@@ -150,6 +165,13 @@ export const checkAuth = async () => {
                     const userFromInertia = usePage().props.auth?.user
                     if (userFromInertia) {
                         console.log('checkAuth: User authenticated via Telegram WebApp')
+                        
+                        // Если на странице логина - перенаправляем
+                        if (window.location.pathname === '/login') {
+                            console.log('checkAuth: Redirecting authenticated user from login page')
+                            window.location.href = '/lk'
+                        }
+                        
                         return setUser(userFromInertia)
                     }
                 }
@@ -161,6 +183,13 @@ export const checkAuth = async () => {
     
     const result = await authAndAutoReg()
     console.log('checkAuth: Authentication result:', !!result)
+    
+    // Финальная проверка - если пользователь авторизован, но на странице логина
+    if (result && window.location.pathname === '/login') {
+        console.log('checkAuth: Final check - redirecting authenticated user from login page')
+        window.location.href = '/lk'
+    }
+    
     return result
 }
 

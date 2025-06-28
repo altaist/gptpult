@@ -21,15 +21,24 @@ class TelegramMiniAppAuth
         // Логируем все заголовки для диагностики
         Log::info('TelegramMiniAppAuth: Processing request', [
             'url' => $request->url(),
+            'path' => $request->path(),
             'user_agent' => $request->userAgent(),
             'is_authenticated' => Auth::check(),
             'is_ajax' => $request->ajax(),
-            'is_inertia' => $request->header('X-Inertia')
+            'is_inertia' => $request->header('X-Inertia'),
+            'method' => $request->method(),
+            'accepts_html' => $request->accepts('text/html'),
+            'is_login_path' => $request->is('login')
         ]);
 
         // Если пользователь уже авторизован
         if (Auth::check()) {
-            Log::info('TelegramMiniAppAuth: User already authenticated', ['user_id' => Auth::id()]);
+            Log::info('TelegramMiniAppAuth: User already authenticated', [
+                'user_id' => Auth::id(),
+                'current_path' => $request->path(),
+                'is_login_path' => $request->is('login'),
+                'should_redirect' => $request->is('login') && !$request->ajax() && !$request->header('X-Inertia')
+            ]);
             
             // Если пользователь авторизован и находится на странице логина, перенаправляем его
             if ($request->is('login') && !$request->ajax() && !$request->header('X-Inertia')) {
@@ -61,7 +70,12 @@ class TelegramMiniAppAuth
                 Log::info('TelegramMiniAppAuth: User logged in successfully', [
                     'user_id' => $user->id,
                     'auth_check' => Auth::check(),
-                    'current_url' => $request->url()
+                    'current_url' => $request->url(),
+                    'current_path' => $request->path(),
+                    'is_login_path' => $request->is('login'),
+                    'is_ajax' => $request->ajax(),
+                    'is_inertia' => $request->header('X-Inertia'),
+                    'should_redirect' => $request->is('login') && !$request->ajax() && !$request->header('X-Inertia')
                 ]);
                 
                 // Если это страница логина и не AJAX запрос, перенаправляем
