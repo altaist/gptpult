@@ -716,6 +716,20 @@ onUnmounted(() => {
                             </div>
                         </div>
 
+                        <!-- Кнопка оплаты (перенесена выше преимуществ) -->
+                        <div class="payment-action">
+                            <q-btn 
+                                color="primary" 
+                                label="Оплатить" 
+                                @click="processTopUp"
+                                :loading="isCreatingOrder"
+                                :disable="topUpAmount < 300"
+                                unelevated
+                                no-caps
+                                class="payment-btn"
+                            />
+                        </div>
+
                         <!-- Преимущества абонемента -->
                         <div v-if="topUpAmount >= 300" class="subscription-benefits">
                             <div class="benefits-title">Что входит в абонемент:</div>
@@ -736,16 +750,6 @@ onUnmounted(() => {
                 </q-card-section>
 
                 <q-card-actions class="modal-actions">
-                    <q-btn 
-                        color="primary" 
-                        label="Оплатить" 
-                        @click="processTopUp"
-                        :loading="isCreatingOrder"
-                        :disable="topUpAmount < 300"
-                        unelevated
-                        no-caps
-                        class="action-btn primary-btn"
-                    />
                     <q-btn 
                         flat 
                         label="Отмена" 
@@ -1697,6 +1701,40 @@ onUnmounted(() => {
     flex-direction: column;
     gap: 12px;
     align-items: center;
+    border-top: 1px solid #f1f5f9;
+}
+
+/* Стили для новой кнопки оплаты */
+.payment-action {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 8px 0;
+}
+
+.payment-btn {
+    width: 100%;
+    padding: 16px 32px;
+    min-height: 56px;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    color: white;
+    border: none;
+    font-size: 18px;
+    font-weight: 700;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.payment-btn:hover {
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+    transform: translateY(-1px);
+}
+
+.payment-btn:disabled {
+    opacity: 0.6;
+    transform: none;
+    box-shadow: 0 2px 6px rgba(59, 130, 246, 0.2);
 }
 
 .action-btn {
@@ -2009,6 +2047,35 @@ onUnmounted(() => {
         max-width: 90vw;
         margin: 16px;
         border-radius: 20px;
+        max-height: 85vh; /* Ограничиваем высоту только для мобильных */
+    }
+    
+    .modal-header {
+        padding: 24px 20px 16px 20px;
+        position: sticky; /* Липкий заголовок только на мобильных */
+        top: 0;
+        z-index: 10;
+    }
+    
+    .modal-content {
+        max-height: 50vh; /* Прокрутка только на мобильных */
+        overflow-y: auto;
+        padding: 24px 20px;
+    }
+    
+    .modal-actions {
+        padding: 16px 20px 24px 20px;
+        flex-direction: column;
+        gap: 12px;
+        position: sticky; /* Липкий футер только на мобильных */
+        bottom: 0;
+        z-index: 10;
+    }
+    
+    .payment-btn {
+        min-height: 52px;
+        font-size: 16px;
+        padding: 14px 24px;
     }
     
     .transitions-modal {
@@ -2018,20 +2085,6 @@ onUnmounted(() => {
         max-height: 85vh;
         margin: 8px;
         border-radius: 20px;
-    }
-    
-    .modal-header {
-        padding: 24px 20px 16px 20px;
-    }
-    
-    .modal-content {
-        padding: 24px 20px;
-    }
-    
-    .modal-actions {
-        padding: 16px 20px 24px 20px;
-        flex-direction: column;
-        gap: 12px;
     }
     
     .action-btn {
