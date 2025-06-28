@@ -284,14 +284,23 @@ const processTopUp = async () => {
   isCreatingOrder.value = true;
 
   try {
+    // Проверяем, работаем ли мы в Telegram WebApp
+    const isTelegramWebApp = window.Telegram?.WebApp?.initData;
+    
     // Создаем заказ на пополнение
+    const orderHeaders = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    };
+    
+    // Добавляем CSRF токен только если не в Telegram WebApp
+    if (!isTelegramWebApp) {
+      orderHeaders['X-CSRF-TOKEN'] = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    }
+    
     const orderResponse = await fetch('/orders/process', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-      },
+      headers: orderHeaders,
       body: JSON.stringify({
         amount: topUpAmount.value,
         order_data: {
@@ -312,13 +321,19 @@ const processTopUp = async () => {
     }
 
     // Создаем платеж ЮКасса
+    const paymentHeaders = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    };
+    
+    // Добавляем CSRF токен только если не в Telegram WebApp
+    if (!isTelegramWebApp) {
+      paymentHeaders['X-CSRF-TOKEN'] = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    }
+    
     const paymentResponse = await fetch(`/api/payment/yookassa/create/${orderData.order_id}`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-      },
+      headers: paymentHeaders,
       credentials: 'include'
     });
 
@@ -356,11 +371,20 @@ const loadTransitions = async () => {
   isLoadingTransitions.value = true;
   
   try {
+    // Проверяем, работаем ли мы в Telegram WebApp
+    const isTelegramWebApp = window.Telegram?.WebApp?.initData;
+    
+    const headers = {
+      'Accept': 'application/json',
+    };
+    
+    // Добавляем CSRF токен только если не в Telegram WebApp
+    if (!isTelegramWebApp) {
+      headers['X-CSRF-TOKEN'] = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    }
+    
     const response = await fetch('/api/user/transitions', {
-      headers: {
-        'Accept': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-      },
+      headers: headers,
       credentials: 'include'
     });
 

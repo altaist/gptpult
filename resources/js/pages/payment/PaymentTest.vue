@@ -70,14 +70,23 @@ const createYookassaPayment = async (orderId) => {
   isProcessingPayment.value = true
 
   try {
+    // Проверяем, работаем ли мы в Telegram WebApp
+    const isTelegramWebApp = window.Telegram?.WebApp?.initData;
+    
+    const headers = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    };
+    
+    // Добавляем CSRF токен только если не в Telegram WebApp
+    if (!isTelegramWebApp) {
+      headers['X-CSRF-TOKEN'] = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    }
+    
     const url = `/api/payment/yookassa/create/${orderId}`
     const response = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-      },
+      headers: headers,
       credentials: 'include'
     })
 
