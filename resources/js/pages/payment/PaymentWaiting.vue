@@ -195,7 +195,7 @@ const getPaymentStatusText = () => {
 
 const checkPaymentStatus = async () => {
     try {
-        const response = await apiClient.get(route('payment.status.api', props.orderId));
+        const response = await apiClient.get(route('api.payment.status', props.orderId));
         
         if (response.success) {
             paymentStatus.value = response.status;
