@@ -119,6 +119,48 @@ export const getTwaUser = () => {
 
 // Проверка авторизации при загрузке страницы
 export const checkAuth = async () => {
-    return await authAndAutoReg();
+    console.log('checkAuth: Starting authentication check...')
+    
+    // Проверяем, если мы в Telegram WebApp
+    if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
+        console.log('checkAuth: Telegram WebApp detected, user data available')
+        
+        // Отправляем данные напрямую на сервер
+        const telegramInitData = window.Telegram.WebApp.initData
+        if (telegramInitData) {
+            console.log('checkAuth: Sending Telegram init data to server')
+            
+            try {
+                // Попробуем отправить данные через fetch к текущему URL
+                const response = await fetch(window.location.href, {
+                    method: 'GET',
+                    headers: {
+                        'X-Telegram-Init-Data': telegramInitData,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                
+                console.log('checkAuth: Telegram data response:', {
+                    status: response.status,
+                    ok: response.ok
+                })
+                
+                if (response.ok) {
+                    // Проверим, авторизован ли пользователь теперь
+                    const userFromInertia = usePage().props.auth?.user
+                    if (userFromInertia) {
+                        console.log('checkAuth: User authenticated via Telegram WebApp')
+                        return setUser(userFromInertia)
+                    }
+                }
+            } catch (error) {
+                console.error('checkAuth: Error sending Telegram data:', error)
+            }
+        }
+    }
+    
+    const result = await authAndAutoReg()
+    console.log('checkAuth: Authentication result:', !!result)
+    return result
 }
 
