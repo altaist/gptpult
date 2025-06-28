@@ -212,7 +212,7 @@
 </template>
 
 <script setup>
-import { defineProps, ref, computed, onMounted, onUnmounted } from 'vue';
+import { defineProps, ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useQuasar } from 'quasar';
 import PageLayout from '@/components/shared/PageLayout.vue';
 import DocumentView from '@/modules/gpt/components/DocumentView.vue';
@@ -223,9 +223,10 @@ import { router } from '@inertiajs/vue3';
 import DocumentPaymentPanel from '@/modules/gpt/components/DocumentPaymentPanel.vue';
 import DocumentHeader from '@/modules/gpt/components/DocumentHeader.vue';
 import DocumentActions from '@/modules/gpt/components/DocumentActions.vue';
+import { useTelegramDownload } from '@/composables/useTelegramDownload';
 
 const $q = useQuasar();
-const isDownloading = ref(false);
+const { downloadFromApi, isDownloading: isDownloadingFile } = useTelegramDownload();
 const isStartingFullGeneration = ref(false);
 const isPollingActive = ref(false); // Флаг активного отслеживания
 
@@ -628,34 +629,28 @@ const startFullGeneration = async () => {
 };
 
 const downloadWord = async () => {
-    try {
-        isDownloading.value = true;
-        const response = await apiClient.post(route('documents.download-word', props.document.id));
-        
-        // Создаем ссылку для скачивания
-        const link = document.createElement('a');
-        link.href = response.url;
-        link.download = response.filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        showModernNotification({
-            type: 'positive',
-            title: 'Документ готов',
-            message: 'Документ успешно сгенерирован и скачан',
-            icon: 'download_done'
-        });
-    } catch (error) {
-        showModernNotification({
-            type: 'negative',
-            title: 'Ошибка скачивания',
-            message: error.response?.data?.message || 'Ошибка при генерации документа',
-            icon: 'download_for_offline'
-        });
-    } finally {
-        isDownloading.value = false;
-    }
+    const success = await downloadFromApi(
+        route('documents.download-word', props.document.id),
+        {}, // requestOptions
+        {
+            onSuccess: (message) => {
+                showModernNotification({
+                    type: 'positive',
+                    title: 'Документ готов',
+                    message: message,
+                    icon: 'download_done'
+                });
+            },
+            onError: (error) => {
+                showModernNotification({
+                    type: 'negative',
+                    title: 'Ошибка скачивания',
+                    message: error,
+                    icon: 'download_for_offline'
+                });
+            }
+        }
+    );
 };
 
 // Обработчик повторной генерации
@@ -906,6 +901,9 @@ const getEstimatedTime = () => {
 const goToDashboard = () => {
     router.visit('/lk');
 };
+
+// Обновляем состояние загрузки
+const isDownloading = computed(() => isDownloadingFile.value);
 </script>
 
 <style scoped>

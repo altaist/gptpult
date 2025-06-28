@@ -90,7 +90,7 @@
 </template>
 
 <script setup>
-import { defineProps, ref, computed } from 'vue';
+import { defineProps, ref, computed, onMounted, onUnmounted } from 'vue';
 import { useQuasar } from 'quasar';
 import PageLayout from '@/components/shared/PageLayout.vue';
 import DocumentView from '@/modules/gpt/components/DocumentView.vue';
@@ -100,9 +100,10 @@ import { useDocumentStatus } from '@/composables/documentStatus';
 import { apiClient } from '@/composables/api';
 import { router } from '@inertiajs/vue3';
 import DocumentPaymentPanel from '@/modules/gpt/components/DocumentPaymentPanel.vue';
+import { useTelegramDownload } from '@/composables/useTelegramDownload';
 
 const $q = useQuasar();
-const isDownloading = ref(false);
+const { downloadFromApi, isDownloading: isDownloadingFile } = useTelegramDownload();
 const isStartingFullGeneration = ref(false);
 const isPollingActive = ref(false); // Флаг активного отслеживания
 
@@ -312,31 +313,28 @@ const startFullGeneration = async () => {
 };
 
 const downloadWord = async () => {
-    try {
-        isDownloading.value = true;
-        const response = await apiClient.post(route('documents.download-word', props.document.id));
-        
-        // Создаем ссылку для скачивания
-        const link = document.createElement('a');
-        link.href = response.url;
-        link.download = response.filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        $q.notify({
-            type: 'positive',
-            message: 'Документ успешно сгенерирован'
-        });
-    } catch (error) {
-        $q.notify({
-            type: 'negative',
-            message: error.response?.data?.message || 'Ошибка при генерации документа'
-        });
-    } finally {
-        isDownloading.value = false;
-    }
+    const success = await downloadFromApi(
+        route('documents.download-word', props.document.id),
+        {}, // requestOptions
+        {
+            onSuccess: (message) => {
+                $q.notify({
+                    type: 'positive',
+                    message: message
+                });
+            },
+            onError: (error) => {
+                $q.notify({
+                    type: 'negative',
+                    message: error
+                });
+            }
+        }
+    );
 };
+
+// Обновляем состояние загрузки
+const isDownloading = computed(() => isDownloadingFile.value);
 
 // Определяем можно ли редактировать документ
 const canEdit = computed(() => {
