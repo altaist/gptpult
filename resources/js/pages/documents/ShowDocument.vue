@@ -284,6 +284,18 @@ const getIsFullGenerationComplete = () => {
 // Запуск полной генерации
 const startFullGeneration = async () => {
     try {
+        // Проверяем, что генерация еще не запущена
+        const currentStatus = currentDocument.value?.status;
+        if (['full_generating', 'full_generated'].includes(currentStatus)) {
+            console.warn('Попытка запустить полную генерацию для документа со статусом:', currentStatus);
+            $q.notify({
+                type: 'warning',
+                message: 'Документ уже генерируется или готов',
+                position: 'top'
+            });
+            return;
+        }
+        
         isStartingFullGeneration.value = true;
         
         const response = await apiClient.post(route('documents.generate-full', props.document.id));

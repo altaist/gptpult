@@ -447,13 +447,24 @@ onMounted(() => {
     
     // Автоматический запуск генерации если есть параметр start_generation=1
     if (shouldStartGeneration && getCanStartFullGeneration()) {
-        setTimeout(() => {
-            startFullGeneration();
-            // Удаляем параметр из URL после запуска
+        // Дополнительные проверки чтобы избежать повторного запуска
+        const currentStatus = currentDocument.value?.status;
+        const isAlreadyGenerating = ['full_generating', 'full_generated'].includes(currentStatus);
+        
+        if (!isAlreadyGenerating) {
+            setTimeout(() => {
+                startFullGeneration();
+                // Удаляем параметр из URL после запуска
+                const currentUrl = new URL(window.location.href);
+                currentUrl.searchParams.delete('start_generation');
+                window.history.replaceState({}, '', currentUrl.toString());
+            }, 1000); // Небольшая задержка для корректной инициализации
+        } else {
+            // Если документ уже генерируется или сгенерирован, просто удаляем параметр
             const currentUrl = new URL(window.location.href);
             currentUrl.searchParams.delete('start_generation');
             window.history.replaceState({}, '', currentUrl.toString());
-        }, 1000); // Небольшая задержка для корректной инициализации
+        }
     }
 });
 
@@ -555,6 +566,19 @@ const getIsFullGenerationComplete = () => {
 // Запуск полной генерации
 const startFullGeneration = async () => {
     try {
+        // Проверяем, что генерация еще не запущена
+        const currentStatus = currentDocument.value?.status;
+        if (['full_generating', 'full_generated'].includes(currentStatus)) {
+            console.warn('Попытка запустить полную генерацию для документа со статусом:', currentStatus);
+            showModernNotification({
+                type: 'warning',
+                title: 'Генерация уже запущена',
+                message: 'Документ уже генерируется или готов',
+                icon: 'info'
+            });
+            return;
+        }
+        
         isStartingFullGeneration.value = true;
         
         const response = await apiClient.post(route('documents.generate-full', props.document.id));

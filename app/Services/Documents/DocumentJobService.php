@@ -53,6 +53,11 @@ class DocumentJobService
      */
     public function startFullGeneration(Document $document, TransitionService $transitionService = null): void
     {
+        // Проверяем статус документа перед началом генерации
+        if (in_array($document->status, [DocumentStatus::FULL_GENERATING, DocumentStatus::FULL_GENERATED])) {
+            throw new \Exception('Документ уже генерируется или полностью готов (статус: ' . $document->status->value . ')');
+        }
+        
         if ($this->hasActiveJob($document)) {
             throw new \Exception('Для этого документа уже запущена задача генерации');
         }
