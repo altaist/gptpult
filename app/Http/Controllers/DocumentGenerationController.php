@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use App\Services\Documents\DocumentJobService;
 use App\Services\Orders\TransitionService;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class DocumentGenerationController extends Controller
 {
@@ -25,10 +27,25 @@ class DocumentGenerationController extends Controller
     {
         $this->authorize('update', $document);
 
+        Log::info('API: Попытка запуска полной генерации', [
+            'document_id' => $document->id,
+            'current_status' => $document->status->value,
+            'user_id' => Auth::id(),
+            'user_agent' => request()->header('User-Agent'),
+            'ip' => request()->ip()
+        ]);
+
         // Проверяем, можно ли запустить полную генерацию (включая проверку ссылок)
         if (!$document->status->canStartFullGenerationWithReferences($document)) {
             $structure = $document->structure ?? [];
             $hasReferences = !empty($structure['references']);
+            
+            Log::warning('API: Отклонен запуск полной генерации', [
+                'document_id' => $document->id,
+                'current_status' => $document->status->value,
+                'has_references' => $hasReferences,
+                'reason' => $hasReferences ? 'Статус не позволяет' : 'Нет ссылок'
+            ]);
             
             return response()->json([
                 'message' => $hasReferences 
@@ -45,6 +62,11 @@ class DocumentGenerationController extends Controller
             // Используем DocumentJobService для запуска полной генерации с автоматическим списанием
             $this->documentJobService->startFullGeneration($document, $this->transitionService);
 
+            Log::info('API: Полная генерация успешно запущена', [
+                'document_id' => $document->id,
+                'user_id' => Auth::id()
+            ]);
+
             return response()->json([
                 'message' => 'Полная генерация документа запущена',
                 'document_id' => $document->id,
@@ -52,6 +74,12 @@ class DocumentGenerationController extends Controller
             ]);
 
         } catch (\Exception $e) {
+            Log::error('API: Ошибка при запуске полной генерации', [
+                'document_id' => $document->id,
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage()
+            ]);
+            
             return response()->json([
                 'message' => 'Ошибка при запуске полной генерации',
                 'error' => $e->getMessage()

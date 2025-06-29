@@ -606,6 +606,11 @@ const getIsFullGenerationComplete = () => {
 
 // Запуск полной генерации
 const startFullGeneration = async () => {
+    console.log('startFullGeneration() вызвана', {
+        currentStatus: currentDocument.value?.status,
+        timestamp: new Date().toISOString()
+    });
+    
     try {
         // Проверяем, что генерация еще не запущена
         const currentStatus = currentDocument.value?.status;
@@ -620,9 +625,12 @@ const startFullGeneration = async () => {
             return;
         }
         
+        console.log('Отправляем запрос на сервер для запуска генерации');
         isStartingFullGeneration.value = true;
         
         const response = await apiClient.post(route('documents.generate-full', props.document.id));
+        
+        console.log('Получен ответ от сервера:', response);
         
         // Обновляем статус документа локально для мгновенного отображения
         currentDocument.value.status = 'full_generating';
@@ -648,6 +656,7 @@ const startFullGeneration = async () => {
         // }, 200);
         
     } catch (error) {
+        console.error('Ошибка при запуске генерации:', error);
         showModernNotification({
             type: 'negative',
             title: 'Ошибка генерации',

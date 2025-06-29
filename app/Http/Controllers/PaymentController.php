@@ -210,23 +210,45 @@ class PaymentController extends Controller
             if ($paymentStatus === 'completed' && $order->document_id && $order->document) {
                 $document = $order->document;
                 
+                Log::info('Проверяем возможность автозапуска генерации после оплаты', [
+                    'document_id' => $document->id,
+                    'order_id' => $order->id,
+                    'current_status' => $document->status->value,
+                    'can_start' => $document->status->canStartFullGenerationWithReferences($document)
+                ]);
+                
                 // Проверяем, можно ли запустить полную генерацию
                 if ($document->status->canStartFullGenerationWithReferences($document)) {
-                    try {
-                        // Запускаем полную генерацию автоматически
-                        $this->documentJobService->startFullGeneration($document, $this->transitionService);
-                        
-                        Log::info('Автоматически запущена полная генерация после подтверждения оплаты', [
-                            'document_id' => $document->id,
-                            'order_id' => $order->id
-                        ]);
-                    } catch (Exception $e) {
-                        Log::error('Ошибка при автоматическом запуске генерации после подтверждения оплаты', [
+                    // Дополнительная проверка - не генерируется ли уже
+                    if (in_array($document->status->value, ['full_generating', 'full_generated'])) {
+                        Log::info('Автозапуск отменен - документ уже генерируется или готов', [
                             'document_id' => $document->id,
                             'order_id' => $order->id,
-                            'error' => $e->getMessage()
+                            'status' => $document->status->value
                         ]);
+                    } else {
+                        try {
+                            // Запускаем полную генерацию автоматически
+                            $this->documentJobService->startFullGeneration($document, $this->transitionService);
+                            
+                            Log::info('Автоматически запущена полная генерация после подтверждения оплаты', [
+                                'document_id' => $document->id,
+                                'order_id' => $order->id
+                            ]);
+                        } catch (Exception $e) {
+                            Log::error('Ошибка при автоматическом запуске генерации после подтверждения оплаты', [
+                                'document_id' => $document->id,
+                                'order_id' => $order->id,
+                                'error' => $e->getMessage()
+                            ]);
+                        }
                     }
+                } else {
+                    Log::info('Автозапуск невозможен - документ не готов', [
+                        'document_id' => $document->id,
+                        'order_id' => $order->id,
+                        'status' => $document->status->value
+                    ]);
                 }
             }
 
