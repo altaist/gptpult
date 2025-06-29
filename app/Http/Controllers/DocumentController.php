@@ -448,14 +448,52 @@ class DocumentController extends Controller
         $this->authorize('update', $document);
 
         $validated = $request->validate([
-            'title' => ['required', 'string', 'max:30'],
+            'title' => ['required', 'string', 'max:255'], // Увеличиваем лимит для структуры
         ]);
 
-        $this->documentService->updateTitle($document, $validated['title']);
+        $this->documentService->updateStructureTitle($document, $validated['title']);
 
         return response()->json([
             'message' => 'Заголовок документа успешно обновлен',
             'title' => $validated['title']
+        ]);
+    }
+
+    /**
+     * Обновить внутренний заголовок документа
+     */
+    public function updateDocumentTitle(Request $request, Document $document)
+    {
+        $this->authorize('update', $document);
+
+        $validated = $request->validate([
+            'document_title' => ['required', 'string', 'max:255'],
+        ]);
+
+        $this->documentService->updateDocumentTitle($document, $validated['document_title']);
+
+        return response()->json([
+            'message' => 'Заголовок документа успешно обновлен',
+            'document_title' => $validated['document_title']
+        ]);
+    }
+
+    /**
+     * Обновить описание документа
+     */
+    public function updateDescription(Request $request, Document $document)
+    {
+        $this->authorize('update', $document);
+
+        $validated = $request->validate([
+            'description' => ['required', 'string'],
+        ]);
+
+        $this->documentService->updateDescription($document, $validated['description']);
+
+        return response()->json([
+            'message' => 'Описание документа успешно обновлено',
+            'description' => $validated['description']
         ]);
     }
 

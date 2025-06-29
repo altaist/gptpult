@@ -107,6 +107,19 @@ class StartGenerateDocument implements ShouldQueue
             $structure = $this->document->structure ?? [];
             $structure['contents'] = $parsedData['contents'] ?? [];
             $structure['objectives'] = $parsedData['objectives'] ?? [];
+            
+            // Добавляем новые поля если они есть в ответе
+            if (isset($parsedData['title'])) {
+                $structure['title'] = $parsedData['title'];
+            }
+            
+            if (isset($parsedData['document_title'])) {
+                $structure['document_title'] = $parsedData['document_title'];
+            }
+            
+            if (isset($parsedData['description'])) {
+                $structure['description'] = $parsedData['description'];
+            }
 
             // Сохраняем изменения
             $this->document->update([
@@ -228,8 +241,24 @@ class StartGenerateDocument implements ShouldQueue
         }
         
         // Валидируем структуру данных
-        if (!isset($data['contents']) || !isset($data['objectives'])) {
-            throw new \Exception('Неверная структура данных в ответе GPT');
+        // Теперь проверяем наличие любых полезных данных, а не только contents и objectives
+        if (empty($data) || !is_array($data)) {
+            throw new \Exception('Пустой или неверный JSON в ответе GPT');
+        }
+        
+        // Проверяем что есть хотя бы одно из ожидаемых полей
+        $expectedFields = ['title', 'document_title', 'description', 'contents', 'objectives'];
+        $hasAnyField = false;
+        
+        foreach ($expectedFields as $field) {
+            if (isset($data[$field])) {
+                $hasAnyField = true;
+                break;
+            }
+        }
+        
+        if (!$hasAnyField) {
+            throw new \Exception('В ответе GPT не найдено ни одного ожидаемого поля: ' . implode(', ', $expectedFields));
         }
         
         return $data;

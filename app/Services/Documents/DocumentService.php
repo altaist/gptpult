@@ -154,6 +154,54 @@ class DocumentService
     }
 
     /**
+     * Обновляет заголовок документа в структуре (для отображения в списке)
+     *
+     * @param Document $document
+     * @param string $title
+     * @return Document
+     */
+    public function updateStructureTitle(Document $document, string $title): Document
+    {
+        $structure = $document->structure;
+        $structure['title'] = $title;
+        
+        $document->update(['structure' => $structure]);
+        return $document->fresh();
+    }
+
+    /**
+     * Обновляет внутренний заголовок документа в структуре
+     *
+     * @param Document $document
+     * @param string $documentTitle
+     * @return Document
+     */
+    public function updateDocumentTitle(Document $document, string $documentTitle): Document
+    {
+        $structure = $document->structure;
+        $structure['document_title'] = $documentTitle;
+        
+        $document->update(['structure' => $structure]);
+        return $document->fresh();
+    }
+
+    /**
+     * Обновляет описание документа в структуре
+     *
+     * @param Document $document
+     * @param string $description
+     * @return Document
+     */
+    public function updateDescription(Document $document, string $description): Document
+    {
+        $structure = $document->structure;
+        $structure['description'] = $description;
+        
+        $document->update(['structure' => $structure]);
+        return $document->fresh();
+    }
+
+    /**
      * Обновляет цели документа
      *
      * @param Document $document

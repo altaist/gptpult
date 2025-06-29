@@ -30,9 +30,16 @@ class LkController extends Controller
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($document) {
+                // Логика для отображения названия:
+                // 1. Если есть title в structure - используем его (для списка документов)
+                // 2. Если нет - используем "Новый документ"
+                $displayTitle = $document->structure['title'] ?? 'Новый документ';
+                
                 return [
                     'id' => $document->id,
-                    'title' => $document->title,
+                    'title' => $displayTitle, // Название для отображения в списке
+                    'document_title' => $document->structure['document_title'] ?? null, // Внутренний заголовок
+                    'description' => $document->structure['description'] ?? null, // Описание
                     'status' => $document->status->value, // Техническое значение для цвета
                     'status_label' => $document->status->getLabel(), // Человекочитаемое название
                     'status_color' => $document->status->getColor(), // Цвет из enum

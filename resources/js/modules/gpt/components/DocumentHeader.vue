@@ -4,7 +4,7 @@
             <div class="document-info-section">
                 <!-- Заголовок документа с кнопкой редактирования -->
                 <h1 class="document-main-title">
-                    {{ document?.title || document?.topic || 'Документ без названия' }}
+                    {{ getDocumentDisplayTitle() }}
                     <q-btn 
                         v-if="editable"
                         icon="edit" 
@@ -219,7 +219,7 @@ const formatCreatedDate = () => {
 
 // Функции для редактирования заголовка
 const openEditTitleDialog = () => {
-    editTitleDialog.value = props.document?.title || props.document?.topic || '';
+    editTitleDialog.value = props.document?.structure?.title || '';
     editTitleDialog.show = true;
     editTitleDialog.loading = false;
     titleError.value = '';
@@ -239,8 +239,8 @@ const saveTitleEdit = async () => {
         return;
     }
     
-    if (editTitleDialog.value.length > 30) {
-        titleError.value = 'Заголовок не может быть длиннее 30 символов';
+    if (editTitleDialog.value.length > 255) {
+        titleError.value = 'Заголовок не может быть длиннее 255 символов';
         return;
     }
     
@@ -281,6 +281,17 @@ const saveTitleEdit = async () => {
         });
     } finally {
         editTitleDialog.loading = false;
+    }
+};
+
+const getDocumentDisplayTitle = () => {
+    // Для отображения в заголовке используем:
+    // 1. title из structure (если есть) - это название для списка документов
+    // 2. Или "Новый документ" если title не сгенерирован
+    if (props.document?.structure?.title) {
+        return props.document.structure.title;
+    } else {
+        return 'Новый документ';
     }
 };
 </script>

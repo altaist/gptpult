@@ -1,6 +1,53 @@
 <template>
     <div class="document-view">
 
+        <!-- Заголовок документа (внутренний) -->
+        <div v-if="document.structure?.document_title" class="content-section">
+            <div class="section-card">
+                <div class="section-header">
+                    <div class="section-title">
+                        <q-icon name="title" class="section-icon" />
+                        Заголовок документа
+                    </div>
+                    <q-btn 
+                        v-if="editable"
+                        icon="edit" 
+                        flat 
+                        round 
+                        size="sm" 
+                        @click="openEditDialog('document_title', 'Заголовок документа', document.structure.document_title)"
+                        class="edit-btn"
+                    />
+                </div>
+                <div class="section-content document-title-content">
+                    {{ document.structure.document_title }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Описание документа -->
+        <div v-if="document.structure?.description" class="content-section">
+            <div class="section-card">
+                <div class="section-header">
+                    <div class="section-title">
+                        <q-icon name="description" class="section-icon" />
+                        Описание
+                    </div>
+                    <q-btn 
+                        v-if="editable"
+                        icon="edit" 
+                        flat 
+                        round 
+                        size="sm" 
+                        @click="openEditDialog('description', 'Описание документа', document.structure.description)"
+                        class="edit-btn"
+                    />
+                </div>
+                <div class="section-content">
+                    {{ document.structure.description }}
+                </div>
+            </div>
+        </div>
 
         <!-- Тема документа -->
         <div v-if="document.structure?.topic" class="content-section">
@@ -357,6 +404,10 @@ function getTextareaPlaceholder() {
             return 'Введите основные тезисы документа...';
         case 'objectives':
             return 'Введите цели документа, каждую с новой строки...';
+        case 'document_title':
+            return 'Введите заголовок документа...';
+        case 'description':
+            return 'Введите описание документа...';
         default:
             return 'Введите текст...';
     }
@@ -373,6 +424,14 @@ async function saveEdit() {
             case 'topic':
                 data = { topic: editDialog.value };
                 url = route('documents.update-topic', props.document.id);
+                break;
+            case 'document_title':
+                data = { document_title: editDialog.value };
+                url = route('documents.update-document-title', props.document.id);
+                break;
+            case 'description':
+                data = { description: editDialog.value };
+                url = route('documents.update-description', props.document.id);
                 break;
             case 'objectives':
                 data = { 
@@ -642,6 +701,16 @@ function handleReferencesUpdated(newReferences) {
     font-size: 15px;
     line-height: 1.5;
     color: #374151;
+}
+
+/* Стили для заголовка документа */
+.document-title-content {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+    line-height: 1.4;
+    text-align: left;
+    padding: 4px 0;
 }
 
 /* Современный диалог */
