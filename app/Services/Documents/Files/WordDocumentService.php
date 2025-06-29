@@ -9,6 +9,7 @@ use PhpOffice\PhpWord\IOFactory;
 use PhpOffice\PhpWord\SimpleType\Jc;
 use PhpOffice\PhpWord\SimpleType\LineSpacingRule;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class WordDocumentService
 {
@@ -47,11 +48,14 @@ class WordDocumentService
         // Сохранение документа
         $filePath = $this->saveDocument($document);
 
+        // Создаем безопасное имя файла на основе названия документа
+        $fileName = $this->generateSafeFileName($document->title);
+
         // Создание записи о файле
         return $this->filesService->createFileFromPath(
             $filePath,
             $document->user,
-            $document->title . '.docx',
+            $fileName,
             $document->id,
             'documents'
         );
@@ -478,5 +482,57 @@ class WordDocumentService
         $objWriter->save(storage_path('app/public/' . $fullPath));
 
         return storage_path('app/public/' . $fullPath);
+    }
+
+    /**
+     * Генерирует безопасное имя файла на основе названия документа
+     */
+    private function generateSafeFileName(string $title): string
+    {
+        // Убираем лишние пробелы и приводим к нижнему регистру
+        $title = trim($title);
+        
+        // Заменяем кириллицу на латиницу (транслитерация)
+        $transliterated = $this->transliterate($title);
+        
+        // Создаем slug (безопасное имя файла)
+        $slug = Str::slug($transliterated, '_');
+        
+        // Ограничиваем длину имени файла (максимум 50 символов + расширение)
+        if (strlen($slug) > 50) {
+            $slug = substr($slug, 0, 50);
+        }
+        
+        // Если slug пустой или содержит только подчеркивания, используем fallback
+        if (empty($slug) || preg_match('/^_+$/', $slug)) {
+            $slug = 'document_' . time();
+        }
+        
+        return $slug . '.docx';
+    }
+
+    /**
+     * Транслитерация кириллицы в латиницу
+     */
+    private function transliterate(string $text): string
+    {
+        $translitMap = [
+            'а' => 'a', 'б' => 'b', 'в' => 'v', 'г' => 'g', 'д' => 'd',
+            'е' => 'e', 'ё' => 'yo', 'ж' => 'zh', 'з' => 'z', 'и' => 'i',
+            'й' => 'y', 'к' => 'k', 'л' => 'l', 'м' => 'm', 'н' => 'n',
+            'о' => 'o', 'п' => 'p', 'р' => 'r', 'с' => 's', 'т' => 't',
+            'у' => 'u', 'ф' => 'f', 'х' => 'h', 'ц' => 'ts', 'ч' => 'ch',
+            'ш' => 'sh', 'щ' => 'shch', 'ъ' => '', 'ы' => 'y', 'ь' => '',
+            'э' => 'e', 'ю' => 'yu', 'я' => 'ya',
+            'А' => 'A', 'Б' => 'B', 'В' => 'V', 'Г' => 'G', 'Д' => 'D',
+            'Е' => 'E', 'Ё' => 'Yo', 'Ж' => 'Zh', 'З' => 'Z', 'И' => 'I',
+            'Й' => 'Y', 'К' => 'K', 'Л' => 'L', 'М' => 'M', 'Н' => 'N',
+            'О' => 'O', 'П' => 'P', 'Р' => 'R', 'С' => 'S', 'Т' => 'T',
+            'У' => 'U', 'Ф' => 'F', 'Х' => 'H', 'Ц' => 'Ts', 'Ч' => 'Ch',
+            'Ш' => 'Sh', 'Щ' => 'Shch', 'Ъ' => '', 'Ы' => 'Y', 'Ь' => '',
+            'Э' => 'E', 'Ю' => 'Yu', 'Я' => 'Ya'
+        ];
+        
+        return strtr($text, $translitMap);
     }
 } 

@@ -215,16 +215,16 @@ class TelegramNotificationService
     }
 
     /**
-     * Отправить документ в Telegram
+     * Отправить файл в Telegram
      */
-    private function sendDocumentToTelegram(int $chatId, string $content, string $title): void
+    private function sendDocumentToTelegram(string $chatId, string $content, string $title): void
     {
         try {
             $botToken = config('services.telegram.bot_token');
             $url = "https://api.telegram.org/bot{$botToken}/sendDocument";
 
-            // Создаем временный файл
-            $filename = \Illuminate\Support\Str::slug($title) . '.docx';
+            // Создаем безопасное имя файла на основе названия документа
+            $filename = $this->generateSafeFileName($title);
             $tempFile = tempnam(sys_get_temp_dir(), 'telegram_doc_');
             file_put_contents($tempFile, $content);
 
@@ -268,6 +268,58 @@ class TelegramNotificationService
                 'error' => $e->getMessage()
             ]);
         }
+    }
+
+    /**
+     * Генерирует безопасное имя файла на основе названия документа
+     */
+    private function generateSafeFileName(string $title): string
+    {
+        // Убираем лишние пробелы
+        $title = trim($title);
+        
+        // Заменяем кириллицу на латиницу (транслитерация)
+        $transliterated = $this->transliterate($title);
+        
+        // Создаем slug (безопасное имя файла)
+        $slug = \Illuminate\Support\Str::slug($transliterated, '_');
+        
+        // Ограничиваем длину имени файла (максимум 50 символов + расширение)
+        if (strlen($slug) > 50) {
+            $slug = substr($slug, 0, 50);
+        }
+        
+        // Если slug пустой или содержит только подчеркивания, используем fallback
+        if (empty($slug) || preg_match('/^_+$/', $slug)) {
+            $slug = 'document_' . time();
+        }
+        
+        return $slug . '.docx';
+    }
+
+    /**
+     * Транслитерация кириллицы в латиницу
+     */
+    private function transliterate(string $text): string
+    {
+        $translitMap = [
+            'а' => 'a', 'б' => 'b', 'в' => 'v', 'г' => 'g', 'д' => 'd',
+            'е' => 'e', 'ё' => 'yo', 'ж' => 'zh', 'з' => 'z', 'и' => 'i',
+            'й' => 'y', 'к' => 'k', 'л' => 'l', 'м' => 'm', 'н' => 'n',
+            'о' => 'o', 'п' => 'p', 'р' => 'r', 'с' => 's', 'т' => 't',
+            'у' => 'u', 'ф' => 'f', 'х' => 'h', 'ц' => 'ts', 'ч' => 'ch',
+            'ш' => 'sh', 'щ' => 'shch', 'ъ' => '', 'ы' => 'y', 'ь' => '',
+            'э' => 'e', 'ю' => 'yu', 'я' => 'ya',
+            'А' => 'A', 'Б' => 'B', 'В' => 'V', 'Г' => 'G', 'Д' => 'D',
+            'Е' => 'E', 'Ё' => 'Yo', 'Ж' => 'Zh', 'З' => 'Z', 'И' => 'I',
+            'Й' => 'Y', 'К' => 'K', 'Л' => 'L', 'М' => 'M', 'Н' => 'N',
+            'О' => 'O', 'П' => 'P', 'Р' => 'R', 'С' => 'S', 'Т' => 'T',
+            'У' => 'U', 'Ф' => 'F', 'Х' => 'H', 'Ц' => 'Ts', 'Ч' => 'Ch',
+            'Ш' => 'Sh', 'Щ' => 'Shch', 'Ъ' => '', 'Ы' => 'Y', 'Ь' => '',
+            'Э' => 'E', 'Ю' => 'Yu', 'Я' => 'Ya'
+        ];
+        
+        return strtr($text, $translitMap);
     }
 
     /**
