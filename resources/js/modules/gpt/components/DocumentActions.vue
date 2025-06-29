@@ -252,10 +252,20 @@ const handleSubscriptionPayment = async () => {
         isProcessingPayment.value = true;
         paymentErrorMessage.value = '';
 
-        // Создаем платеж на пополнение баланса на 300 рублей
-        const paymentResponse = await apiClient.post(route('payment.yookassa.balance.create'), {
-            amount: 300
+        // Сначала создаем заказ на пополнение баланса на 300 рублей
+        const orderResponse = await apiClient.post(route('orders.process-without-document'), {
+            amount: 300,
+            order_data: {
+                purpose: 'balance_top_up'
+            }
         });
+
+        if (!orderResponse.success) {
+            throw new Error(orderResponse.error || 'Ошибка при создании заказа');
+        }
+
+        // Затем создаем платеж для этого заказа
+        const paymentResponse = await apiClient.post(route('api.payment.yookassa.create', orderResponse.order_id));
 
         if (paymentResponse.success && paymentResponse.payment_url) {
             // Перенаправляем на оплату ЮКасса
