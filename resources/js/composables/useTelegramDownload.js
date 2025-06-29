@@ -65,7 +65,7 @@ export function useTelegramDownload() {
 
     /**
      * Загрузка файла через API запрос с последующим скачиванием
-     * @param {string} apiUrl - URL API для получения файла
+     * @param {string} apiUrl - URL API для получения файла  
      * @param {Object} requestOptions - Опции для fetch запроса
      * @param {Object} downloadOptions - Опции для скачивания
      */
@@ -75,29 +75,48 @@ export function useTelegramDownload() {
             
             console.log('useTelegramDownload: Making API request:', apiUrl)
             
-            // Выполняем API запрос
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
-                    ...requestOptions.headers
-                },
-                ...requestOptions
-            })
+            // Проверяем, работаем ли в Telegram Web App
+            const isTelegramWebApp = window.Telegram?.WebApp?.initData
             
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+            if (isTelegramWebApp) {
+                // В Telegram Web App используем прямую ссылку на загрузку
+                // Заменяем API endpoint на direct endpoint
+                const directUrl = apiUrl.replace('/download-word', '/download-word-direct')
+                console.log('useTelegramDownload: Using direct download for Telegram Web App:', directUrl)
+                
+                // Используем openLink для прямой загрузки
+                window.Telegram.WebApp.openLink(directUrl)
+                
+                if (downloadOptions.onSuccess) {
+                    downloadOptions.onSuccess('Файл открыт для скачивания в браузере')
+                }
+                
+                return true
+            } else {
+                // В обычном браузере используем API + JSON ответ
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
+                        ...requestOptions.headers
+                    },
+                    ...requestOptions
+                })
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+                }
+                
+                const data = await response.json()
+                
+                if (!data.url) {
+                    throw new Error('URL файла не получен от сервера')
+                }
+                
+                // Скачиваем файл
+                return await downloadFile(data.url, data.filename, downloadOptions)
             }
-            
-            const data = await response.json()
-            
-            if (!data.url) {
-                throw new Error('URL файла не получен от сервера')
-            }
-            
-            // Скачиваем файл
-            return await downloadFile(data.url, data.filename, downloadOptions)
             
         } catch (error) {
             console.error('useTelegramDownload: Error in API download:', error)

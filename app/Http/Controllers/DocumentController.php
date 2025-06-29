@@ -335,6 +335,25 @@ class DocumentController extends Controller
     }
 
     /**
+     * Прямая загрузка Word-документа (для Telegram Web App)
+     */
+    public function downloadWordDirect(Document $document)
+    {
+        $this->authorize('view', $document);
+
+        try {
+            $file = $this->wordDocumentService->generate($document);
+            
+            // Возвращаем файл напрямую для загрузки
+            return response()->download($file->getFullPath(), $file->display_name, [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            ]);
+        } catch (\Exception $e) {
+            abort(500, 'Ошибка при генерации документа: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Обновить настройки GPT для документа
      */
     public function updateGptSettings(Request $request, Document $document)
