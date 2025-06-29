@@ -45,6 +45,15 @@ class LkController extends Controller
         $balance = $user->balance_rub ?? 0;
 
         return Inertia::render('Lk', [
+            'auth' => [
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'privacy_consent' => $user->privacy_consent ?? false,
+                    'privacy_consent_at' => $user->privacy_consent_at?->format('Y-m-d H:i:s'),
+                ]
+            ],
             'balance' => $balance,
             'documents' => $documents,
             'isDevelopment' => app()->environment(['local', 'testing']),
@@ -141,8 +150,73 @@ class LkController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage()
-            ], 400);
+                'error' => 'Ошибка при уменьшении баланса: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * API: Обновить email и согласие на обработку персональных данных
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function updateUserContact(Request $request)
+    {
+        $user = $request->user();
+        
+        $request->validate([
+            'email' => 'required|email|max:255',
+            'privacy_consent' => 'required|boolean'
+        ]);
+
+        $email = $request->input('email');
+        $privacyConsent = $request->input('privacy_consent');
+
+        try {
+            // Проверяем согласие на обработку данных
+            if (!$privacyConsent) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Необходимо дать согласие на обработку персональных данных'
+                ], 422);
+            }
+
+            // Проверяем уникальность email (исключая текущего пользователя)
+            $existingUser = \App\Models\User::where('email', $email)
+                ->where('id', '!=', $user->id)
+                ->first();
+                
+            if ($existingUser) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Пользователь с таким email уже существует'
+                ], 422);
+            }
+
+            // Обновляем данные пользователя
+            $updateData = [
+                'email' => $email,
+                'privacy_consent' => $privacyConsent
+            ];
+
+            // Если согласие было дано впервые, записываем дату
+            if ($privacyConsent && !$user->privacy_consent) {
+                $updateData['privacy_consent_at'] = now();
+            }
+
+            $user->update($updateData);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Контактные данные успешно обновлены'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Ошибка при обновлении данных: ' . $e->getMessage()
+            ], 500);
         }
     }
 } 

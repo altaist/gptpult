@@ -152,7 +152,7 @@ class PaymentController extends Controller
 
                 return response()->json([
                     'success' => true,
-                    'payment_url' => $paymentResult['confirmation_url'],
+                    'confirmation_url' => $paymentResult['confirmation_url'],
                     'payment_id' => $paymentResult['payment_id']
                 ]);
             } else {

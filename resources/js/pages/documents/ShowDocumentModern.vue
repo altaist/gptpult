@@ -123,9 +123,9 @@
                             <q-btn
                                 color="primary"
                                 text-color="white"
-                                label="Авторизироваться через Telegram"
+                                :label="shouldShowTelegramAuth ? 'Авторизоваться через Telegram' : 'Авторизироваться через Telegram'"
                                 size="md"
-                                @click="linkTelegram"
+                                @click="shouldShowTelegramAuth ? authTelegram() : linkTelegram()"
                                 :loading="telegramLoading"
                                 unelevated
                                 rounded
@@ -133,7 +133,7 @@
                                 icon="fab fa-telegram-plane"
                             />
                             <p class="telegram-caption">
-                                Свяжите аккаунт с Telegram для получения уведомлений о готовности документа
+                                {{ shouldShowTelegramAuth ? 'Авторизуйтесь через Telegram для удобного доступа к аккаунту' : 'Свяжите аккаунт с Telegram для получения уведомлений о готовности документа' }}
                             </p>
                         </div>
                     </div>
@@ -201,6 +201,7 @@
                         :is-generating="getIsGenerating()"
                         :is-starting-full-generation="isStartingFullGeneration"
                         :is-downloading="isDownloading"
+                        :user="user"
                         @start-full-generation="startFullGeneration"
                         @download-word="downloadWord"
                         @retry-generation="retryGeneration"
@@ -779,6 +780,65 @@ const handleDocumentUpdate = () => {
 
 // Состояние Telegram
 const telegramLoading = ref(false);
+
+// Проверить, нужно ли показывать кнопку авторизации через Telegram
+const shouldShowTelegramAuth = computed(() => {
+    const user = props.user;
+    if (!user) return false;
+    
+    // Показываем если нет связанного Telegram И email автогенерированный
+    return !user.telegram_id && 
+           user.email && 
+           user.email.endsWith('@auto.user');
+});
+
+// Авторизация через Telegram (не связка, а именно авторизация)
+const authTelegram = async () => {
+    telegramLoading.value = true;
+    
+    try {
+        const response = await fetch('/telegram/auth-link', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            // Открываем ссылку на бота в новой вкладке
+            window.open(data.bot_url, '_blank');
+            
+            showModernNotification({
+                type: 'positive',
+                title: 'Telegram',
+                message: 'Перейдите в Telegram и нажмите "Старт"',
+                icon: 'fab fa-telegram-plane',
+                timeout: 5000
+            });
+            
+        } else {
+            showModernNotification({
+                type: 'negative',
+                title: 'Ошибка авторизации',
+                message: data.error || 'Ошибка при авторизации через Telegram',
+                icon: 'link_off'
+            });
+        }
+        
+    } catch (error) {
+        showModernNotification({
+            type: 'negative',
+            title: 'Ошибка',
+            message: 'Произошла ошибка при авторизации через Telegram',
+            icon: 'error'
+        });
+    } finally {
+        telegramLoading.value = false;
+    }
+};
 
 // Связать с Telegram
 const linkTelegram = async () => {

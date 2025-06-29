@@ -85,16 +85,17 @@ Route::middleware(['auth'])->group(function () {
 
     // Управление веб-хуками и связка с Telegram (авторизованные пользователи)
     Route::prefix('telegram')->group(function () {
-        // Управление веб-хуками (админ)
+        // Телеграм веб-хуки (для админов)
         Route::post('/set-webhook', [TelegramController::class, 'setWebhook'])->name('telegram.set-webhook');
         Route::post('/delete-webhook', [TelegramController::class, 'deleteWebhook'])->name('telegram.delete-webhook');
         Route::get('/me', [TelegramController::class, 'getMe'])->name('telegram.me');
         
         // Связка с Telegram
         Route::post('/link', [TelegramLinkController::class, 'generateLink'])->name('telegram.link');
+        Route::post('/auth-link', [TelegramLinkController::class, 'generateAuthLink'])->name('telegram.auth-link');
         Route::post('/unlink', [TelegramLinkController::class, 'unlink'])->name('telegram.unlink');
         Route::get('/status', [TelegramLinkController::class, 'status'])->name('telegram.status');
-    });
+    })->middleware(['auth', 'verified']);
 
     // Новые маршруты для ЮКасса
     Route::post('/payment/yookassa/create/{orderId}', [PaymentController::class, 'createYookassaPayment'])
@@ -141,5 +142,117 @@ Route::get('/payment/waiting-test', function () {
 // Telegram бот роуты (веб-хук должен быть без auth middleware)
 Route::post('/telegram/webhook', [TelegramController::class, 'webhook'])->name('telegram.webhook');
 Route::get('/telegram/test-mode', [TelegramController::class, 'testMode'])->name('telegram.test-mode');
+
+// Временный роут для тестирования переноса документов (можно удалить позже)
+Route::get('/test/transfer-documents/{fromUserId}/{toUserId}', function ($fromUserId, $toUserId) {
+    $transferService = new \App\Services\Documents\DocumentTransferService();
+    
+    $fromUser = \App\Models\User::find($fromUserId);
+    $toUser = \App\Models\User::find($toUserId);
+    
+    if (!$fromUser || !$toUser) {
+        return response()->json(['error' => 'Пользователи не найдены'], 404);
+    }
+    
+    $result = $transferService->transferDocuments($fromUser, $toUser);
+    
+    return response()->json([
+        'result' => $result,
+        'from_user' => $fromUser->only(['id', 'name', 'email']),
+        'to_user' => $toUser->only(['id', 'name', 'email']),
+        'documents_after_transfer' => \App\Models\Document::where('user_id', $toUser->id)
+            ->get(['id', 'title', 'user_id', 'created_at'])
+    ]);
+})->name('test.transfer-documents');
+
+// Тестовый роут для симуляции Telegram авторизации (можно удалить позже)
+Route::get('/test/telegram-auth/{userId}', function ($userId) {
+    $user = \App\Models\User::find($userId);
+    
+    if (!$user) {
+        return response()->json(['error' => 'Пользователь не найден'], 404);
+    }
+    
+    // Генерируем токен авторизации
+    $telegramService = new \App\Services\Telegram\TelegramBotService();
+    $authToken = $telegramService->generateAuthToken($user);
+    
+    // Симулируем данные пользователя Telegram
+    $telegramUser = [
+        'id' => 123456789,
+        'first_name' => 'Тестовый',
+        'last_name' => 'Пользователь',
+        'username' => 'test_user',
+    ];
+    
+    // Симулируем обработку авторизации через рефлексию
+    $reflection = new \ReflectionClass($telegramService);
+    $method = $reflection->getMethod('handleTelegramAuth');
+    $method->setAccessible(true);
+    
+    $result = $method->invoke($telegramService, 123456789, $telegramUser, $authToken);
+    
+    return response()->json([
+        'auth_token' => $authToken,
+        'telegram_user' => $telegramUser,
+        'auth_result' => $result,
+        'user_before' => $user->only(['id', 'name', 'email', 'telegram_id']),
+        'user_after' => \App\Models\User::find($user->id)->only(['id', 'name', 'email', 'telegram_id']),
+        'documents_count' => \App\Models\Document::where('user_id', $user->id)->count()
+    ]);
+})->name('test.telegram-auth');
+
+// Простой тестовый роут для демонстрации переноса документов при Telegram авторизации
+Route::get('/test/full-flow', function () {
+    $transferService = new \App\Services\Documents\DocumentTransferService();
+    
+    // Находим временного пользователя с документами
+    $tempUser = \App\Models\User::where('email', 'like', '%@auto.user')
+        ->whereHas('documents')
+        ->with('documents')
+        ->first();
+    
+    if (!$tempUser) {
+        return response()->json(['error' => 'Не найден временный пользователь с документами'], 404);
+    }
+    
+    // Создаем нового "авторизованного" пользователя
+    $permanentUser = \App\Models\User::create([
+        'name' => 'Тестовый Авторизованный Пользователь',
+        'email' => 'auth_test_' . time() . '@example.com',
+        'password' => bcrypt('password'),
+        'auth_token' => \Illuminate\Support\Str::random(32),
+        'role_id' => 0,
+        'status' => 1,
+        'telegram_id' => 987654321,
+        'telegram_username' => 'test_auth_user',
+        'telegram_linked_at' => now(),
+    ]);
+    
+    $documentsBeforeTransfer = \App\Models\Document::where('user_id', $tempUser->id)->count();
+    $documentsBefore = \App\Models\Document::where('user_id', $permanentUser->id)->count();
+    
+    // Выполняем перенос
+    $result = $transferService->transferDocuments($tempUser, $permanentUser);
+    
+    $documentsAfter = \App\Models\Document::where('user_id', $permanentUser->id)->count();
+    
+    return response()->json([
+        'status' => 'success',
+        'temp_user' => [
+            'id' => $tempUser->id,
+            'email' => $tempUser->email,
+            'documents_before' => $documentsBeforeTransfer
+        ],
+        'permanent_user' => [
+            'id' => $permanentUser->id,
+            'email' => $permanentUser->email,
+            'documents_before' => $documentsBefore,
+            'documents_after' => $documentsAfter
+        ],
+        'transfer_result' => $result,
+        'documents_transferred' => $documentsAfter - $documentsBefore
+    ]);
+})->name('test.full-flow');
 
 require __DIR__.'/auth.php';

@@ -30,4 +30,9 @@ Route::middleware('web')->group(function () {
     Route::post('/user/test-decrement-balance', [LkController::class, 'testDecrementBalance'])
         ->name('api.user.test-decrement-balance')
         ->middleware('auth');
+        
+    // API роут для обновления контактных данных пользователя
+    Route::post('/user/update-contact', [LkController::class, 'updateUserContact'])
+        ->name('api.user.update-contact')
+        ->middleware('auth');
 });

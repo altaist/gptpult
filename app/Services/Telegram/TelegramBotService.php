@@ -3,6 +3,7 @@
 namespace App\Services\Telegram;
 
 use App\Models\User;
+use App\Services\Documents\DocumentTransferService;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -97,17 +98,37 @@ class TelegramBotService
         // Извлекаем токен из команды /start
         if (preg_match('/^\/start\s+(.+)$/', $text, $matches)) {
             $token = trim($matches[1]);
-            return $this->linkTelegramAccount($chatId, $user, $token);
+            
+            Log::info('Received /start with token', [
+                'chat_id' => $chatId,
+                'token' => substr($token, 0, 10) . '...',
+                'is_auth_token' => str_starts_with($token, 'auth_')
+            ]);
+            
+            // ВАЖНО: Токены авторизации имеют приоритет!
+            // Проверяем тип токена и обрабатываем соответственно
+            if (str_starts_with($token, 'auth_')) {
+                Log::info('Processing auth token with priority', ['chat_id' => $chatId]);
+                return $this->handleTelegramAuth($chatId, $user, $token);
+            } else {
+                Log::info('Processing link token', ['chat_id' => $chatId]);
+                return $this->linkTelegramAccount($chatId, $user, $token);
+            }
         }
 
         // Если нет токена, проверяем, связан ли уже аккаунт
         $linkedUser = User::where('telegram_id', $chatId)->first();
         
         if ($linkedUser) {
+            Log::info('No token provided, showing menu for linked user', [
+                'chat_id' => $chatId,
+                'user_id' => $linkedUser->id
+            ]);
             return $this->sendLinkedUserMenu($chatId, $linkedUser);
         }
 
         // Если аккаунт не связан, отправляем инструкции по связке
+        Log::info('No token and no linked user, showing welcome message', ['chat_id' => $chatId]);
         return $this->sendMessage($chatId, 
             "🤖 <b>Добро пожаловать в GPT Пульт!</b>\n\n" .
             "Для связки аккаунта с Telegram используйте кнопку <b>\"Связать\"</b> в личном кабинете.\n\n" .
@@ -368,12 +389,219 @@ class TelegramBotService
     }
 
     /**
-     * Получить ссылку на бота с токеном
+     * Генерировать токен авторизации для пользователя
+     */
+    public function generateAuthToken(User $user): string
+    {
+        $token = 'auth_' . Str::random(32);
+        
+        $user->update([
+            'telegram_link_token' => $token
+        ]);
+
+        return $token;
+    }
+
+    /**
+     * Получить URL бота для связки
      */
     public function getBotLinkUrl(string $token): string
     {
         $botUsername = config('services.telegram.bot_username');
         return "https://t.me/{$botUsername}?start={$token}";
+    }
+
+    /**
+     * Получить URL бота для авторизации
+     */
+    public function getBotAuthUrl(string $token): string
+    {
+        $botUsername = config('services.telegram.bot_username');
+        return "https://t.me/{$botUsername}?start={$token}";
+    }
+
+    /**
+     * Обработать авторизацию через Telegram
+     */
+    private function handleTelegramAuth(int $chatId, array $telegramUser, string $token): array
+    {
+        Log::info('Starting Telegram authorization', [
+            'chat_id' => $chatId,
+            'token' => substr($token, 0, 15) . '...',
+            'telegram_user' => $telegramUser
+        ]);
+
+        // СНАЧАЛА находим пользователя по токену авторизации
+        $userWithToken = User::where('telegram_link_token', $token)->first();
+
+        if (!$userWithToken) {
+            Log::warning('Invalid auth token', ['token' => substr($token, 0, 15) . '...']);
+            return $this->sendMessage($chatId, 
+                "❌ Недействительный токен авторизации.\n\n" .
+                "Получите новый токен в личном кабинете."
+            );
+        }
+
+        Log::info('User found by auth token', [
+            'user_id' => $userWithToken->id, 
+            'user_name' => $userWithToken->name,
+            'user_email' => $userWithToken->email
+        ]);
+
+        // ПОТОМ проверяем, есть ли уже пользователь с таким Telegram ID
+        $existingUserWithTelegram = User::where('telegram_id', $chatId)->first();
+        
+        // Попытка переноса документов от временного пользователя
+        $documentsTransferred = 0;
+        $transferService = new DocumentTransferService();
+        $finalUser = $userWithToken; // По умолчанию используем пользователя с токеном
+        
+        if ($existingUserWithTelegram) {
+            Log::info('Found existing user with this Telegram ID', [
+                'existing_user_id' => $existingUserWithTelegram->id,
+                'existing_user_email' => $existingUserWithTelegram->email,
+                'token_user_id' => $userWithToken->id,
+                'token_user_email' => $userWithToken->email
+            ]);
+            
+            if ($existingUserWithTelegram->id === $userWithToken->id) {
+                // Это тот же пользователь, просто обновляем токен
+                Log::info('Same user, just clearing token');
+                $userWithToken->update(['telegram_link_token' => null]);
+                $finalUser = $userWithToken;
+            } else {
+                // Разные пользователи! Нужно перенести документы
+                if ($transferService->isTempUser($userWithToken)) {
+                    Log::info('Token user is temporary, transferring documents to existing Telegram user', [
+                        'from_temp_user' => $userWithToken->id,
+                        'to_permanent_user' => $existingUserWithTelegram->id
+                    ]);
+                    
+                    // Переносим документы от временного к постоянному
+                    $transferResult = $transferService->transferDocuments($userWithToken, $existingUserWithTelegram);
+                    $documentsTransferred = $transferResult['transferred_count'];
+                    
+                    // Очищаем токен у временного пользователя
+                    $userWithToken->update(['telegram_link_token' => null]);
+                    
+                    // Используем постоянного пользователя
+                    $finalUser = $existingUserWithTelegram;
+                } else {
+                    Log::warning('Token user is permanent but Telegram already linked to another user', [
+                        'token_user' => $userWithToken->id,
+                        'telegram_user' => $existingUserWithTelegram->id
+                    ]);
+                    
+                    return $this->sendMessage($chatId, 
+                        "❌ Этот Telegram уже связан с другим аккаунтом.\n\n" .
+                        "Для связки с новым аккаунтом сначала отвяжите Telegram от текущего аккаунта."
+                    );
+                }
+            }
+        } else {
+            // Нет пользователя с таким Telegram ID
+            Log::info('No existing user with this Telegram ID, linking to token user');
+            
+            // Проверяем, это временный пользователь или нет
+            if ($transferService->isTempUser($userWithToken)) {
+                // Превращаем временного пользователя в постоянного
+                $firstName = $telegramUser['first_name'];
+                $lastName = $telegramUser['last_name'] ?? '';
+                $userName = trim($firstName . ' ' . $lastName);
+                
+                // Обновляем email с автогенерированного на более постоянный
+                $userWithToken->update([
+                    'name' => $userName,
+                    'email' => Str::random(10) . '@linked.user', // Меняем с @auto.user на @linked.user
+                    'telegram_id' => $chatId,
+                    'telegram_username' => $telegramUser['username'] ?? null,
+                    'telegram_linked_at' => now(),
+                    'telegram_link_token' => null, // Очищаем токен
+                ]);
+                
+                Log::info('Converted temporary user to permanent', [
+                    'user_id' => $userWithToken->id,
+                    'old_email_type' => '@auto.user',
+                    'new_email_type' => '@linked.user'
+                ]);
+            } else {
+                // Это постоянный пользователь, просто связываем с Telegram
+                $firstName = $telegramUser['first_name'];
+                $lastName = $telegramUser['last_name'] ?? '';
+                $userName = trim($firstName . ' ' . $lastName);
+                
+                $userWithToken->update([
+                    'telegram_id' => $chatId,
+                    'telegram_username' => $telegramUser['username'] ?? null,
+                    'telegram_linked_at' => now(),
+                    'telegram_link_token' => null, // Очищаем токен
+                    'name' => $userName,
+                ]);
+                
+                Log::info('Linked permanent user with Telegram', [
+                    'user_id' => $userWithToken->id,
+                    'telegram_id' => $chatId
+                ]);
+            }
+            
+            $finalUser = $userWithToken;
+        }
+
+        // Проверяем auth_token для fallback
+        if (!$finalUser->auth_token) {
+            Log::warning('User has no auth_token, generating new one', ['user_id' => $finalUser->id]);
+            $finalUser->update(['auth_token' => Str::random(32)]);
+            $finalUser->refresh();
+        }
+
+        // Формируем URL для входа
+        $baseUrl = $this->getBaseUrl();
+        $isHttps = str_starts_with($baseUrl, 'https://');
+        
+        Log::info('Telegram authorization completed successfully', [
+            'final_user_id' => $finalUser->id,
+            'telegram_id' => $chatId,
+            'telegram_username' => $telegramUser['username'] ?? null,
+            'documents_transferred' => $documentsTransferred
+        ]);
+
+        // Создаем инлайн клавиатуру
+        if ($isHttps) {
+            // Для HTTPS используем Mini App
+            $keyboard = [
+                'inline_keyboard' => [[
+                    [
+                        'text' => '🏠 Войти в личный кабинет',
+                        'web_app' => ['url' => $baseUrl . '/lk']
+                    ]
+                ]]
+            ];
+        } else {
+            // Для HTTP используем обычный URL с автологином
+            $loginUrl = "{$baseUrl}/auto-login/{$finalUser->auth_token}?redirect=" . urlencode('/lk');
+            $keyboard = [
+                'inline_keyboard' => [[
+                    [
+                        'text' => '🏠 Войти в личный кабинет',
+                        'url' => $loginUrl
+                    ]
+                ]]
+            ];
+        }
+
+        Log::info('Sending auth success message with keyboard', ['keyboard' => $keyboard, 'is_https' => $isHttps]);
+
+        // Формируем сообщение в зависимости от того, были ли перенесены документы
+        $messageText = "✅ <b>Авторизация через Telegram успешна!</b>\n\n" .
+            "Добро пожаловать, {$finalUser->name}!\n\n";
+            
+        if ($documentsTransferred > 0) {
+            $messageText .= "📄 Перенесено документов: {$documentsTransferred}\n\n";
+        }
+        
+        $messageText .= "Ваш аккаунт теперь связан с Telegram. Войдите в личный кабинет:";
+
+        return $this->sendMessage($chatId, $messageText, $keyboard);
     }
 
     /**

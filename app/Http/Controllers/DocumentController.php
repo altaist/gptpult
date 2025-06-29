@@ -122,7 +122,7 @@ class DocumentController extends Controller
             ),
             'balance' => $balance,
             'orderPrice' => $orderPrice,
-            'user' => $document->user->only(['id', 'name', 'email', 'telegram_id', 'telegram_username'])
+            'user' => $document->user->only(['id', 'name', 'email', 'telegram_id', 'telegram_username', 'privacy_consent'])
         ]);
     }
 

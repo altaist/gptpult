@@ -17,6 +17,8 @@ class VerifyCsrfToken extends Middleware
         'api/payment/yookassa/create/*',
         'api/payment/status/*',
         'api/user/transitions',
+        'api/user/test-decrement-balance',
+        'api/user/update-contact',
         'orders/process',
     ];
 

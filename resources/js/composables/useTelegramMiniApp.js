@@ -31,6 +31,13 @@ export function useTelegramMiniApp() {
       headers['X-Telegram-Auth-Timestamp'] = storedTimestamp
     }
     
+    // Проверяем токен предыдущего временного пользователя для переноса документов
+    const autoAuthToken = localStorage.getItem('auto_auth_token')
+    if (autoAuthToken) {
+      headers['X-Auto-Auth-Token'] = autoAuthToken
+      console.log('useTelegramMiniApp: Found auto_auth_token for document transfer')
+    }
+    
     // Проверяем куки Telegram
     const telegramCookies = []
     document.cookie.split(';').forEach(cookie => {
@@ -258,6 +265,13 @@ export function useTelegramMiniApp() {
             
             // Также сохраняем в куки для дублирования
             setCookie(`telegram_auth_user_${data.user.id}`, data.user.id, 7)
+            
+            // Очищаем токен временного пользователя, если он был использован
+            const hadAutoAuthToken = localStorage.getItem('auto_auth_token')
+            if (hadAutoAuthToken) {
+              localStorage.removeItem('auto_auth_token')
+              console.log('useTelegramMiniApp: Cleared auto_auth_token after successful Telegram auth')
+            }
             
             // Перезагружаем страницу для применения авторизации
             window.location.reload()

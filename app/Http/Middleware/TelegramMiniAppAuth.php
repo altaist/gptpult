@@ -2,11 +2,15 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\UserRole;
 use App\Models\User;
+use App\Services\Documents\DocumentTransferService;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 
 class TelegramMiniAppAuth
@@ -177,7 +181,36 @@ class TelegramMiniAppAuth
                     }
                 }
             } else {
-                Log::warning('User not found for Telegram ID', ['telegram_id' => $telegramData['id']]);
+                Log::info('User not found for Telegram ID, creating new account', ['telegram_id' => $telegramData['id']]);
+                
+                // Автоматически создаем новый аккаунт и связываем с Telegram
+                $user = $this->createAndLinkTelegramUser($telegramData, $request);
+                
+                if ($user) {
+                    Log::info('Auto-created and linked Telegram user', [
+                        'user_id' => $user->id, 
+                        'telegram_id' => $telegramData['id'],
+                        'user_name' => $user->name
+                    ]);
+                    
+                    // Принудительно настраиваем сессию для Telegram
+                    $this->setupTelegramSession($request, $user);
+                    
+                    // Если это страница логина, перенаправляем
+                    if ($request->is('login')) {
+                        if ($request->ajax() || $request->header('X-Inertia')) {
+                            Log::info('TelegramMiniAppAuth: Sending redirect header for newly created AJAX user');
+                            $response = $next($request);
+                            $response->headers->set('X-Telegram-Redirect', '/lk');
+                            return $response;
+                        } else {
+                            Log::info('TelegramMiniAppAuth: Redirecting newly created user from login page');
+                            return redirect('/lk');
+                        }
+                    }
+                } else {
+                    Log::error('Failed to create and link Telegram user', ['telegram_data' => $telegramData]);
+                }
             }
         } else {
             Log::info('TelegramMiniAppAuth: No valid Telegram data found', [
@@ -327,5 +360,173 @@ class TelegramMiniAppAuth
         ]);
 
         return $isValid;
+    }
+
+    /**
+     * Автоматически создать новый аккаунт и связать с Telegram
+     */
+    private function createAndLinkTelegramUser(array $telegramData, Request $request = null): ?User
+    {
+        try {
+            // Формируем имя пользователя из Telegram данных
+            $firstName = $telegramData['first_name'] ?? 'Пользователь';
+            $lastName = $telegramData['last_name'] ?? '';
+            $userName = trim($firstName . ' ' . $lastName);
+            
+            // Создаем нового пользователя
+            $user = User::create([
+                'name' => $userName,
+                'email' => Str::random(10) . '@auto.user', // Автогенерированный email
+                'password' => Hash::make(Str::random(16)), // Случайный пароль
+                'auth_token' => Str::random(32), // Токен для автовхода
+                'role_id' => UserRole::USER, // Обычный пользователь
+                'status' => 1, // Активный статус
+                'telegram_id' => $telegramData['id'],
+                'telegram_username' => $telegramData['username'] ?? null,
+                'telegram_linked_at' => now(),
+                'person' => [
+                    'telegram' => [
+                        'id' => $telegramData['id'],
+                        'username' => $telegramData['username'] ?? null,
+                        'first_name' => $firstName,
+                        'last_name' => $lastName,
+                        'language_code' => $telegramData['language_code'] ?? null,
+                        'is_premium' => $telegramData['is_premium'] ?? false,
+                        'auto_created' => true, // Флаг автоматического создания
+                        'created_at' => now()->toISOString(),
+                    ]
+                ],
+                'settings' => [],
+                'statistics' => []
+            ]);
+            
+            Log::info('Successfully created new Telegram user', [
+                'user_id' => $user->id,
+                'telegram_id' => $telegramData['id'],
+                'name' => $userName,
+                'email' => $user->email,
+                'telegram_username' => $telegramData['username'] ?? null
+            ]);
+            
+            // Проверяем наличие предыдущего временного пользователя для переноса документов
+            $this->transferDocumentsFromTempUser($user, $request);
+            
+            return $user;
+            
+        } catch (\Exception $e) {
+            Log::error('Failed to create Telegram user', [
+                'telegram_data' => $telegramData,
+                'error' => $e->getMessage(),
+                'stack' => $e->getTraceAsString()
+            ]);
+            
+            return null;
+        }
+    }
+
+    /**
+     * Перенести документы от временного пользователя к новому авторизованному
+     */
+    private function transferDocumentsFromTempUser(User $newUser, Request $request = null): void
+    {
+        if (!$request) {
+            Log::info('Запрос не передан, пропускаем перенос документов');
+            return;
+        }
+
+        try {
+            $transferService = new DocumentTransferService();
+            
+            // Проверяем разные источники для получения токена предыдущего пользователя
+            $tempAuthToken = $this->getTempUserToken($request);
+            
+            if (!$tempAuthToken) {
+                Log::info('Токен временного пользователя не найден');
+                return;
+            }
+            
+            // Ищем временного пользователя по токену
+            $tempUser = $transferService->findTempUserByAuthToken($tempAuthToken);
+            
+            if (!$tempUser) {
+                Log::info('Временный пользователь не найден по токену', [
+                    'token' => substr($tempAuthToken, 0, 8) . '...' // Логируем только часть токена
+                ]);
+                return;
+            }
+            
+            Log::info('Найден временный пользователь для переноса документов', [
+                'temp_user_id' => $tempUser->id,
+                'temp_user_email' => $tempUser->email,
+                'new_user_id' => $newUser->id,
+                'new_user_email' => $newUser->email
+            ]);
+            
+            // Переносим документы
+            $result = $transferService->transferDocuments($tempUser, $newUser);
+            
+            if ($result['success'] && $result['transferred_count'] > 0) {
+                Log::info('Документы успешно перенесены от временного пользователя', [
+                    'temp_user_id' => $tempUser->id,
+                    'new_user_id' => $newUser->id,
+                    'transferred_count' => $result['transferred_count']
+                ]);
+                
+                // Опционально удаляем временного пользователя (осторожно!)
+                // $transferService->deleteTempUser($tempUser);
+            } else {
+                Log::info('Перенос документов не потребовался', [
+                    'temp_user_id' => $tempUser->id,
+                    'new_user_id' => $newUser->id,
+                    'result' => $result
+                ]);
+            }
+            
+        } catch (\Exception $e) {
+            Log::error('Ошибка при переносе документов от временного пользователя', [
+                'new_user_id' => $newUser->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
+    }
+
+    /**
+     * Получить токен временного пользователя из различных источников
+     */
+    private function getTempUserToken(Request $request): ?string
+    {
+        // 1. Проверяем заголовок X-Auth-Token
+        $token = $request->header('X-Auth-Token');
+        if ($token) {
+            Log::info('Найден токен в заголовке X-Auth-Token');
+            return $token;
+        }
+        
+        // 2. Проверяем заголовок X-Auto-Auth-Token  
+        $token = $request->header('X-Auto-Auth-Token');
+        if ($token) {
+            Log::info('Найден токен в заголовке X-Auto-Auth-Token');
+            return $token;
+        }
+        
+        // 3. Проверяем куки auth_token
+        $token = $request->cookie('auth_token');
+        if ($token) {
+            Log::info('Найден токен в куки auth_token');
+            return $token;
+        }
+        
+        // 4. Проверяем сессию (если есть текущий авторизованный пользователь)
+        if (Auth::check()) {
+            $currentUser = Auth::user();
+            if ($currentUser && $currentUser->auth_token && str_ends_with($currentUser->email, '@auto.user')) {
+                Log::info('Найден токен текущего временного пользователя в сессии');
+                return $currentUser->auth_token;
+            }
+        }
+        
+        Log::info('Токен временного пользователя не найден ни в одном источнике');
+        return null;
     }
 }
