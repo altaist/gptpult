@@ -76,7 +76,7 @@ class DocumentObserver
         $this->telegramNotificationService->notifyDocumentContentReady($document);
 
         // Отправляем файл документа пользователю
-        $this->telegramNotificationService->sendDocumentFile($document);
+        $this->telegramNotificationService->sendDocumentFileByDocument($document);
     }
 
     /**
