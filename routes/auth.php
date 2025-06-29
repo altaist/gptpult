@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\ConfirmablePasswordController;
+use App\Http\Controllers\Auth\EmailAuthController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\EmailVerificationPromptController;
 use App\Http\Controllers\Auth\NewPasswordController;
@@ -21,6 +22,24 @@ Route::middleware('guest')->group(function () {
         ->name('login');
 
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
+
+    // Авторизация по email
+    Route::get('email-auth', [EmailAuthController::class, 'showEmailForm'])
+        ->name('email-auth');
+    
+    // Обработка случайных GET запросов на send-code (редирект на форму)
+    Route::get('email-auth/send-code', function() {
+        return redirect()->route('email-auth');
+    });
+    
+    Route::post('email-auth/send-code', [EmailAuthController::class, 'sendCode'])
+        ->name('email-auth.send-code');
+    
+    Route::post('email-auth/verify-code', [EmailAuthController::class, 'verifyCode'])
+        ->name('email-auth.verify-code');
+    
+    Route::post('email-auth/resend-code', [EmailAuthController::class, 'resendCode'])
+        ->name('email-auth.resend-code');
 
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
         ->name('password.request');

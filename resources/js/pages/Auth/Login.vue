@@ -6,8 +6,8 @@ import InputLabel from '@/_breeze/Components/InputLabel.vue';
 import PrimaryButton from '@/_breeze/Components/PrimaryButton.vue';
 import TextInput from '@/_breeze/Components/TextInput.vue';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
-import { onMounted } from 'vue';
-import { checkAuth } from '@/composables/auth';
+import { ref } from 'vue';
+import { authAndAutoReg } from '@/composables/auth';
 
 defineProps({
     canResetPassword: {
@@ -24,24 +24,35 @@ const form = useForm({
     remember: false,
 });
 
+const isAutoAuthLoading = ref(false);
+
 const submit = () => {
     form.post(route('login'), {
         onFinish: () => form.reset('password'),
     });
 };
 
+const autoAuth = async () => {
+    isAutoAuthLoading.value = true;
+    try {
+        const user = await authAndAutoReg();
+        if (user) {
+            router.visit(route('dashboard'));
+        } else {
+            // Если автоматическая авторизация не удалась
+            alert('Не удалось автоматически авторизоваться. Попробуйте войти по почте.');
+        }
+    } catch (error) {
+        console.error('Auto auth error:', error);
+        alert('Ошибка при автоматической авторизации');
+    } finally {
+        isAutoAuthLoading.value = false;
+    }
+};
+
 const goToDashboard = () => {
     router.visit(route('dashboard'));
 };
-
-onMounted(async () => {
-    try {
-        await checkAuth();
-        router.visit(route('dashboard'));
-    } catch (error) {
-        console.log('Требуется авторизация');
-    }
-});
 </script>
 
 <template>
@@ -52,7 +63,35 @@ onMounted(async () => {
             {{ status }}
         </div>
 
-        <form @submit.prevent="submit">
+        <!-- Кнопки выбора способа авторизации -->
+        <div class="mb-6 space-y-3">
+            <Link
+                :href="route('email-auth')"
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-center block transition duration-200"
+            >
+                Войти по почте
+            </Link>
+
+            <button
+                @click="autoAuth"
+                :disabled="isAutoAuthLoading"
+                class="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded transition duration-200"
+            >
+                <span v-if="isAutoAuthLoading">Авторизация...</span>
+                <span v-else>Автоматическая авторизация</span>
+            </button>
+        </div>
+
+        <div class="relative">
+            <div class="absolute inset-0 flex items-center">
+                <div class="w-full border-t border-gray-300"></div>
+            </div>
+            <div class="relative flex justify-center text-sm">
+                <span class="px-2 bg-white text-gray-500">или войти с паролем</span>
+            </div>
+        </div>
+
+        <form @submit.prevent="submit" class="mt-6">
             <div>
                 <InputLabel for="email" value="Email" />
 

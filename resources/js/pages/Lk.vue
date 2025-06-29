@@ -5,6 +5,7 @@ import { router } from '@inertiajs/vue3';
 import { useQuasar } from 'quasar';
 import PageLayout from '@/components/shared/PageLayout.vue';
 import { useTelegramMiniApp } from '@/composables/useTelegramMiniApp.js';
+import { logout } from '@/composables/auth';
 
 const $q = useQuasar();
 
@@ -520,6 +521,26 @@ onUnmounted(() => {
     document.body.classList.remove('tg-viewport');
   }
 });
+
+// Функция для выхода из аккаунта
+const handleLogout = async () => {
+  try {
+    await logout();
+    $q.notify({
+      type: 'positive',
+      message: 'Вы успешно вышли из аккаунта',
+      timeout: 2000
+    });
+    router.visit('/');
+  } catch (error) {
+    console.error('Logout failed:', error);
+    $q.notify({
+      type: 'negative',
+      message: 'Ошибка при выходе из аккаунта',
+      timeout: 3000
+    });
+  }
+};
 </script>
 
 <template>
@@ -641,6 +662,21 @@ onUnmounted(() => {
                         <q-icon name="fab fa-telegram" class="telegram-btn-icon" />
                         <span>Подключить Telegram</span>
                     </q-btn>
+
+                    <!-- Кнопка выхода из аккаунта -->
+                    <div class="logout-section">
+                        <q-btn
+                            @click="handleLogout"
+                            color="negative"
+                            class="logout-btn"
+                            size="md"
+                            unelevated
+                            no-caps
+                        >
+                            <q-icon name="logout" class="logout-icon" />
+                            Выйти из аккаунта
+                        </q-btn>
+                    </div>
                 </div>
 
                 <!-- Правая колонка -->
@@ -2441,5 +2477,32 @@ body.tg-viewport .telegram-connect-simple {
 
 .history-btn:hover {
     background: #f8fafc;
+}
+
+.logout-section {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.logout-btn {
+    width: 100%;
+    padding: 12px 24px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    transition: all 0.2s ease;
+}
+
+.logout-btn:hover {
+    box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+    transform: translateY(-1px);
+}
+
+.logout-icon {
+    font-size: 20px;
+    margin-right: 8px;
 }
 </style> 

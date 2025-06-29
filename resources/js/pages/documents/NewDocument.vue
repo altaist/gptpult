@@ -1,5 +1,5 @@
 <template>
-    <page-layout :auto-auth="true">
+    <page-layout :auto-auth="false">
         <Head title="Создание документа" />
         
         <div class="container">

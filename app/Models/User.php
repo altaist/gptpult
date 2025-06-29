@@ -37,7 +37,9 @@ class User extends Authenticatable
         'telegram_id',
         'telegram_username',
         'telegram_link_token',
-        'telegram_linked_at'
+        'telegram_linked_at',
+        'email_verification_code',
+        'email_verification_expires_at'
     ];
 
     /**
@@ -61,7 +63,8 @@ class User extends Authenticatable
         'role_id' => UserRole::class,
         'person' => 'array',
         'settings' => 'array',
-        'statistics' => 'array'
+        'statistics' => 'array',
+        'email_verification_expires_at' => 'datetime'
     ];
 
     /**

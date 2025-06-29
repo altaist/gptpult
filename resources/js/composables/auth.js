@@ -117,36 +117,45 @@ export const getTwaUser = () => {
     };
 }
 
-// Проверка авторизации при загрузке страницы
-export const checkAuth = async () => {
-    console.log('checkAuth: Starting authentication check...')
+// Проверка авторизации без автоматической регистрации
+export const checkAuthOnly = async () => {
+    console.log('checkAuthOnly: Starting authentication check without auto-registration...')
     
     // Проверяем, если пользователь уже авторизован через Inertia
     const userFromInertia = usePage().props.auth?.user
     if (userFromInertia) {
-        console.log('checkAuth: User already authenticated via Inertia')
-        
-        // Если на странице логина - перенаправляем
-        if (window.location.pathname === '/login') {
-            console.log('checkAuth: User is on login page but authenticated, redirecting to /lk')
-            window.location.href = '/lk'
-            return setUser(userFromInertia)
-        }
-        
+        console.log('checkAuthOnly: User already authenticated via Inertia')
         return setUser(userFromInertia)
+    }
+    
+    // Проверяем токен в localStorage
+    const token = loadFromLocalStorage('auto_auth_token');
+    
+    if (token) {
+        try {
+            const response = await apiClient.post(route('login.auto'), { auth_token: token });
+            if (response && response.user) {
+                response.user.token = token;
+                return setUser(response.user);
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            // Если токен неверный, удаляем его
+            if (error.status === 401) {
+                localStorage.removeItem('auto_auth_token');
+            }
+        }
     }
     
     // Проверяем, если мы в Telegram WebApp
     if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
-        console.log('checkAuth: Telegram WebApp detected, user data available')
+        console.log('checkAuthOnly: Telegram WebApp detected, user data available')
         
-        // Отправляем данные напрямую на сервер
         const telegramInitData = window.Telegram.WebApp.initData
         if (telegramInitData) {
-            console.log('checkAuth: Sending Telegram init data to server')
+            console.log('checkAuthOnly: Sending Telegram init data to server')
             
             try {
-                // Попробуем отправить данные через fetch к текущему URL
                 const response = await fetch(window.location.href, {
                     method: 'GET',
                     headers: {
@@ -155,41 +164,41 @@ export const checkAuth = async () => {
                     }
                 })
                 
-                console.log('checkAuth: Telegram data response:', {
-                    status: response.status,
-                    ok: response.ok
-                })
-                
                 if (response.ok) {
-                    // Проверим, авторизован ли пользователь теперь
                     const userFromInertia = usePage().props.auth?.user
                     if (userFromInertia) {
-                        console.log('checkAuth: User authenticated via Telegram WebApp')
-                        
-                        // Если на странице логина - перенаправляем
-                        if (window.location.pathname === '/login') {
-                            console.log('checkAuth: Redirecting authenticated user from login page')
-                            window.location.href = '/lk'
-                        }
-                        
+                        console.log('checkAuthOnly: User authenticated via Telegram WebApp')
                         return setUser(userFromInertia)
                     }
                 }
             } catch (error) {
-                console.error('checkAuth: Error sending Telegram data:', error)
+                console.error('checkAuthOnly: Error sending Telegram data:', error)
             }
         }
     }
     
-    const result = await authAndAutoReg()
-    console.log('checkAuth: Authentication result:', !!result)
+    console.log('checkAuthOnly: No valid authentication found')
+    return null
+}
+
+// Проверка авторизации при загрузке страницы
+export const checkAuth = async () => {
+    console.log('checkAuth: Starting authentication check...')
     
-    // Финальная проверка - если пользователь авторизован, но на странице логина
-    if (result && window.location.pathname === '/login') {
-        console.log('checkAuth: Final check - redirecting authenticated user from login page')
-        window.location.href = '/lk'
+    // Сначала проверяем существующую авторизацию
+    const existingAuth = await checkAuthOnly()
+    if (existingAuth) {
+        // Если на странице логина - перенаправляем
+        if (window.location.pathname === '/login' || window.location.pathname === '/email-auth') {
+            console.log('checkAuth: User is on auth page but authenticated, redirecting to /lk')
+            window.location.href = '/lk'
+        }
+        return existingAuth
     }
     
-    return result
+    // Если нет существующей авторизации, НЕ пытаемся автоматически регистрировать
+    // Это позволяет пользователю выбрать способ авторизации
+    console.log('checkAuth: No existing authentication found, user needs to choose auth method')
+    return null
 }
 
