@@ -174,68 +174,13 @@ class TelegramBotService
             $user->refresh();
         }
 
-        // Формируем базовый URL приложения
-        $baseUrl = $this->getBaseUrl();
-        $isHttps = str_starts_with($baseUrl, 'https://');
-
         $messageText = "👋 <b>Привет, {$user->name}!</b>\n\n" .
             "🔗 Ваш аккаунт связан с Telegram\n" .
             "💰 Баланс: " . number_format($user->balance_rub ?? 0, 0, ',', ' ') . " ₽\n\n" .
             "Выберите действие:";
 
-        // Создаем инлайн клавиатуру
-        if ($isHttps) {
-            // Для HTTPS используем Mini App
-            $keyboard = [
-                'inline_keyboard' => [
-                    [
-                        [
-                            'text' => '🏠 Личный кабинет',
-                            'web_app' => ['url' => $baseUrl . '/lk']
-                        ]
-                    ],
-                    [
-                        [
-                            'text' => '📝 Создать документ',
-                            'web_app' => ['url' => $baseUrl . '/new']
-                        ]
-                    ],
-                    [
-                        [
-                            'text' => '💬 Поддержка',
-                            'url' => 'https://t.me/gptpult_help'
-                        ]
-                    ]
-                ]
-            ];
-        } else {
-            // Для HTTP используем обычные URL с автологином
-            $lkUrl = "{$baseUrl}/auto-login/{$user->auth_token}?redirect=" . urlencode('/lk');
-            $newDocUrl = "{$baseUrl}/auto-login/{$user->auth_token}?redirect=" . urlencode('/new');
-            
-            $keyboard = [
-                'inline_keyboard' => [
-                    [
-                        [
-                            'text' => '🏠 Личный кабинет',
-                            'url' => $lkUrl
-                        ]
-                    ],
-                    [
-                        [
-                            'text' => '📝 Создать документ',
-                            'url' => $newDocUrl
-                        ]
-                    ],
-                    [
-                        [
-                            'text' => '💬 Поддержка',
-                            'url' => 'https://t.me/gptpult_help'
-                        ]
-                    ]
-                ]
-            ];
-        }
+        // Используем новую клавиатуру с двумя кнопками
+        $keyboard = $this->createLoginKeyboard($user);
 
         return $this->sendMessage($chatId, $messageText, $keyboard);
     }
@@ -271,6 +216,15 @@ class TelegramBotService
             Log::warning('Invalid link token', ['token' => $token]);
             return $this->sendMessage($chatId, 
                 "❌ Недействительный токен связки.\n\n" .
+                "Получите новый токен в личном кабинете."
+            );
+        }
+
+        // Проверяем срок действия токена
+        if (!$this->isTokenValid($user)) {
+            Log::warning('Expired link token', ['user_id' => $user->id, 'token' => $token]);
+            return $this->sendMessage($chatId, 
+                "❌ Токен связки истёк.\n\n" .
                 "Получите новый токен в личном кабинете."
             );
         }
@@ -319,6 +273,7 @@ class TelegramBotService
             'telegram_username' => $telegramUser['username'] ?? null,
             'telegram_linked_at' => now(),
             'telegram_link_token' => null, // Очищаем токен
+            'telegram_token_expires_at' => null, // Очищаем время истечения
             'name' => $userName,
         ]);
 
@@ -331,41 +286,16 @@ class TelegramBotService
             $user->refresh();
         }
 
-        // Формируем URL для Mini App или fallback
-        $baseUrl = $this->getBaseUrl();
-        $isHttps = str_starts_with($baseUrl, 'https://');
-        
         Log::info('Telegram account linked successfully', [
             'user_id' => $user->id,
             'telegram_id' => $chatId,
             'telegram_username' => $telegramUser['username'] ?? null
         ]);
 
-        // Создаем инлайн клавиатуру
-        if ($isHttps) {
-            // Для HTTPS используем Mini App
-            $keyboard = [
-                'inline_keyboard' => [[
-                    [
-                        'text' => '🔗 Войти в личный кабинет',
-                        'web_app' => ['url' => $baseUrl . '/lk']
-                    ]
-                ]]
-            ];
-        } else {
-            // Для HTTP используем обычный URL с автологином
-            $loginUrl = "{$baseUrl}/auto-login/{$user->auth_token}?redirect=" . urlencode('/lk');
-            $keyboard = [
-                'inline_keyboard' => [[
-                    [
-                        'text' => '🔗 Войти в личный кабинет',
-                        'url' => $loginUrl
-                    ]
-                ]]
-            ];
-        }
+        // Используем новую клавиатуру с двумя кнопками
+        $keyboard = $this->createLoginKeyboard($user);
 
-        Log::info('Sending success message with keyboard', ['keyboard' => $keyboard, 'is_https' => $isHttps]);
+        Log::info('Sending success message with keyboard', ['keyboard' => $keyboard]);
 
         $messageText = "✅ <b>Аккаунт успешно связан!</b>\n\n" .
             "Добро пожаловать, {$user->name}!\n\n" .
@@ -380,9 +310,16 @@ class TelegramBotService
     public function generateLinkToken(User $user): string
     {
         $token = Str::random(32);
+        $expiresAt = now()->addMinutes(10); // Токен действует 10 минут
         
         $user->update([
-            'telegram_link_token' => $token
+            'telegram_link_token' => $token,
+            'telegram_token_expires_at' => $expiresAt
+        ]);
+
+        Log::info('Generated link token', [
+            'user_id' => $user->id,
+            'expires_at' => $expiresAt->toISOString()
         ]);
 
         return $token;
@@ -394,12 +331,58 @@ class TelegramBotService
     public function generateAuthToken(User $user): string
     {
         $token = 'auth_' . Str::random(32);
+        $expiresAt = now()->addMinutes(10); // Токен действует 10 минут
         
         $user->update([
-            'telegram_link_token' => $token
+            'telegram_link_token' => $token,
+            'telegram_token_expires_at' => $expiresAt
+        ]);
+
+        Log::info('Generated auth token', [
+            'user_id' => $user->id,
+            'expires_at' => $expiresAt->toISOString()
         ]);
 
         return $token;
+    }
+
+    /**
+     * Проверить действительность токена
+     */
+    private function isTokenValid(User $user): bool
+    {
+        if (!$user->telegram_link_token || !$user->telegram_token_expires_at) {
+            Log::info('Token invalid: missing token or expiration', [
+                'user_id' => $user->id,
+                'has_token' => !empty($user->telegram_link_token),
+                'has_expiration' => !empty($user->telegram_token_expires_at)
+            ]);
+            return false;
+        }
+
+        $isValid = now()->isBefore($user->telegram_token_expires_at);
+        
+        if (!$isValid) {
+            Log::info('Token expired, clearing', [
+                'user_id' => $user->id,
+                'expired_at' => $user->telegram_token_expires_at->toISOString(),
+                'current_time' => now()->toISOString()
+            ]);
+            
+            // Очищаем истекший токен
+            $user->update([
+                'telegram_link_token' => null,
+                'telegram_token_expires_at' => null
+            ]);
+        } else {
+            Log::info('Token is valid', [
+                'user_id' => $user->id,
+                'expires_at' => $user->telegram_token_expires_at->toISOString(),
+                'current_time' => now()->toISOString()
+            ]);
+        }
+
+        return $isValid;
     }
 
     /**
@@ -442,6 +425,15 @@ class TelegramBotService
             );
         }
 
+        // Проверяем срок действия токена
+        if (!$this->isTokenValid($userWithToken)) {
+            Log::warning('Expired auth token', ['user_id' => $userWithToken->id, 'token' => substr($token, 0, 15) . '...']);
+            return $this->sendMessage($chatId, 
+                "❌ Токен авторизации истёк.\n\n" .
+                "Получите новый токен в личном кабинете."
+            );
+        }
+
         Log::info('User found by auth token', [
             'user_id' => $userWithToken->id, 
             'user_name' => $userWithToken->name,
@@ -467,7 +459,10 @@ class TelegramBotService
             if ($existingUserWithTelegram->id === $userWithToken->id) {
                 // Это тот же пользователь, просто обновляем токен
                 Log::info('Same user, just clearing token');
-                $userWithToken->update(['telegram_link_token' => null]);
+                $userWithToken->update([
+                    'telegram_link_token' => null,
+                    'telegram_token_expires_at' => null
+                ]);
                 $finalUser = $userWithToken;
             } else {
                 // Разные пользователи! Нужно перенести документы
@@ -482,7 +477,10 @@ class TelegramBotService
                     $documentsTransferred = $transferResult['transferred_count'];
                     
                     // Очищаем токен у временного пользователя
-                    $userWithToken->update(['telegram_link_token' => null]);
+                    $userWithToken->update([
+                        'telegram_link_token' => null,
+                        'telegram_token_expires_at' => null
+                    ]);
                     
                     // Используем постоянного пользователя
                     $finalUser = $existingUserWithTelegram;
@@ -517,6 +515,7 @@ class TelegramBotService
                     'telegram_username' => $telegramUser['username'] ?? null,
                     'telegram_linked_at' => now(),
                     'telegram_link_token' => null, // Очищаем токен
+                    'telegram_token_expires_at' => null, // Очищаем время истечения
                 ]);
                 
                 Log::info('Converted temporary user to permanent', [
@@ -535,6 +534,7 @@ class TelegramBotService
                     'telegram_username' => $telegramUser['username'] ?? null,
                     'telegram_linked_at' => now(),
                     'telegram_link_token' => null, // Очищаем токен
+                    'telegram_token_expires_at' => null, // Очищаем время истечения
                     'name' => $userName,
                 ]);
                 
@@ -554,10 +554,6 @@ class TelegramBotService
             $finalUser->refresh();
         }
 
-        // Формируем URL для входа
-        $baseUrl = $this->getBaseUrl();
-        $isHttps = str_starts_with($baseUrl, 'https://');
-        
         Log::info('Telegram authorization completed successfully', [
             'final_user_id' => $finalUser->id,
             'telegram_id' => $chatId,
@@ -565,31 +561,10 @@ class TelegramBotService
             'documents_transferred' => $documentsTransferred
         ]);
 
-        // Создаем инлайн клавиатуру
-        if ($isHttps) {
-            // Для HTTPS используем Mini App
-            $keyboard = [
-                'inline_keyboard' => [[
-                    [
-                        'text' => '🏠 Войти в личный кабинет',
-                        'web_app' => ['url' => $baseUrl . '/lk']
-                    ]
-                ]]
-            ];
-        } else {
-            // Для HTTP используем обычный URL с автологином
-            $loginUrl = "{$baseUrl}/auto-login/{$finalUser->auth_token}?redirect=" . urlencode('/lk');
-            $keyboard = [
-                'inline_keyboard' => [[
-                    [
-                        'text' => '🏠 Войти в личный кабинет',
-                        'url' => $loginUrl
-                    ]
-                ]]
-            ];
-        }
+        // Используем новую клавиатуру с двумя кнопками
+        $keyboard = $this->createLoginKeyboard($finalUser);
 
-        Log::info('Sending auth success message with keyboard', ['keyboard' => $keyboard, 'is_https' => $isHttps]);
+        Log::info('Sending auth success message with keyboard', ['keyboard' => $keyboard]);
 
         // Формируем сообщение в зависимости от того, были ли перенесены документы
         $messageText = "✅ <b>Авторизация через Telegram успешна!</b>\n\n" .
@@ -602,6 +577,81 @@ class TelegramBotService
         $messageText .= "Ваш аккаунт теперь связан с Telegram. Войдите в личный кабинет:";
 
         return $this->sendMessage($chatId, $messageText, $keyboard);
+    }
+
+    /**
+     * Создать клавиатуру с двумя кнопками входа (браузер + веб-приложение)
+     */
+    private function createLoginKeyboard(User $user): array
+    {
+        // Проверяем auth_token для fallback
+        if (!$user->auth_token) {
+            $user->update(['auth_token' => Str::random(32)]);
+            $user->refresh();
+        }
+
+        // Формируем базовый URL приложения
+        $baseUrl = $this->getBaseUrl();
+        $isHttps = str_starts_with($baseUrl, 'https://');
+
+        if ($isHttps) {
+            // Для HTTPS используем обе кнопки
+            return [
+                'inline_keyboard' => [
+                    [
+                        [
+                            'text' => '🌐 Войти в браузере',
+                            'url' => "{$baseUrl}/auto-login/{$user->auth_token}?redirect=" . urlencode('/lk')
+                        ]
+                    ],
+                    [
+                        [
+                            'text' => '📱 Открыть веб-приложение',
+                            'web_app' => ['url' => $baseUrl . '/lk']
+                        ]
+                    ],
+                    [
+                        [
+                            'text' => '📝 Создать документ',
+                            'web_app' => ['url' => $baseUrl . '/new']
+                        ]
+                    ],
+                    [
+                        [
+                            'text' => '💬 Поддержка',
+                            'url' => 'https://t.me/gptpult_help'
+                        ]
+                    ]
+                ]
+            ];
+        } else {
+            // Для HTTP только браузерные ссылки
+            $lkUrl = "{$baseUrl}/auto-login/{$user->auth_token}?redirect=" . urlencode('/lk');
+            $newDocUrl = "{$baseUrl}/auto-login/{$user->auth_token}?redirect=" . urlencode('/new');
+            
+            return [
+                'inline_keyboard' => [
+                    [
+                        [
+                            'text' => '🏠 Личный кабинет',
+                            'url' => $lkUrl
+                        ]
+                    ],
+                    [
+                        [
+                            'text' => '📝 Создать документ',
+                            'url' => $newDocUrl
+                        ]
+                    ],
+                    [
+                        [
+                            'text' => '💬 Поддержка',
+                            'url' => 'https://t.me/gptpult_help'
+                        ]
+                    ]
+                ]
+            ];
+        }
     }
 
     /**

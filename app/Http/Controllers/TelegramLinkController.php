@@ -40,7 +40,7 @@ class TelegramLinkController extends Controller
         return response()->json([
             'bot_url' => $botUrl,
             'token' => $token,
-            'expires_in' => 300 // токен действует 5 минут
+            'expires_in' => 600 // токен действует 10 минут
         ]);
     }
 
@@ -69,7 +69,7 @@ class TelegramLinkController extends Controller
         return response()->json([
             'bot_url' => $botUrl,
             'token' => $token,
-            'expires_in' => 300 // токен действует 5 минут
+            'expires_in' => 600 // токен действует 10 минут
         ]);
     }
 
@@ -91,6 +91,7 @@ class TelegramLinkController extends Controller
             'telegram_id' => null,
             'telegram_username' => null,
             'telegram_link_token' => null,
+            'telegram_token_expires_at' => null,
             'telegram_linked_at' => null,
         ]);
 

@@ -37,6 +37,7 @@ class User extends Authenticatable
         'telegram_id',
         'telegram_username',
         'telegram_link_token',
+        'telegram_token_expires_at',
         'telegram_linked_at',
         'privacy_consent',
         'privacy_consent_at'
@@ -64,6 +65,7 @@ class User extends Authenticatable
         'person' => 'array',
         'settings' => 'array',
         'statistics' => 'array',
+        'telegram_token_expires_at' => 'datetime',
         'privacy_consent_at' => 'datetime'
     ];
 
