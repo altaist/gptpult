@@ -62,6 +62,13 @@ const isEmailValid = computed(() => {
   return userEmail.value.trim() && emailRegex.test(userEmail.value.trim());
 });
 
+// Вычисляем количество оставшихся генераций (цена за генерацию 100₽)
+const remainingGenerations = computed(() => {
+  const currentBalance = props.balance || 0;
+  const pricePerGeneration = 100;
+  return Math.floor(currentBalance / pricePerGeneration);
+});
+
 // Загрузить статус Telegram при монтировании компонента
 onMounted(async () => {
   await loadTelegramStatus();
@@ -758,8 +765,13 @@ const authTelegram = async () => {
                             </div>
                         </div>
                         <div class="balance-content">
-                            <div class="balance-amount">
-                                {{ balance?.toLocaleString('ru-RU') || '0' }} ₽
+                            <div class="balance-info">
+                                <div class="balance-amount">
+                                    {{ balance?.toLocaleString('ru-RU') || '0' }} ₽
+                                </div>
+                                <div class="generations-info">
+                                    {{ remainingGenerations }} {{ remainingGenerations === 1 ? 'генерация' : remainingGenerations >= 2 && remainingGenerations <= 4 ? 'генерации' : 'генераций' }}
+                                </div>
                             </div>
                             <div class="balance-buttons">
                                 <q-btn
@@ -1666,9 +1678,21 @@ const authTelegram = async () => {
         gap: 12px;
     }
     
+    .balance-info {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+    }
+    
     .balance-amount {
         font-size: 28px;
-        text-align: center;
+        text-align: left;
+    }
+    
+    .generations-info {
+        text-align: right;
+        font-size: 14px;
     }
     
     .balance-btn {
@@ -2682,12 +2706,26 @@ body.tg-viewport .telegram-connect-simple {
     align-items: flex-start;
 }
 
+.balance-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
 .balance-amount {
     font-size: 32px;
     font-weight: 700;
     color: #1e293b;
     line-height: 1;
     text-align: left;
+}
+
+.generations-info {
+    font-size: 16px;
+    font-weight: 500;
+    color: #64748b;
+    text-align: right;
 }
 
 .balance-buttons {

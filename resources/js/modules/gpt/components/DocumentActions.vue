@@ -128,7 +128,7 @@
         </div>
 
         <!-- Кнопка запуска полной генерации -->
-        <div v-if="canStartFullGeneration && !canPay" class="action-card">
+        <div v-if="canStartFullGeneration && !canPay" class="action-card">            
             <div class="action-item">
                 <div class="action-info">
                     <h4 class="action-name">Завершить создание</h4>
@@ -144,6 +144,13 @@
                     unelevated
                     no-caps
                 />
+            </div>
+
+            <!-- Компактная информация о стоимости -->
+            <div class="cost-info">
+                <div class="generations-remaining" :class="{ 'last-generation': Math.floor((balance || 0) / 100) === 1 }">
+                    {{ getGenerationsText() }}
+                </div>
             </div>
         </div>
         
@@ -451,6 +458,43 @@ const handleSubscriptionPayment = async () => {
 onMounted(async () => {
     await loadUserContactData();
 });
+
+const getGenerationsText = () => {
+    const remainingGenerations = Math.floor((props.balance || 0) / 100);
+    
+    if (remainingGenerations === 0) {
+        return 'Осталось 0 генераций';
+    } else if (remainingGenerations === 1) {
+        return 'Осталась 1 генерация';
+    } else {
+        // Функция для правильного склонения
+        const getWordForm = (number) => {
+            const lastDigit = number % 10;
+            const lastTwoDigits = number % 100;
+            
+            // Исключения для 11, 12, 13, 14
+            if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
+                return 'генераций';
+            }
+            
+            // Правила склонения
+            if (lastDigit === 1) {
+                return 'генерация';
+            } else if (lastDigit >= 2 && lastDigit <= 4) {
+                return 'генерации';
+            } else {
+                return 'генераций';
+            }
+        };
+        
+        const wordForm = getWordForm(remainingGenerations);
+        const verb = remainingGenerations === 1 || (remainingGenerations % 10 === 1 && remainingGenerations % 100 !== 11) 
+            ? 'Осталась' 
+            : 'Осталось';
+            
+        return `${verb} ${remainingGenerations} ${wordForm}`;
+    }
+};
 </script>
 
 <style scoped>
@@ -687,12 +731,18 @@ onMounted(async () => {
 
 .primary-btn {
     background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
+    font-size: 16px;
+    padding: 18px 36px;
+    border-radius: 16px;
+    letter-spacing: 0.5px;
+    transform: translateZ(0);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .primary-btn:hover {
-    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
-    transform: translateY(-1px);
+    box-shadow: 0 12px 32px rgba(59, 130, 246, 0.4);
+    transform: translateY(-3px) scale(1.02);
 }
 
 .success-btn {
@@ -810,6 +860,23 @@ onMounted(async () => {
     
     .error-actions {
         flex-direction: column;
+    }
+
+    .cost-info {
+        gap: 12px;
+        font-size: 12px;
+        margin-top: 12px;
+        padding: 6px 12px;
+    }
+
+    .cost-separator {
+        margin: 0 2px;
+    }
+
+    .primary-btn {
+        padding: 16px 28px;
+        font-size: 15px;
+        border-radius: 14px;
     }
 }
 
@@ -982,5 +1049,77 @@ onMounted(async () => {
         font-size: 11px;
         line-height: 1.3;
     }
+}
+
+/* Блок информации о балансе */
+.balance-info-block {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 20px;
+    background: #f8fafc;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 24px;
+}
+
+.balance-info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.balance-label {
+    font-size: 14px;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.balance-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.price-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: #3b82f6;
+}
+
+.remaining-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: #059669;
+}
+
+/* Компактная информация о стоимости */
+.cost-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-top: 12px;
+    padding: 0;
+    background: transparent;
+    border-radius: 8px;
+    opacity: 0.8;
+    transition: opacity 0.2s ease;
+}
+
+.cost-info:hover {
+    opacity: 1;
+}
+
+.generations-remaining {
+    font-size: 12px;
+    font-weight: 500;
+    color: #64748b;
+    text-align: center;
+}
+
+.last-generation {
+    color: #ef4444;
+    font-weight: 600;
 }
 </style> 
