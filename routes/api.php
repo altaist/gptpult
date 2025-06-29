@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\LkController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -31,4 +32,9 @@ Route::middleware('web')->group(function () {
         ]);
     })->name('api.user.transitions')
       ->middleware('auth');
+
+    // API роут для тестового уменьшения баланса (только для разработки)
+    Route::post('/user/test-decrement-balance', [LkController::class, 'testDecrementBalance'])
+        ->name('api.user.test-decrement-balance')
+        ->middleware('auth');
 });
