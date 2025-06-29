@@ -754,6 +754,12 @@ onUnmounted(() => {
                                 class="payment-btn"
                             />
                         </div>
+                        
+                        <!-- Информация о территориальных ограничениях -->
+                        <div class="payment-restriction-notice">
+                            <q-icon name="info" class="restriction-icon" />
+                            <span>Оплата доступна с IP-адресов Российской Федерации</span>
+                        </div>
 
                         <!-- Преимущества абонемента -->
                         <div v-if="topUpAmount >= 300" class="subscription-benefits">
@@ -2310,6 +2316,27 @@ onUnmounted(() => {
 .benefit-icon {
     color: #10b981;
     font-size: 18px;
+    flex-shrink: 0;
+}
+
+/* Стили для уведомления о территориальных ограничениях */
+.payment-restriction-notice {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 500;
+    margin-top: 8px;
+}
+
+.restriction-icon {
+    color: #94a3b8;
+    font-size: 16px;
     flex-shrink: 0;
 }
 

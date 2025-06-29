@@ -29,6 +29,12 @@
                         no-caps
                     />
                     
+                    <!-- Информация о территориальных ограничениях -->
+                    <div class="payment-restriction-notice">
+                        <q-icon name="info" class="restriction-icon" />
+                        <span>Оплата доступна с IP-адресов Российской Федерации</span>
+                    </div>
+                    
                     <div class="subscription-benefits">
                         <div class="benefits-title">Что входит в абонемент:</div>
                         <div class="benefit-item">
@@ -641,5 +647,26 @@ const handleSubscriptionPayment = async () => {
     .error-actions {
         flex-direction: column;
     }
+}
+
+/* Стили для уведомления о территориальных ограничениях */
+.payment-restriction-notice {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 500;
+    margin-top: 12px;
+}
+
+.restriction-icon {
+    color: #94a3b8;
+    font-size: 16px;
+    flex-shrink: 0;
 }
 </style> 
