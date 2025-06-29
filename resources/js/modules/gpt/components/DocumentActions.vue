@@ -256,7 +256,8 @@ const handleSubscriptionPayment = async () => {
         const orderResponse = await apiClient.post(route('orders.process-without-document'), {
             amount: 300,
             order_data: {
-                purpose: 'balance_top_up'
+                purpose: 'balance_top_up',
+                source_document_id: props.document.id
             }
         });
 

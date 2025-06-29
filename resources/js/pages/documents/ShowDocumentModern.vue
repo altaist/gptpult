@@ -267,6 +267,7 @@ const currentDocument = ref(props.document);
 // Проверяем наличие параметра autoload в URL
 const urlParams = new URLSearchParams(window.location.search);
 const shouldAutoload = urlParams.get('autoload') === '1';
+const shouldStartGeneration = urlParams.get('start_generation') === '1';
 
 // Трекер статуса документа
 const {
@@ -442,6 +443,17 @@ onMounted(() => {
             isPollingActive.value = true;
             resumeTracking();
         }
+    }
+    
+    // Автоматический запуск генерации если есть параметр start_generation=1
+    if (shouldStartGeneration && getCanStartFullGeneration()) {
+        setTimeout(() => {
+            startFullGeneration();
+            // Удаляем параметр из URL после запуска
+            const currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.delete('start_generation');
+            window.history.replaceState({}, '', currentUrl.toString());
+        }, 1000); // Небольшая задержка для корректной инициализации
     }
 });
 

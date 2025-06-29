@@ -280,8 +280,8 @@ class PaymentController extends Controller
                     'id' => $order->id,
                     'amount' => $order->amount
                 ],
-                'isDocument' => (bool) $order->document_id,
-                'documentId' => $order->document_id
+                'isDocument' => (bool) $order->document_id || (isset($order->order_data['source_document_id'])),
+                'documentId' => $order->document_id ?: ($order->order_data['source_document_id'] ?? null)
             ]);
 
         } catch (Exception $e) {

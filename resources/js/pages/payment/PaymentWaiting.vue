@@ -215,7 +215,9 @@ const checkPaymentStatus = async () => {
 const handleSuccess = () => {
     if (props.isDocument && props.documentId) {
         // Для документов: переход к документу с автозагрузкой генерации
-        router.visit(route('documents.show', props.documentId) + '?autoload=1');
+        // Если заказ был для пополнения баланса (без прямого document_id в заказе), 
+        // добавляем параметр для автоматического запуска генерации
+        router.visit(route('documents.show', props.documentId) + '?autoload=1&start_generation=1');
     } else {
         // Для пополнения баланса: переход в личный кабинет
         goToDashboard();
