@@ -22,16 +22,9 @@ Route::middleware('web')->group(function () {
         ->middleware('auth');
         
     // API роут для получения транзакций пользователя
-    Route::get('/user/transitions', function (Request $request) {
-        $user = $request->user();
-        $transitions = $user->transitions()->latest()->limit(50)->get();
-        
-        return response()->json([
-            'success' => true,
-            'transitions' => $transitions
-        ]);
-    })->name('api.user.transitions')
-      ->middleware('auth');
+    Route::get('/user/transitions', [LkController::class, 'getTransitionHistory'])
+        ->name('api.user.transitions')
+        ->middleware('auth');
 
     // API роут для тестового уменьшения баланса (только для разработки)
     Route::post('/user/test-decrement-balance', [LkController::class, 'testDecrementBalance'])

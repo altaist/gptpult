@@ -508,7 +508,9 @@ const testDecrementBalance = async () => {
 
 // Форматировать сумму операции
 const formatTransitionAmount = (transition) => {
-  const amount = Math.abs(transition.difference);
+  // Приводим difference к числу и берем абсолютное значение
+  const difference = parseFloat(transition.difference) || 0;
+  const amount = Math.abs(difference);
   const sign = transition.is_credit ? '+' : '-';
   return `${sign}${amount.toLocaleString('ru-RU')} ₽`;
 };
@@ -861,8 +863,8 @@ onUnmounted(() => {
                                 <div class="transition-description">{{ transition.description }}</div>
                                 <div class="transition-date">{{ formatTransitionDate(transition.created_at) }}</div>
                                 <div class="transition-balance">
-                                    Баланс: {{ transition.amount_before.toLocaleString('ru-RU') }} ₽ 
-                                    → {{ transition.amount_after.toLocaleString('ru-RU') }} ₽
+                                    Баланс: {{ parseFloat(transition.amount_before || 0).toLocaleString('ru-RU') }} ₽ 
+                                    → {{ parseFloat(transition.amount_after || 0).toLocaleString('ru-RU') }} ₽
                                 </div>
                             </div>
                             <div class="transition-amount" :style="{ color: getTransitionAmountColor(transition) }">
