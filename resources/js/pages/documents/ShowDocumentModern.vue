@@ -582,29 +582,27 @@ const startFullGeneration = async () => {
     }
 };
 
-const { downloadFile } = useTelegramWebApp();
+const { downloadDocumentFile } = useTelegramWebApp();
 
 const downloadWord = async () => {
     try {
         isDownloading.value = true;
-        const response = await apiClient.post(route('documents.download-word', props.document.id));
         
-        // Проверяем, был ли файл отправлен в Telegram
-        if (response.telegram_sent) {
+        // Используем новую функцию для скачивания
+        const result = await downloadDocumentFile(props.document.id);
+        
+        if (result.telegram_sent) {
             showModernNotification({
                 type: 'positive',
                 title: 'Документ отправлен',
-                message: 'Документ отправлен в Telegram чат',
+                message: result.message || 'Документ отправлен в Telegram чат',
                 icon: 'send'
             });
         } else {
-            // Используем утилиту для скачивания
-            downloadFile(response.url, response.filename);
-
             showModernNotification({
                 type: 'positive',
                 title: 'Документ готов',
-                message: 'Документ успешно сгенерирован и скачан',
+                message: result.message || 'Документ успешно скачан',
                 icon: 'download_done'
             });
         }
@@ -612,7 +610,7 @@ const downloadWord = async () => {
         showModernNotification({
             type: 'negative',
             title: 'Ошибка скачивания',
-            message: error.response?.data?.message || 'Ошибка при генерации документа',
+            message: error.message || 'Ошибка при скачивании документа',
             icon: 'download_for_offline'
         });
     } finally {

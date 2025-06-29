@@ -351,12 +351,11 @@ class DocumentController extends Controller
                 }
             }
 
-            return response()->json([
-                'message' => 'Документ успешно сгенерирован',
-                'url' => $file->getPublicUrl(),
-                'filename' => $file->display_name,
-                'telegram_sent' => false
+            // Для обычного браузера - возвращаем файл для прямого скачивания
+            return response()->download($file->getFullPath(), $file->display_name, [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
             ]);
+
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Ошибка при генерации документа: ' . $e->getMessage()

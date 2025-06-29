@@ -103,7 +103,7 @@ import DocumentPaymentPanel from '@/modules/gpt/components/DocumentPaymentPanel.
 import { useTelegramWebApp } from '@/composables/telegramWebApp';
 
 const $q = useQuasar();
-const { downloadFile } = useTelegramWebApp();
+const { downloadDocumentFile } = useTelegramWebApp();
 const isDownloading = ref(false);
 const isStartingFullGeneration = ref(false);
 const isPollingActive = ref(false); // Флаг активного отслеживания
@@ -316,27 +316,25 @@ const startFullGeneration = async () => {
 const downloadWord = async () => {
     try {
         isDownloading.value = true;
-        const response = await apiClient.post(route('documents.download-word', props.document.id));
         
-        // Проверяем, был ли файл отправлен в Telegram
-        if (response.telegram_sent) {
+        // Используем новую функцию для скачивания
+        const result = await downloadDocumentFile(props.document.id);
+        
+        if (result.telegram_sent) {
             $q.notify({
                 type: 'positive',
-                message: 'Документ отправлен в Telegram'
+                message: result.message || 'Документ отправлен в Telegram'
             });
         } else {
-            // Используем утилиту для скачивания
-            downloadFile(response.url, response.filename);
-            
             $q.notify({
                 type: 'positive',
-                message: 'Документ успешно сгенерирован'
+                message: result.message || 'Документ успешно скачан'
             });
         }
     } catch (error) {
         $q.notify({
             type: 'negative',
-            message: error.response?.data?.message || 'Ошибка при генерации документа'
+            message: error.message || 'Ошибка при скачивании документа'
         });
     } finally {
         isDownloading.value = false;
