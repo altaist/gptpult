@@ -8,6 +8,7 @@ use App\Models\DocumentType;
 use App\Services\Documents\DocumentService;
 use App\Services\Documents\DocumentJobService;
 use App\Services\Documents\Files\WordDocumentService;
+use App\Services\Telegram\TelegramNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -21,15 +22,18 @@ class DocumentController extends Controller
     protected DocumentService $documentService;
     protected DocumentJobService $documentJobService;
     protected WordDocumentService $wordDocumentService;
+    protected TelegramNotificationService $telegramNotificationService;
 
     public function __construct(
         DocumentService $documentService,
         DocumentJobService $documentJobService,
-        WordDocumentService $wordDocumentService
+        WordDocumentService $wordDocumentService,
+        TelegramNotificationService $telegramNotificationService
     ) {
         $this->documentService = $documentService;
         $this->documentJobService = $documentJobService;
         $this->wordDocumentService = $wordDocumentService;
+        $this->telegramNotificationService = $telegramNotificationService;
     }
 
     /**
@@ -315,41 +319,48 @@ class DocumentController extends Controller
     /**
      * Сгенерировать и скачать Word-документ
      */
-    public function downloadWord(Document $document)
+    public function downloadWord(Document $document, Request $request)
     {
         $this->authorize('view', $document);
 
         try {
             $file = $this->wordDocumentService->generate($document);
 
+            // Проверяем, работает ли пользователь в Telegram WebApp
+            $isTelegramWebApp = $request->header('X-Telegram-User-Id') || 
+                               $request->session()->has('telegram_user_id') ||
+                               str_contains($request->header('User-Agent', ''), 'Telegram');
+
+            // Если пользователь в Telegram и у него есть связь с ботом, отправляем файл через бот
+            if ($isTelegramWebApp && $document->user->telegram_id) {
+                try {
+                    $this->telegramNotificationService->sendDocumentFile($document->user, $file);
+                    
+                    return response()->json([
+                        'message' => 'Документ отправлен в Telegram',
+                        'url' => $file->getPublicUrl(),
+                        'filename' => $file->display_name,
+                        'telegram_sent' => true
+                    ]);
+                } catch (\Exception $e) {
+                    // Если не удалось отправить через Telegram, возвращаем обычную ссылку
+                    \Illuminate\Support\Facades\Log::warning('Failed to send document via Telegram', [
+                        'document_id' => $document->id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+
             return response()->json([
                 'message' => 'Документ успешно сгенерирован',
                 'url' => $file->getPublicUrl(),
-                'filename' => $file->display_name
+                'filename' => $file->display_name,
+                'telegram_sent' => false
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Ошибка при генерации документа: ' . $e->getMessage()
             ], 500);
-        }
-    }
-
-    /**
-     * Прямая загрузка Word-документа (для Telegram Web App)
-     */
-    public function downloadWordDirect(Document $document)
-    {
-        $this->authorize('view', $document);
-
-        try {
-            $file = $this->wordDocumentService->generate($document);
-            
-            // Возвращаем файл напрямую для загрузки
-            return response()->download($file->getFullPath(), $file->display_name, [
-                'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-            ]);
-        } catch (\Exception $e) {
-            abort(500, 'Ошибка при генерации документа: ' . $e->getMessage());
         }
     }
 

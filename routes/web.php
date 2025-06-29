@@ -49,7 +49,6 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/{document}', [DocumentController::class, 'update'])->name('update');
         Route::delete('/{document}', [DocumentController::class, 'destroy'])->name('destroy');
         Route::post('/{document}/download-word', [DocumentController::class, 'downloadWord'])->name('download-word');
-        Route::get('/{document}/download-word-direct', [DocumentController::class, 'downloadWordDirect'])->name('download-word-direct');
         
         // Маршруты для редактирования отдельных частей структуры
         Route::patch('/{document}/topic', [DocumentController::class, 'updateTopic'])->name('update-topic');

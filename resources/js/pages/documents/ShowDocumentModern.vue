@@ -212,7 +212,7 @@
 </template>
 
 <script setup>
-import { defineProps, ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
+import { defineProps, ref, computed, onMounted, onUnmounted } from 'vue';
 import { useQuasar } from 'quasar';
 import PageLayout from '@/components/shared/PageLayout.vue';
 import DocumentView from '@/modules/gpt/components/DocumentView.vue';
@@ -223,10 +223,11 @@ import { router } from '@inertiajs/vue3';
 import DocumentPaymentPanel from '@/modules/gpt/components/DocumentPaymentPanel.vue';
 import DocumentHeader from '@/modules/gpt/components/DocumentHeader.vue';
 import DocumentActions from '@/modules/gpt/components/DocumentActions.vue';
-import { useTelegramDownload } from '@/composables/useTelegramDownload';
+import { showModernNotification } from '@/utils/modernNotifications';
+import { useTelegramWebApp } from '@/composables/telegramWebApp';
 
 const $q = useQuasar();
-const { downloadFromApi, isDownloading: isDownloadingFile } = useTelegramDownload();
+const isDownloading = ref(false);
 const isStartingFullGeneration = ref(false);
 const isPollingActive = ref(false); // Флаг активного отслеживания
 
@@ -628,29 +629,42 @@ const startFullGeneration = async () => {
     }
 };
 
+const { downloadFile } = useTelegramWebApp();
+
 const downloadWord = async () => {
-    const success = await downloadFromApi(
-        route('documents.download-word', props.document.id),
-        {}, // requestOptions
-        {
-            onSuccess: (message) => {
-                showModernNotification({
-                    type: 'positive',
-                    title: 'Документ готов',
-                    message: message,
-                    icon: 'download_done'
-                });
-            },
-            onError: (error) => {
-                showModernNotification({
-                    type: 'negative',
-                    title: 'Ошибка скачивания',
-                    message: error,
-                    icon: 'download_for_offline'
-                });
-            }
+    try {
+        isDownloading.value = true;
+        const response = await apiClient.post(route('documents.download-word', props.document.id));
+        
+        // Проверяем, был ли файл отправлен в Telegram
+        if (response.telegram_sent) {
+            showModernNotification({
+                type: 'positive',
+                title: 'Документ отправлен',
+                message: 'Документ отправлен в Telegram чат',
+                icon: 'send'
+            });
+        } else {
+            // Используем утилиту для скачивания
+            downloadFile(response.url, response.filename);
+
+            showModernNotification({
+                type: 'positive',
+                title: 'Документ готов',
+                message: 'Документ успешно сгенерирован и скачан',
+                icon: 'download_done'
+            });
         }
-    );
+    } catch (error) {
+        showModernNotification({
+            type: 'negative',
+            title: 'Ошибка скачивания',
+            message: error.response?.data?.message || 'Ошибка при генерации документа',
+            icon: 'download_for_offline'
+        });
+    } finally {
+        isDownloading.value = false;
+    }
 };
 
 // Обработчик повторной генерации
@@ -901,9 +915,6 @@ const getEstimatedTime = () => {
 const goToDashboard = () => {
     router.visit('/lk');
 };
-
-// Обновляем состояние загрузки
-const isDownloading = computed(() => isDownloadingFile.value);
 </script>
 
 <style scoped>

@@ -5,6 +5,7 @@ namespace App\Services\Telegram;
 use App\Models\Document;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
+use App\Models\File;
 
 class TelegramNotificationService
 {
@@ -99,9 +100,40 @@ class TelegramNotificationService
     }
 
     /**
-     * Отправить файл документа пользователю
+     * Отправить готовый файл документа пользователю
      */
-    public function sendDocumentFile(Document $document): void
+    public function sendDocumentFile(User $user, File $file): void
+    {
+        if (!$this->canSendNotification($user)) {
+            return;
+        }
+
+        try {
+            // Читаем содержимое файла
+            $content = file_get_contents($file->getFullPath());
+            
+            if (!$content) {
+                Log::warning('Could not read document file', ['file_id' => $file->id]);
+                return;
+            }
+
+            // Отправляем файл через Telegram
+            $this->sendDocumentToTelegram($user->telegram_id, $content, $file->display_name);
+            
+        } catch (\Exception $e) {
+            Log::error('Failed to send document file to Telegram', [
+                'user_id' => $user->id,
+                'file_id' => $file->id,
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Отправить файл документа пользователю (для обратной совместимости)
+     */
+    public function sendDocumentFileByDocument(Document $document): void
     {
         $user = $document->user;
         
@@ -183,27 +215,6 @@ class TelegramNotificationService
     }
 
     /**
-     * Сгенерировать Word документ
-     */
-    private function generateWordDocument(Document $document): ?string
-    {
-        try {
-            // Используем существующий сервис генерации Word
-            $wordService = app(\App\Services\Documents\Files\WordDocumentService::class);
-            $file = $wordService->generate($document);
-            
-            // Читаем содержимое файла
-            return file_get_contents($file->getFullPath());
-        } catch (\Exception $e) {
-            Log::error('Failed to generate Word document for Telegram', [
-                'document_id' => $document->id,
-                'error' => $e->getMessage()
-            ]);
-            return null;
-        }
-    }
-
-    /**
      * Отправить документ в Telegram
      */
     private function sendDocumentToTelegram(int $chatId, string $content, string $title): void
@@ -256,6 +267,27 @@ class TelegramNotificationService
                 'chat_id' => $chatId,
                 'error' => $e->getMessage()
             ]);
+        }
+    }
+
+    /**
+     * Сгенерировать Word документ
+     */
+    private function generateWordDocument(Document $document): ?string
+    {
+        try {
+            // Используем существующий сервис генерации Word
+            $wordService = app(\App\Services\Documents\Files\WordDocumentService::class);
+            $file = $wordService->generate($document);
+            
+            // Читаем содержимое файла
+            return file_get_contents($file->getFullPath());
+        } catch (\Exception $e) {
+            Log::error('Failed to generate Word document for Telegram', [
+                'document_id' => $document->id,
+                'error' => $e->getMessage()
+            ]);
+            return null;
         }
     }
 } 

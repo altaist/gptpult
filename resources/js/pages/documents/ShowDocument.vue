@@ -90,7 +90,7 @@
 </template>
 
 <script setup>
-import { defineProps, ref, computed, onMounted, onUnmounted } from 'vue';
+import { defineProps, ref, computed } from 'vue';
 import { useQuasar } from 'quasar';
 import PageLayout from '@/components/shared/PageLayout.vue';
 import DocumentView from '@/modules/gpt/components/DocumentView.vue';
@@ -100,10 +100,11 @@ import { useDocumentStatus } from '@/composables/documentStatus';
 import { apiClient } from '@/composables/api';
 import { router } from '@inertiajs/vue3';
 import DocumentPaymentPanel from '@/modules/gpt/components/DocumentPaymentPanel.vue';
-import { useTelegramDownload } from '@/composables/useTelegramDownload';
+import { useTelegramWebApp } from '@/composables/telegramWebApp';
 
 const $q = useQuasar();
-const { downloadFromApi, isDownloading: isDownloadingFile } = useTelegramDownload();
+const { downloadFile } = useTelegramWebApp();
+const isDownloading = ref(false);
 const isStartingFullGeneration = ref(false);
 const isPollingActive = ref(false); // Флаг активного отслеживания
 
@@ -313,28 +314,34 @@ const startFullGeneration = async () => {
 };
 
 const downloadWord = async () => {
-    const success = await downloadFromApi(
-        route('documents.download-word', props.document.id),
-        {}, // requestOptions
-        {
-            onSuccess: (message) => {
-                $q.notify({
-                    type: 'positive',
-                    message: message
-                });
-            },
-            onError: (error) => {
-                $q.notify({
-                    type: 'negative',
-                    message: error
-                });
-            }
+    try {
+        isDownloading.value = true;
+        const response = await apiClient.post(route('documents.download-word', props.document.id));
+        
+        // Проверяем, был ли файл отправлен в Telegram
+        if (response.telegram_sent) {
+            $q.notify({
+                type: 'positive',
+                message: 'Документ отправлен в Telegram'
+            });
+        } else {
+            // Используем утилиту для скачивания
+            downloadFile(response.url, response.filename);
+            
+            $q.notify({
+                type: 'positive',
+                message: 'Документ успешно сгенерирован'
+            });
         }
-    );
+    } catch (error) {
+        $q.notify({
+            type: 'negative',
+            message: error.response?.data?.message || 'Ошибка при генерации документа'
+        });
+    } finally {
+        isDownloading.value = false;
+    }
 };
-
-// Обновляем состояние загрузки
-const isDownloading = computed(() => isDownloadingFile.value);
 
 // Определяем можно ли редактировать документ
 const canEdit = computed(() => {
