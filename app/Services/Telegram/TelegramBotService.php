@@ -570,7 +570,8 @@ class TelegramBotService
         $messageText = "✅ <b>Авторизация через Telegram успешна!</b>\n\n" .
             "Добро пожаловать, {$finalUser->name}!\n\n";
             
-        if ($documentsTransferred > 0) {
+        // Показываем количество перенесенных документов только в режиме разработки/тестирования
+        if ($documentsTransferred > 0 && (app()->environment(['local', 'testing']) || config('app.debug'))) {
             $messageText .= "📄 Перенесено документов: {$documentsTransferred}\n\n";
         }
         
