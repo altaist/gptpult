@@ -416,12 +416,21 @@ const animateRandomKeyPress = () => {
 // Автоматически переходим на загрузочный экран если документ генерируется
 const checkAndRedirectToLoadingScreen = () => {
     const status = currentDocument.value?.status;
+    
+    // Дополнительная проверка: если мы уже на загрузочном экране, не делаем ничего
+    if (shouldAutoload) {
+        console.log('Уже на загрузочном экране, пропускаем перенаправление');
+        return;
+    }
+    
     // Проверяем если документ генерируется и мы не на загрузочном экране
     if ((status === 'full_generating' || status === 'pre_generating') && !shouldAutoload) {
-        console.log('Документ генерируется, переходим на загрузочный экран...');
+        console.log('Документ генерируется, переходим на загрузочный экран...', status);
         // Если документ генерируется, но мы не на загрузочном экране - переходим туда
         const currentUrl = new URL(window.location.href);
         currentUrl.searchParams.set('autoload', '1');
+        // Удаляем опасные параметры
+        currentUrl.searchParams.delete('start_generation');
         
         // Используем timeout чтобы дать возможность завершиться текущим операциям
         setTimeout(() => {
@@ -432,6 +441,29 @@ const checkAndRedirectToLoadingScreen = () => {
 
 // Проверяем при монтировании компонента
 onMounted(() => {
+    // Сразу очищаем URL от потенциально опасных параметров
+    const currentUrl = new URL(window.location.href);
+    let urlChanged = false;
+    
+    // Если документ уже генерируется или готов, принудительно удаляем все параметры автозапуска
+    const currentStatus = currentDocument.value?.status;
+    if (['full_generating', 'full_generated'].includes(currentStatus)) {
+        if (currentUrl.searchParams.has('start_generation')) {
+            currentUrl.searchParams.delete('start_generation');
+            urlChanged = true;
+        }
+        if (currentUrl.searchParams.has('autoload') && currentStatus === 'full_generated') {
+            currentUrl.searchParams.delete('autoload');
+            urlChanged = true;
+        }
+    }
+    
+    // Обновляем URL если что-то изменилось
+    if (urlChanged) {
+        window.history.replaceState({}, '', currentUrl.toString());
+        console.log('URL очищен от параметров автозапуска для статуса:', currentStatus);
+    }
+    
     checkAndRedirectToLoadingScreen();
     
     if (getIsGenerating()) {
@@ -451,8 +483,16 @@ onMounted(() => {
         const currentStatus = currentDocument.value?.status;
         const isAlreadyGenerating = ['full_generating', 'full_generated'].includes(currentStatus);
         
+        console.log('Проверка автозапуска:', {
+            shouldStartGeneration,
+            canStart: getCanStartFullGeneration(),
+            currentStatus,
+            isAlreadyGenerating
+        });
+        
         if (!isAlreadyGenerating) {
             setTimeout(() => {
+                console.log('Запускаем полную генерацию автоматически');
                 startFullGeneration();
                 // Удаляем параметр из URL после запуска
                 const currentUrl = new URL(window.location.href);
@@ -460,6 +500,7 @@ onMounted(() => {
                 window.history.replaceState({}, '', currentUrl.toString());
             }, 1000); // Небольшая задержка для корректной инициализации
         } else {
+            console.log('Автозапуск отменен - документ уже генерируется или готов:', currentStatus);
             // Если документ уже генерируется или сгенерирован, просто удаляем параметр
             const currentUrl = new URL(window.location.href);
             currentUrl.searchParams.delete('start_generation');
@@ -598,13 +639,13 @@ const startFullGeneration = async () => {
             icon: 'auto_awesome'
         });
 
-        // Небольшая задержка для завершения локального обновления
-        setTimeout(() => {
-            // Перенаправляем на загрузочный экран с параметром autoload
-            const currentUrl = new URL(window.location.href);
-            currentUrl.searchParams.set('autoload', '1');
-            window.location.href = currentUrl.toString();
-        }, 200);
+        // Убираем автоматическое перенаправление - остаемся на текущей странице
+        // setTimeout(() => {
+        //     // Перенаправляем на загрузочный экран с параметром autoload
+        //     const currentUrl = new URL(window.location.href);
+        //     currentUrl.searchParams.set('autoload', '1');
+        //     window.location.href = currentUrl.toString();
+        // }, 200);
         
     } catch (error) {
         showModernNotification({
