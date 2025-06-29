@@ -70,18 +70,11 @@ const createYookassaPayment = async (orderId) => {
   isProcessingPayment.value = true
 
   try {
-    // Проверяем, работаем ли мы в Telegram WebApp
-    const isTelegramWebApp = window.Telegram?.WebApp?.initData;
-    
     const headers = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
+      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
     };
-    
-    // Добавляем CSRF токен только если не в Telegram WebApp
-    if (!isTelegramWebApp) {
-      headers['X-CSRF-TOKEN'] = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-    }
     
     const url = `/api/payment/yookassa/create/${orderId}`
     const response = await fetch(url, {
@@ -99,13 +92,7 @@ const createYookassaPayment = async (orderId) => {
 
     if (data.success) {
       // Перенаправляем на страницу оплаты ЮКасса
-      if (window.Telegram?.WebApp?.openLink) {
-        // В Telegram WebApp используем специальный метод для открытия внешних ссылок
-        window.Telegram.WebApp.openLink(data.payment_url);
-      } else {
-        // В обычном браузере используем стандартное перенаправление
-        window.location.href = data.payment_url;
-      }
+      window.location.href = data.payment_url;
     } else {
       throw new Error(data.error || 'Ошибка создания платежа')
     }

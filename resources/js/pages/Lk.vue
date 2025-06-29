@@ -284,19 +284,12 @@ const processTopUp = async () => {
   isCreatingOrder.value = true;
 
   try {
-    // Проверяем, работаем ли мы в Telegram WebApp
-    const isTelegramWebApp = window.Telegram?.WebApp?.initData;
-    
     // Создаем заказ на пополнение
     const orderHeaders = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
+      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
     };
-    
-    // Добавляем CSRF токен только если не в Telegram WebApp
-    if (!isTelegramWebApp) {
-      orderHeaders['X-CSRF-TOKEN'] = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-    }
     
     const orderResponse = await fetch('/orders/process', {
       method: 'POST',
@@ -324,12 +317,8 @@ const processTopUp = async () => {
     const paymentHeaders = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
+      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
     };
-    
-    // Добавляем CSRF токен только если не в Telegram WebApp
-    if (!isTelegramWebApp) {
-      paymentHeaders['X-CSRF-TOKEN'] = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-    }
     
     const paymentResponse = await fetch(`/api/payment/yookassa/create/${orderData.order_id}`, {
       method: 'POST',
@@ -364,23 +353,10 @@ const processTopUp = async () => {
     });
     
     // Перенаправляем на оплату ЮКасса
-    if (window.Telegram?.WebApp?.openLink) {
-      // В Telegram WebApp используем специальный метод для открытия внешних ссылок
-      console.log('Opening payment URL in Telegram WebApp:', paymentData.payment_url);
-      
-      // Показываем кнопку "Назад" в Telegram
-      if (isTelegramMiniApp.value && showBackButton) {
-        showBackButton(() => {
-          // При нажатии на "Назад" возвращаемся в ЛК
-          window.location.href = '/lk';
-        });
-      }
-      
-      window.Telegram.WebApp.openLink(paymentData.payment_url);
-    } else {
-      // В обычном браузере используем стандартное перенаправление
-      window.location.href = paymentData.payment_url;
-    }
+    // Убираем условие для Telegram WebApp и всегда используем обычное перенаправление
+    // чтобы ЮKassa открывалась внутри веб-приложения, а не во встроенном браузере
+    console.log('Redirecting to payment URL:', paymentData.payment_url);
+    window.location.href = paymentData.payment_url;
 
   } catch (error) {
     console.error('Ошибка при создании платежа:', error);
@@ -399,17 +375,10 @@ const loadTransitions = async () => {
   isLoadingTransitions.value = true;
   
   try {
-    // Проверяем, работаем ли мы в Telegram WebApp
-    const isTelegramWebApp = window.Telegram?.WebApp?.initData;
-    
     const headers = {
       'Accept': 'application/json',
+      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
     };
-    
-    // Добавляем CSRF токен только если не в Telegram WebApp
-    if (!isTelegramWebApp) {
-      headers['X-CSRF-TOKEN'] = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-    }
     
     const response = await fetch('/api/user/transitions', {
       headers: headers,
