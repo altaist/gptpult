@@ -190,7 +190,7 @@ class WordDocumentService
         $year = date('Y');
         $footer->addText(
             '[Город] ' . $year,
-            ['size' => 14, 'name' => 'Times New Roman'],
+            ['size' => 14, 'name' => 'Times New Roman', 'color' => '0066CC'],
             ['alignment' => Jc::CENTER]
         );
         
@@ -215,19 +215,19 @@ class WordDocumentService
         
         $section->addText(
             '«[НАИМЕНОВАНИЕ УНИВЕРСИТЕТА]»',
-            ['size' => 12, 'bold' => true, 'name' => 'Times New Roman'],
+            ['size' => 12, 'bold' => true, 'name' => 'Times New Roman', 'color' => '0066CC'],
             ['alignment' => Jc::CENTER, 'spaceAfter' => 120]
         );
         
         $section->addText(
             '[Наименование института/факультета]',
-            ['size' => 12, 'name' => 'Times New Roman'],
+            ['size' => 12, 'name' => 'Times New Roman', 'color' => '0066CC'],
             ['alignment' => Jc::CENTER, 'spaceAfter' => 60]
         );
         
         $section->addText(
             'Кафедра [наименование кафедры]',
-            ['size' => 12, 'name' => 'Times New Roman'],
+            ['size' => 12, 'name' => 'Times New Roman', 'color' => '0066CC'],
             ['alignment' => Jc::CENTER, 'spaceAfter' => 200]
         );
         
@@ -282,13 +282,13 @@ class WordDocumentService
         
         $rightCell->addText(
             'студент [курс] курса группы [номер группы]',
-            ['size' => 12, 'name' => 'Times New Roman'],
+            ['size' => 12, 'name' => 'Times New Roman', 'color' => '0066CC'],
             ['alignment' => Jc::LEFT, 'spaceAfter' => 120]
         );
         
         $rightCell->addText(
             '___________________ [Фамилия И.О.]',
-            ['size' => 12, 'name' => 'Times New Roman'],
+            ['size' => 12, 'name' => 'Times New Roman', 'color' => '0066CC'],
             ['alignment' => Jc::LEFT, 'spaceAfter' => 200]
         );
         
@@ -301,13 +301,13 @@ class WordDocumentService
         
         $rightCell->addText(
             '[ученая степень, ученое звание]',
-            ['size' => 12, 'name' => 'Times New Roman'],
+            ['size' => 12, 'name' => 'Times New Roman', 'color' => '0066CC'],
             ['alignment' => Jc::LEFT, 'spaceAfter' => 120]
         );
         
         $rightCell->addText(
             '___________________ [Фамилия И.О.]',
-            ['size' => 12, 'name' => 'Times New Roman'],
+            ['size' => 12, 'name' => 'Times New Roman', 'color' => '0066CC'],
             ['alignment' => Jc::LEFT, 'spaceAfter' => 200]
         );
         
