@@ -165,50 +165,165 @@ class WordDocumentService
         ]);
     }
 
+    /**
+     * Создает титульный лист по ГОСТ 7.32-2017 и ГОСТ 2.105-95
+     * Содержит заглушки для заполнения пользователем:
+     * - Наименование университета
+     * - Институт/факультет и кафедра
+     * - Курс и группа студента
+     * - ФИО студента и руководителя
+     * - Ученая степень и звание руководителя
+     * - Город
+     */
     private function createTitlePage(Document $document): void
     {
         $section = $this->phpWord->addSection([
-            'breakType' => 'nextPage'
+            'breakType' => 'nextPage',
+            'marginTop' => 850,    // 3 см сверху в твипах (1 см = 567 твипов)
+            'marginBottom' => 850, // 3 см снизу
+            'marginLeft' => 850,   // 3 см слева
+            'marginRight' => 567   // 2 см справа (по ГОСТ)
         ]);
         
-        // Добавление отступов для центрирования по вертикали
-        $section->addTextBreak(8);
+        // Верхняя часть - наименование министерства и организации
+        $section->addText(
+            'МИНИСТЕРСТВО НАУКИ И ВЫСШЕГО ОБРАЗОВАНИЯ РОССИЙСКОЙ ФЕДЕРАЦИИ',
+            ['size' => 12, 'bold' => true, 'allCaps' => true, 'name' => 'Times New Roman'],
+            ['alignment' => Jc::CENTER, 'spaceAfter' => 120]
+        );
         
-        // Декодируем заголовок документа
+        $section->addText(
+            'Федеральное государственное бюджетное образовательное учреждение',
+            ['size' => 12, 'name' => 'Times New Roman'],
+            ['alignment' => Jc::CENTER, 'spaceAfter' => 60]
+        );
+        
+        $section->addText(
+            'высшего образования',
+            ['size' => 12, 'name' => 'Times New Roman'],
+            ['alignment' => Jc::CENTER, 'spaceAfter' => 60]
+        );
+        
+        $section->addText(
+            '«[НАИМЕНОВАНИЕ УНИВЕРСИТЕТА]»',
+            ['size' => 12, 'bold' => true, 'name' => 'Times New Roman'],
+            ['alignment' => Jc::CENTER, 'spaceAfter' => 120]
+        );
+        
+        $section->addText(
+            '[Наименование института/факультета]',
+            ['size' => 12, 'name' => 'Times New Roman'],
+            ['alignment' => Jc::CENTER, 'spaceAfter' => 60]
+        );
+        
+        $section->addText(
+            'Кафедра [наименование кафедры]',
+            ['size' => 12, 'name' => 'Times New Roman'],
+            ['alignment' => Jc::CENTER, 'spaceAfter' => 200]
+        );
+        
+        // Отступ перед основной частью
+        $section->addTextBreak(2);
+        
+        // Тип работы
+        $documentType = $document->documentType->name ?? 'КУРСОВАЯ РАБОТА';
+        $section->addText(
+            strtoupper($documentType),
+            ['size' => 16, 'bold' => true, 'allCaps' => true, 'name' => 'Times New Roman'],
+            ['alignment' => Jc::CENTER, 'spaceAfter' => 200]
+        );
+        
+        // Тема работы
         $decodedTitle = $this->decodeUnicodeString($document->title);
-        
-        // Основной заголовок
         $section->addText(
-            strtoupper($decodedTitle),
-            ['bold' => true, 'size' => 20, 'allCaps' => true, 'name' => 'Times New Roman'],
-            'TitleMain'
+            'по теме:',
+            ['size' => 14, 'name' => 'Times New Roman'],
+            ['alignment' => Jc::CENTER, 'spaceAfter' => 120]
         );
         
-        // Тема (если есть)
-        if (isset($document->structure['topic']) && $document->structure['topic'] !== $document->title) {
-            $decodedTopic = $this->decodeUnicodeString($document->structure['topic']);
-            $section->addText(
-                $decodedTopic,
-                ['size' => 16, 'name' => 'Times New Roman'],
-                'TitleSub'
-            );
-        }
-        
-        // Большой отступ
-        $section->addTextBreak(12);
-        
-        // Информация об авторе
         $section->addText(
-            'Автор: ' . $document->user->name,
-            ['size' => 14, 'name' => 'Times New Roman'],
-            'AuthorInfo'
+            '«' . $decodedTitle . '»',
+            ['size' => 14, 'bold' => true, 'name' => 'Times New Roman'],
+            ['alignment' => Jc::CENTER, 'spaceAfter' => 300]
         );
         
-        // Дата создания
+        // Отступ перед нижней частью
+        $section->addTextBreak(3);
+        
+        // Правая часть - сведения об исполнителе и руководителе
+        // Создаем невидимую таблицу для правильного выравнивания
+        $table = $section->addTable([
+            'borderSize' => 0,
+            'cellMargin' => 0,
+            'width' => 100 * 50, // 100% ширины
+            'unit' => 'pct'
+        ]);
+        
+        // Первая строка - пустая для отступа слева
+        $table->addRow();
+        $table->addCell(7000)->addText('', ['size' => 12, 'name' => 'Times New Roman']); // Левая пустая часть
+        $rightCell = $table->addCell(6000); // Правая часть для информации
+        
+        // Сведения об исполнителе
+        $rightCell->addText(
+            'Выполнил:',
+            ['size' => 12, 'name' => 'Times New Roman'],
+            ['alignment' => Jc::LEFT, 'spaceAfter' => 120]
+        );
+        
+        $rightCell->addText(
+            'студент [курс] курса группы [номер группы]',
+            ['size' => 12, 'name' => 'Times New Roman'],
+            ['alignment' => Jc::LEFT, 'spaceAfter' => 120]
+        );
+        
+        $rightCell->addText(
+            '___________________ [Фамилия И.О.]',
+            ['size' => 12, 'name' => 'Times New Roman'],
+            ['alignment' => Jc::LEFT, 'spaceAfter' => 200]
+        );
+        
+        // Сведения о руководителе
+        $rightCell->addText(
+            'Руководитель:',
+            ['size' => 12, 'name' => 'Times New Roman'],
+            ['alignment' => Jc::LEFT, 'spaceAfter' => 120]
+        );
+        
+        $rightCell->addText(
+            '[ученая степень, ученое звание]',
+            ['size' => 12, 'name' => 'Times New Roman'],
+            ['alignment' => Jc::LEFT, 'spaceAfter' => 120]
+        );
+        
+        $rightCell->addText(
+            '___________________ [Фамилия И.О.]',
+            ['size' => 12, 'name' => 'Times New Roman'],
+            ['alignment' => Jc::LEFT, 'spaceAfter' => 200]
+        );
+        
+        // Оценка (если нужно)
+        $rightCell->addText(
+            'Оценка: ___________________',
+            ['size' => 12, 'name' => 'Times New Roman'],
+            ['alignment' => Jc::LEFT, 'spaceAfter' => 120]
+        );
+        
+        $rightCell->addText(
+            'Дата: _____________________',
+            ['size' => 12, 'name' => 'Times New Roman'],
+            ['alignment' => Jc::LEFT, 'spaceAfter' => 200]
+        );
+        
+        // Отступ перед нижней частью
+        $section->addTextBreak(4);
+        
+        // Место и год выполнения
+        $year = date('Y');
         $section->addText(
-            'Дата: ' . $document->created_at->format('d.m.Y'),
+            '[Город] ' . $year,
             ['size' => 14, 'name' => 'Times New Roman'],
-            'AuthorInfo'
+            ['alignment' => Jc::CENTER, 'spaceAfter' => 0]
         );
     }
 
