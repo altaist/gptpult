@@ -185,6 +185,15 @@ class WordDocumentService
             'marginRight' => 567   // 2 см справа (по ГОСТ)
         ]);
         
+        // Добавляем footer с городом и годом (только для титульного листа)
+        $footer = $section->addFooter();
+        $year = date('Y');
+        $footer->addText(
+            '[Город] ' . $year,
+            ['size' => 14, 'name' => 'Times New Roman'],
+            ['alignment' => Jc::CENTER]
+        );
+        
         // Верхняя часть - наименование министерства и организации
         $section->addText(
             'МИНИСТЕРСТВО НАУКИ И ВЫСШЕГО ОБРАЗОВАНИЯ РОССИЙСКОЙ ФЕДЕРАЦИИ',
@@ -314,17 +323,6 @@ class WordDocumentService
             ['size' => 12, 'name' => 'Times New Roman'],
             ['alignment' => Jc::LEFT, 'spaceAfter' => 200]
         );
-        
-        // Отступ перед нижней частью
-        $section->addTextBreak(4);
-        
-        // Место и год выполнения
-        $year = date('Y');
-        $section->addText(
-            '[Город] ' . $year,
-            ['size' => 14, 'name' => 'Times New Roman'],
-            ['alignment' => Jc::CENTER, 'spaceAfter' => 0]
-        );
     }
 
     private function createTableOfContents(Document $document): void
@@ -332,6 +330,14 @@ class WordDocumentService
         $section = $this->phpWord->addSection([
             'breakType' => 'nextPage'
         ]);
+        
+        // Добавляем footer с номером страницы
+        $footer = $section->addFooter();
+        $footer->addPreserveText(
+            '{PAGE}',
+            ['size' => 12, 'name' => 'Times New Roman'],
+            ['alignment' => Jc::CENTER]
+        );
         
         // Заголовок содержания
         $section->addText(
@@ -383,6 +389,14 @@ class WordDocumentService
         $section = $this->phpWord->addSection([
             'breakType' => 'nextPage'
         ]);
+        
+        // Добавляем footer с номером страницы
+        $footer = $section->addFooter();
+        $footer->addPreserveText(
+            '{PAGE}',
+            ['size' => 12, 'name' => 'Times New Roman'],
+            ['alignment' => Jc::CENTER]
+        );
         
         // Отладочная информация
         \Illuminate\Support\Facades\Log::info('WordDocumentService: обработка content поля', [
@@ -485,6 +499,14 @@ class WordDocumentService
         $section = $this->phpWord->addSection([
             'breakType' => 'nextPage'
         ]);
+        
+        // Добавляем footer с номером страницы
+        $footer = $section->addFooter();
+        $footer->addPreserveText(
+            '{PAGE}',
+            ['size' => 12, 'name' => 'Times New Roman'],
+            ['alignment' => Jc::CENTER]
+        );
         
         // Заголовок списка источников согласно ГОСТ
         $section->addTitle('СПИСОК ИСПОЛЬЗОВАННЫХ ИСТОЧНИКОВ', 1);
