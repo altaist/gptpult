@@ -20,6 +20,8 @@ class VerifyCsrfToken extends Middleware
         'api/user/test-decrement-balance',
         'api/user/update-contact',
         'orders/process',
+        'login/auto',
+        'register/auto',
     ];
 
     /**
@@ -46,7 +48,7 @@ class VerifyCsrfToken extends Middleware
         );
         
         // Логируем для отладки
-        if (str_starts_with($request->path(), 'api/') || str_starts_with($request->path(), 'orders/')) {
+        if (str_starts_with($request->path(), 'api/') || str_starts_with($request->path(), 'orders/') || str_starts_with($request->path(), 'login/') || str_starts_with($request->path(), 'register/')) {
             \Illuminate\Support\Facades\Log::info('CSRF Check', [
                 'path' => $request->path(),
                 'user_agent' => $userAgent,
@@ -61,8 +63,8 @@ class VerifyCsrfToken extends Middleware
             ]);
         }
 
-        // Если это Telegram WebApp, пропускаем CSRF для API маршрутов и orders/process
-        if ($isTelegram && (str_starts_with($request->path(), 'api/') || str_starts_with($request->path(), 'orders/'))) {
+        // Если это Telegram WebApp, пропускаем CSRF для API маршрутов, orders/process, login/auto и register/auto
+        if ($isTelegram && (str_starts_with($request->path(), 'api/') || str_starts_with($request->path(), 'orders/') || str_starts_with($request->path(), 'login/') || str_starts_with($request->path(), 'register/'))) {
             return true;
         }
 
