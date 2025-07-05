@@ -45,6 +45,8 @@
         </TransitionGroup>
     </div>
 
+    <Head :title="pageTitle" />
+
     <page-layout
         :is-sticky="true"
         :auto-auth="true"
@@ -213,7 +215,7 @@
 </template>
 
 <script setup>
-import { defineProps, ref, computed, onMounted, onUnmounted } from 'vue';
+import { defineProps, ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import PageLayout from '@/components/shared/PageLayout.vue';
 import DocumentView from '@/modules/gpt/components/DocumentView.vue';
@@ -226,6 +228,7 @@ import DocumentHeader from '@/modules/gpt/components/DocumentHeader.vue';
 import DocumentActions from '@/modules/gpt/components/DocumentActions.vue';
 import { showModernNotification, useModernNotifications } from '@/utils/modernNotifications';
 import { useTelegramWebApp } from '@/composables/telegramWebApp';
+import { Head } from '@inertiajs/vue3';
 
 const $q = useQuasar();
 const isDownloading = ref(false);
@@ -264,6 +267,15 @@ const canPay = computed(() => {
 
 // Реактивная ссылка на документ для обновления
 const currentDocument = ref(props.document);
+
+// Computed свойство для заголовка страницы
+const pageTitle = computed(() => {
+    const title = currentDocument.value?.structure?.title;
+    if (title) {
+        return title.length > 50 ? title.substring(0, 50) + '...' : title;
+    }
+    return 'Документ';
+});
 
 // Проверяем наличие параметра autoload в URL
 const urlParams = new URLSearchParams(window.location.search);
@@ -366,9 +378,21 @@ const typewriterTexts = [
 
 // Новая функция анимации печати на машинке
 const startTypewriterAnimation = () => {
+    // Останавливаем предыдущую анимацию если она была запущена
+    if (typewriterInterval) {
+        clearInterval(typewriterInterval);
+        typewriterInterval = null;
+    }
+    
+    // Сбрасываем состояние анимации
+    currentTypedText.value = '';
+    printedLines.value = [];
+    
     let textIndex = 0;
     let charIndex = 0;
     let currentText = typewriterTexts[textIndex];
+    
+    console.log('Анимация пишущей машинки запущена');
     
     typewriterInterval = setInterval(() => {
         if (charIndex < currentText.length) {
@@ -439,6 +463,59 @@ const checkAndRedirectToLoadingScreen = () => {
         }, 100);
     }
 };
+
+// Добавляем watcher для отслеживания изменения статуса генерации
+watch(
+    () => getIsGenerating(),
+    (isGenerating, wasGenerating) => {
+        console.log('Статус генерации изменился:', { isGenerating, wasGenerating });
+        
+        if (isGenerating && !wasGenerating) {
+            // Генерация началась - запускаем анимацию
+            console.log('Запускаем анимацию пишущей машинки...');
+            
+            // Инициализируем клавиши если они еще не инициализированы
+            if (typewriterKeys.value.length === 0) {
+                initTypewriterKeys();
+            }
+            
+            // Запускаем анимацию
+            startTypewriterAnimation();
+        } else if (!isGenerating && wasGenerating) {
+            // Генерация завершилась - останавливаем анимацию
+            console.log('Останавливаем анимацию пишущей машинки...');
+            if (typewriterInterval) {
+                clearInterval(typewriterInterval);
+                typewriterInterval = null;
+            }
+        }
+    },
+    { immediate: false } // Не вызываем при первом монтировании
+);
+
+// Дополнительный watcher для отслеживания изменения статуса документа
+watch(
+    () => currentDocument.value?.status,
+    (newStatus, oldStatus) => {
+        console.log('Статус документа изменился:', { newStatus, oldStatus });
+        
+        // Если статус изменился на генерацию, запускаем анимацию
+        if (['pre_generating', 'full_generating'].includes(newStatus) && 
+            !['pre_generating', 'full_generating'].includes(oldStatus)) {
+            
+            console.log('Документ начал генерироваться, запускаем анимацию...');
+            
+            // Инициализируем клавиши если они еще не инициализированы
+            if (typewriterKeys.value.length === 0) {
+                initTypewriterKeys();
+            }
+            
+            // Запускаем анимацию
+            startTypewriterAnimation();
+        }
+    },
+    { immediate: false }
+);
 
 // Проверяем при монтировании компонента
 onMounted(() => {

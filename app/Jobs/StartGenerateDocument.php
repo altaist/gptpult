@@ -72,8 +72,16 @@ class StartGenerateDocument implements ShouldQueue
             // Работа с OpenAI Assistants API
             $assistantId = 'asst_OwXAXycYmcU85DAeqShRkhYa';
             
-            // Создаем thread (не сохраняем в БД)
+            // Создаем thread для контекста генерации
             $thread = $gptService->createThread();
+            
+            // Сохраняем thread_id в БД
+            $this->document->update(['thread_id' => $thread['id']]);
+            
+            Log::channel('queue')->info('Создан thread для документа', [
+                'document_id' => $this->document->id,
+                'thread_id' => $thread['id']
+            ]);
             
             // Добавляем сообщение в thread
             $gptService->addMessageToThread($thread['id'], $prompt);
@@ -84,12 +92,21 @@ class StartGenerateDocument implements ShouldQueue
             // Ждем завершения run
             $completedRun = $gptService->waitForRunCompletion($thread['id'], $run['id']);
             
-            // Получаем ответ
-            $response = $gptService->getThreadMessages($thread['id']);
+            // Логируем информацию о завершении run с токенами
+            Log::channel('queue')->info('Run завершен', [
+                'document_id' => $this->document->id,
+                'thread_id' => $thread['id'],
+                'run_id' => $run['id'],
+                'status' => $run['status'],
+                'usage' => $run['usage'] ?? null
+            ]);
+
+            // Получаем сообщения из thread
+            $messages = $gptService->getThreadMessages($thread['id']);
             
-            // Извлекаем последнее сообщение ассистента
+            // Находим ответ ассистента (первое сообщение от assistant)
             $assistantMessage = null;
-            foreach ($response['data'] as $message) {
+            foreach ($messages['data'] as $message) {
                 if ($message['role'] === 'assistant') {
                     $assistantMessage = $message['content'][0]['text']['value'];
                     break;
@@ -100,21 +117,27 @@ class StartGenerateDocument implements ShouldQueue
                 throw new \Exception('Не получен ответ от ассистента');
             }
 
-            // Парсим ответ и извлекаем contents и objectives
-            $parsedData = $this->parseGptResponse($assistantMessage);
+            // Парсим ответ
+            $response = $this->parseGptResponse($assistantMessage);
+            $parsedData = $response;
 
-            // Обновляем структуру документа
-            $structure = $this->document->structure ?? [];
-            $structure['contents'] = $parsedData['contents'] ?? [];
-            $structure['objectives'] = $parsedData['objectives'] ?? [];
-            
-            // Добавляем новые поля если они есть в ответе
-            if (isset($parsedData['title'])) {
-                $structure['title'] = $parsedData['title'];
-            }
+            // Формируем структуру документа
+            $structure = [
+                'contents' => $parsedData['contents'] ?? [],
+                'objectives' => $parsedData['objectives'] ?? [],
+                'generated_at' => now()->toDateTimeString(),
+                'service' => $service,
+                'assistant_id' => $assistantId,
+                'thread_id' => $thread['id'],
+                'run_id' => $run['id']
+            ];
             
             if (isset($parsedData['document_title'])) {
                 $structure['document_title'] = $parsedData['document_title'];
+            }
+            
+            if (isset($parsedData['title'])) {
+                $structure['title'] = $parsedData['title'];
             }
             
             if (isset($parsedData['description'])) {
@@ -131,7 +154,7 @@ class StartGenerateDocument implements ShouldQueue
                 'document_id' => $this->document->id,
                 'contents_count' => count($structure['contents']),
                 'objectives_count' => count($structure['objectives']),
-                'tokens_used' => $response['tokens_used'] ?? 0
+                'usage' => $run['usage'] ?? null
             ]);
 
             // Генерируем ссылки сразу после создания структуры
@@ -214,9 +237,16 @@ class StartGenerateDocument implements ShouldQueue
         $topic = $this->document->structure['topic'] ?? $this->document->title;
         $documentType = $this->document->documentType->name ?? 'документ';
         $pagesNum = $this->document->pages_num ?? 'не указан';
+        
+        // Вычисляем количество страниц для содержания (минус титульник, содержание и список литературы)
+        if (is_numeric($pagesNum) && $pagesNum > 3) {
+            $contentPagesNum = $pagesNum - 3;
+        } else {
+            $contentPagesNum = $pagesNum; // Если не число или меньше 3, передаем как есть
+        }
 
         return "
-        {$documentType}, {$topic}, {$pagesNum}
+        {$documentType}, {$topic}, {$contentPagesNum}
         ";
     }
 

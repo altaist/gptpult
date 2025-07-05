@@ -73,6 +73,19 @@ class OpenAiService implements GptServiceInterface
         }
 
         $result = $response->json();
+        
+        // Логируем использование токенов
+        if (isset($result['usage'])) {
+            Log::info('OpenAI Chat Completions API - токены использованы', [
+                'model' => $model,
+                'completion_tokens' => $result['usage']['completion_tokens'] ?? 0,
+                'prompt_tokens' => $result['usage']['prompt_tokens'] ?? 0,
+                'total_tokens' => $result['usage']['total_tokens'] ?? 0,
+                'prompt_token_details' => $result['usage']['prompt_token_details'] ?? [],
+                'completion_token_details' => $result['usage']['completion_token_details'] ?? []
+            ]);
+        }
+        
         return [
             'content' => $result['choices'][0]['message']['content'],
             'tokens_used' => $result['usage']['total_tokens'],
@@ -171,6 +184,20 @@ class OpenAiService implements GptServiceInterface
             $run = $response->json();
             
             if ($run['status'] === 'completed') {
+                // Логируем информацию о токенах при завершении run
+                if (isset($run['usage'])) {
+                    Log::info('OpenAI Assistant API - токены использованы', [
+                        'thread_id' => $threadId,
+                        'run_id' => $runId,
+                        'model' => $run['model'] ?? 'unknown',
+                        'completion_tokens' => $run['usage']['completion_tokens'] ?? 0,
+                        'prompt_tokens' => $run['usage']['prompt_tokens'] ?? 0,
+                        'total_tokens' => $run['usage']['total_tokens'] ?? 0,
+                        'prompt_token_details' => $run['usage']['prompt_token_details'] ?? [],
+                        'completion_token_details' => $run['usage']['completion_token_details'] ?? []
+                    ]);
+                }
+                
                 return $run;
             }
             
@@ -245,6 +272,18 @@ class OpenAiService implements GptServiceInterface
         }
 
         $result = $response->json();
+        
+        // Логируем использование токенов для web search
+        if (isset($result['usage'])) {
+            Log::info('OpenAI Web Search API - токены использованы', [
+                'model' => $model,
+                'completion_tokens' => $result['usage']['completion_tokens'] ?? 0,
+                'prompt_tokens' => $result['usage']['prompt_tokens'] ?? 0,
+                'total_tokens' => $result['usage']['total_tokens'] ?? 0,
+                'prompt_token_details' => $result['usage']['prompt_token_details'] ?? [],
+                'completion_token_details' => $result['usage']['completion_token_details'] ?? []
+            ]);
+        }
         
         Log::info('OpenAI web search response received', [
             'finish_reason' => $result['choices'][0]['finish_reason'] ?? 'unknown',

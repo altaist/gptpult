@@ -22,7 +22,8 @@ class Document extends Model
         'content',
         'pages_num',
         'gpt_settings',
-        'status'
+        'status',
+        'thread_id'
     ];
 
     protected $casts = [

@@ -43,6 +43,17 @@ class AnthropicService implements GptServiceInterface
         }
 
         $result = $response->json();
+        
+        // Логируем использование токенов
+        if (isset($result['usage'])) {
+            Log::info('Anthropic API - токены использованы', [
+                'model' => $model,
+                'input_tokens' => $result['usage']['input_tokens'] ?? 0,
+                'output_tokens' => $result['usage']['output_tokens'] ?? 0,
+                'total_tokens' => ($result['usage']['input_tokens'] ?? 0) + ($result['usage']['output_tokens'] ?? 0)
+            ]);
+        }
+        
         return [
             'content' => $result['content'][0]['text'],
             'tokens_used' => $result['usage']['output_tokens'] + $result['usage']['input_tokens'],

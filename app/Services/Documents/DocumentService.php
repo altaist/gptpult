@@ -27,7 +27,8 @@ class DocumentService
             'content' => $data['content'] ?? null,
             'pages_num' => $data['pages_num'] ?? null,
             'gpt_settings' => $data['gpt_settings'] ?? null,
-            'status' => $data['status'] ?? 'draft'
+            'status' => $data['status'] ?? 'draft',
+            'thread_id' => $data['thread_id'] ?? null
         ]);
 
         return $document;
@@ -60,6 +61,7 @@ class DocumentService
             'gpt_settings' => $data['gpt_settings'] ?? $document->gpt_settings,
             'status' => $data['status'] ?? $document->status,
             'document_type_id' => $data['document_type_id'] ?? $document->document_type_id,
+            'thread_id' => $data['thread_id'] ?? $document->thread_id
         ]);
 
         return $document->fresh();
@@ -450,6 +452,19 @@ class DocumentService
     public function updateGptSettings(Document $document, array $gptSettings): Document
     {
         $document->update(['gpt_settings' => $gptSettings]);
+        return $document->fresh();
+    }
+
+    /**
+     * Обновить thread_id документа
+     *
+     * @param Document $document
+     * @param string $threadId
+     * @return Document
+     */
+    public function updateThreadId(Document $document, string $threadId): Document
+    {
+        $document->update(['thread_id' => $threadId]);
         return $document->fresh();
     }
 

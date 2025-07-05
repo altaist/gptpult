@@ -138,6 +138,7 @@ const processProgress = computed(() => {
 
 // Методы
 const startCountdown = () => {
+    console.log('Запускаем обратный отсчет времени...');
     countdownTimer = setInterval(() => {
         remainingTime.value--;
         
@@ -150,6 +151,7 @@ const startCountdown = () => {
 };
 
 const startProcessAnimation = () => {
+    console.log('Запускаем анимацию процесса...');
     // Рассчитываем интервал смены строк процесса
     const intervalMs = Math.floor((props.estimatedTime * 1000) / processSteps.length);
     
@@ -180,10 +182,12 @@ const startAll = () => {
 
 // Хуки жизненного цикла
 onMounted(() => {
+    console.log('DocumentGenerationStatus смонтирован, запускаем анимацию...');
     startAll();
 });
 
 onUnmounted(() => {
+    console.log('DocumentGenerationStatus размонтирован, останавливаем таймеры...');
     stopAllTimers();
 });
 </script>

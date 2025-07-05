@@ -1,4 +1,5 @@
 <template>
+    <Head :title="pageTitle" />
     <page-layout
         title="Документ"
         :is-sticky="true"
@@ -7,7 +8,7 @@
         <div class="q-pa-md">
             <!-- Если идет автозагрузка или отслеживание И генерация -->
             <document-generation-status
-                v-if="(shouldAutoload || isPollingActive) && getIsGenerating()"
+                v-if="getIsGenerating()"
                 :estimated-time="30"
                 :title="getDisplayStatusText()"
                 :generation-type="currentDocument.value?.status === 'full_generating' ? 'full' : 'structure'"
@@ -90,7 +91,7 @@
 </template>
 
 <script setup>
-import { defineProps, ref, computed } from 'vue';
+import { defineProps, ref, computed, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import PageLayout from '@/components/shared/PageLayout.vue';
 import DocumentView from '@/modules/gpt/components/DocumentView.vue';
@@ -101,6 +102,7 @@ import { apiClient } from '@/composables/api';
 import { router } from '@inertiajs/vue3';
 import DocumentPaymentPanel from '@/modules/gpt/components/DocumentPaymentPanel.vue';
 import { useTelegramWebApp } from '@/composables/telegramWebApp';
+import { Head } from '@inertiajs/vue3';
 
 const $q = useQuasar();
 const { downloadDocumentFile } = useTelegramWebApp();
@@ -133,6 +135,15 @@ const canPay = computed(() => {
 
 // Реактивная ссылка на документ для обновления
 const currentDocument = ref(props.document);
+
+// Computed свойство для заголовка страницы
+const pageTitle = computed(() => {
+    const title = currentDocument.value?.structure?.title;
+    if (title) {
+        return title.length > 50 ? title.substring(0, 50) + '...' : title;
+    }
+    return 'Документ';
+});
 
 // Проверяем наличие параметра autoload в URL
 const urlParams = new URLSearchParams(window.location.search);
@@ -374,4 +385,43 @@ const handleGenerationTimeout = () => {
     // Ничего не делаем - просто ловим событие
     console.log('Время ожидания генерации истекло, но продолжаем отслеживание через useDocumentStatus');
 };
+
+// Добавляем watcher для автоматического включения отслеживания при запуске генерации
+watch(
+    () => getIsGenerating(),
+    (isGenerating, wasGenerating) => {
+        console.log('Статус генерации изменился в ShowDocument:', { isGenerating, wasGenerating });
+        
+        if (isGenerating && !wasGenerating) {
+            // Генерация началась - включаем отслеживание если оно не включено
+            if (!isPollingActive.value) {
+                console.log('Включаем отслеживание статуса...');
+                isPollingActive.value = true;
+                resumeTracking();
+            }
+        }
+    },
+    { immediate: false }
+);
+
+// Дополнительный watcher для отслеживания изменения статуса документа
+watch(
+    () => currentDocument.value?.status,
+    (newStatus, oldStatus) => {
+        console.log('Статус документа изменился в ShowDocument:', { newStatus, oldStatus });
+        
+        // Если статус изменился на генерацию, включаем отслеживание
+        if (['pre_generating', 'full_generating'].includes(newStatus) && 
+            !['pre_generating', 'full_generating'].includes(oldStatus)) {
+            
+            console.log('Документ начал генерироваться, включаем отслеживание...');
+            
+            if (!isPollingActive.value) {
+                isPollingActive.value = true;
+                resumeTracking();
+            }
+        }
+    },
+    { immediate: false }
+);
 </script> 

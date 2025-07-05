@@ -90,6 +90,18 @@ class StartFullGenerateDocument implements ShouldQueue
             // ID ассистента для полной генерации
             $assistantId = 'asst_8FBCbxGFVWfhwnGLHyo7T3Ju';
             
+            // Получаем thread_id из документа
+            $threadId = $this->document->thread_id;
+            
+            if (!$threadId) {
+                throw new \Exception('Не найден thread_id для документа. Сначала должна быть создана структура.');
+            }
+            
+            Log::channel('queue')->info('Используем существующий thread', [
+                'document_id' => $this->document->id,
+                'thread_id' => $threadId
+            ]);
+            
             // Получаем структуру документа
             $contents = $structure['contents'] ?? [];
             
@@ -124,27 +136,34 @@ class StartFullGenerateDocument implements ShouldQueue
                         'subtopic_title' => $subtopic['title']
                     ]);
 
-                    // Создаем thread для данного subtopic
-                    $thread = $gptService->createThread();
-                    
-                    // Формируем промпт для конкретного subtopic
+                    // Используем существующий thread
                     $prompt = $this->buildSubtopicPrompt($subtopic);
                     
-                    // Добавляем сообщение в thread
-                    $gptService->addMessageToThread($thread['id'], $prompt);
+                    // Добавляем сообщение в существующий thread
+                    $gptService->addMessageToThread($threadId, $prompt);
                     
                     // Запускаем run с ассистентом
-                    $run = $gptService->createRun($thread['id'], $assistantId);
+                    $run = $gptService->createRun($threadId, $assistantId);
                     
                     // Ждем завершения run
-                    $completedRun = $gptService->waitForRunCompletion($thread['id'], $run['id']);
+                    $completedRun = $gptService->waitForRunCompletion($threadId, $run['id']);
                     
-                    // Получаем ответ
-                    $response = $gptService->getThreadMessages($thread['id']);
+                    // Логируем информацию о завершении run с токенами для подраздела
+                    Log::channel('queue')->info('Run для подраздела завершен', [
+                        'document_id' => $this->document->id,
+                        'thread_id' => $threadId,
+                        'run_id' => $run['id'],
+                        'subtopic_title' => $subtopic['title'],
+                        'status' => $completedRun['status'],
+                        'usage' => $completedRun['usage'] ?? null
+                    ]);
                     
-                    // Извлекаем последнее сообщение ассистента
+                    // Получаем сообщения из thread
+                    $messages = $gptService->getThreadMessages($threadId);
+                    
+                    // Находим последнее сообщение ассистента
                     $assistantMessage = null;
-                    foreach ($response['data'] as $message) {
+                    foreach ($messages['data'] as $message) {
                         if ($message['role'] === 'assistant') {
                             $assistantMessage = $message['content'][0]['text']['value'];
                             break;
@@ -152,49 +171,39 @@ class StartFullGenerateDocument implements ShouldQueue
                     }
                     
                     if (!$assistantMessage) {
-                        throw new \Exception("Не получен ответ от ассистента для подраздела: {$subtopic['title']}");
+                        throw new \Exception('Не получен ответ от ассистента для подраздела: ' . $subtopic['title']);
                     }
-
-                    // Парсим JSON ответ от ассистента
-                    $parsedResponse = null;
-                    try {
-                        $parsedResponse = json_decode($assistantMessage, true);
-                        if (json_last_error() !== JSON_ERROR_NONE) {
-                            throw new \Exception('Ошибка парсинга JSON: ' . json_last_error_msg());
+                    
+                    // Парсим JSON ответ если он есть, иначе используем как обычный текст
+                    $contentText = $assistantMessage;
+                    if (strpos($assistantMessage, '{') !== false) {
+                        $jsonData = json_decode($assistantMessage, true);
+                        if (json_last_error() === JSON_ERROR_NONE && isset($jsonData['text'])) {
+                            $contentText = $jsonData['text'];
                         }
-                    } catch (\Exception $e) {
-                        Log::channel('queue')->warning('Не удалось распарсить JSON ответ, используем текст как есть', [
-                            'document_id' => $this->document->id,
-                            'subtopic_title' => $subtopic['title'],
-                            'response' => $assistantMessage,
-                            'error' => $e->getMessage()
-                        ]);
-                        // Если не удалось распарсить JSON, используем весь ответ как текст
-                        $parsedResponse = ['text' => $assistantMessage];
                     }
-
-                    // Извлекаем text из ответа или используем весь ответ если text нет
-                    $contentText = $parsedResponse['text'] ?? $assistantMessage;
-
-                    // Добавляем сгенерированный контент к подразделу
-                    $generatedSubtopic = [
+                    
+                    // Добавляем сгенерированный подраздел в topic
+                    $generatedTopic['subtopics'][] = [
                         'title' => $subtopic['title'],
-                        'content' => trim($contentText)
+                        'content' => $contentText, // Используем обычный текст, а не JSON
+                        'generated_at' => now()->toDateTimeString(),
+                        'run_id' => $run['id'],
+                        'usage' => $completedRun['usage'] ?? null
                     ];
 
-                    $generatedTopic['subtopics'][] = $generatedSubtopic;
-
-                    Log::channel('queue')->info('Подраздел сгенерирован', [
+                    Log::channel('queue')->info('Подраздел успешно сгенерирован', [
                         'document_id' => $this->document->id,
                         'subtopic_title' => $subtopic['title'],
-                        'content_length' => strlen($contentText),
-                        'was_json' => is_array($parsedResponse) && isset($parsedResponse['text'])
+                        'content_length' => mb_strlen($contentText),
+                        'usage' => $completedRun['usage'] ?? null
                     ]);
 
                     // Небольшая пауза между запросами
                     sleep(1);
                 }
 
+                // Добавляем готовый topic в результат (только один раз!)
                 $generatedContent['topics'][] = $generatedTopic;
             }
 
