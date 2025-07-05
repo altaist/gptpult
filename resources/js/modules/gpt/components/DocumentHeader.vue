@@ -274,7 +274,7 @@ const saveTitleEdit = async () => {
         }, 500);
 
     } catch (error) {
-        console.error('Ошибка при сохранении заголовка:', error);
+        // console.error('Ошибка при сохранении заголовка:', error);  // Закомментировано для продакшена
         $q.notify({
             type: 'negative',
             message: 'Ошибка при сохранении заголовка'

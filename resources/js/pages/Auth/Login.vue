@@ -34,13 +34,8 @@ const goToDashboard = () => {
     router.visit(route('dashboard'));
 };
 
-onMounted(async () => {
-    try {
-        await checkAuth();
-        router.visit(route('dashboard'));
-    } catch (error) {
-        console.log('Требуется авторизация');
-    }
+onMounted(() => {
+    // console.log('Требуется авторизация');  // Закомментировано для продакшена
 });
 </script>
 

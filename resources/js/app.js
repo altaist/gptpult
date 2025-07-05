@@ -15,7 +15,14 @@ import 'quasar/src/css/index.sass';
 
 const appName = import.meta.env.VITE_APP_NAME || 'GPT Пульт';
 window.TWA = window.Telegram ? window.Telegram.WebApp : null;
-window.debug = (...t) => console.log(...t);
+
+// Глобальная функция для отладки (только в режиме разработки)
+if (import.meta.env.MODE !== 'production' && import.meta.env.VITE_APP_ENV !== 'production') {
+    window.debug = (...t) => console.log(...t);
+} else {
+    window.debug = () => {}; // Пустая функция в продакшене
+}
+
 window.redirect =  (path) => window.location = path;
 window.goBack =  () => history.back();
 
@@ -68,14 +75,21 @@ if (window.Telegram?.WebApp) {
             // Проверяем заголовок перенаправления
             const redirectUrl = response.headers.get('X-Telegram-Redirect');
             if (redirectUrl && window.location.pathname !== redirectUrl) {
-                console.log('Global fetch interceptor: Telegram redirect to:', redirectUrl);
-                window.location.href = redirectUrl;
+                // console.log('Global fetch interceptor: Telegram redirect to:', redirectUrl);  // Закомментировано для продакшена
+                
+                // Если в Telegram WebApp, делаем редирект через window.location
+                if (window.Telegram?.WebApp) {
+                    window.location.href = redirectUrl;
+                } else {
+                    window.location.href = redirectUrl;
+                }
+                return null;
             }
             return response;
         });
     };
     
-    console.log('Telegram WebApp fetch interceptor initialized');
+    // console.log('Telegram WebApp fetch interceptor initialized');  // Закомментировано для продакшена
 }
 
 createInertiaApp({

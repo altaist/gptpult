@@ -186,7 +186,7 @@ const {
         onDocumentUpdate: (newDocument, oldDocument) => {
             // Обновляем текущий документ когда приходят новые данные
             currentDocument.value = newDocument;
-            console.log('Документ обновлен:', newDocument);
+            // console.log('Документ обновлен:', newDocument);  // Закомментировано для продакшена
         },
         onError: (err) => {
             $q.notify({
@@ -298,7 +298,7 @@ const startFullGeneration = async () => {
         // Проверяем, что генерация еще не запущена
         const currentStatus = currentDocument.value?.status;
         if (['full_generating', 'full_generated'].includes(currentStatus)) {
-            console.warn('Попытка запустить полную генерацию для документа со статусом:', currentStatus);
+            // console.warn('Попытка запустить полную генерацию для документа со статусом:', currentStatus);  // Закомментировано для продакшена
             $q.notify({
                 type: 'warning',
                 message: 'Документ уже генерируется или готов',
@@ -372,30 +372,26 @@ const canEdit = computed(() => {
 });
 
 // Обработчик обновления документа из компонента DocumentView
-const handleDocumentUpdate = () => {
-    // Можно добавить логику для перезагрузки данных документа
-    console.log('Документ был обновлен через редактирование');
-    
-    // Обновляем текущий документ, получив свежие данные
-    window.location.reload();
+const handleDocumentUpdate = (newDocument) => {
+    // console.log('Документ обновлен:', newDocument);  // Закомментировано для продакшена
+    currentDocument.value = newDocument;
 };
 
 // Обработчик события таймаута компонента генерации
 const handleGenerationTimeout = () => {
-    // Ничего не делаем - просто ловим событие
-    console.log('Время ожидания генерации истекло, но продолжаем отслеживание через useDocumentStatus');
+    // console.log('Время ожидания генерации истекло, но продолжаем отслеживание через useDocumentStatus');  // Закомментировано для продакшена
 };
 
 // Добавляем watcher для автоматического включения отслеживания при запуске генерации
 watch(
     () => getIsGenerating(),
     (isGenerating, wasGenerating) => {
-        console.log('Статус генерации изменился в ShowDocument:', { isGenerating, wasGenerating });
+        // console.log('Статус генерации изменился в ShowDocument:', { isGenerating, wasGenerating });  // Закомментировано для продакшена
         
         if (isGenerating && !wasGenerating) {
             // Генерация началась - включаем отслеживание если оно не включено
             if (!isPollingActive.value) {
-                console.log('Включаем отслеживание статуса...');
+                // console.log('Включаем отслеживание статуса...');  // Закомментировано для продакшена
                 isPollingActive.value = true;
                 resumeTracking();
             }
@@ -408,13 +404,13 @@ watch(
 watch(
     () => currentDocument.value?.status,
     (newStatus, oldStatus) => {
-        console.log('Статус документа изменился в ShowDocument:', { newStatus, oldStatus });
+        // console.log('Статус документа изменился в ShowDocument:', { newStatus, oldStatus });  // Закомментировано для продакшена
         
         // Если статус изменился на генерацию, включаем отслеживание
         if (['pre_generating', 'full_generating'].includes(newStatus) && 
             !['pre_generating', 'full_generating'].includes(oldStatus)) {
             
-            console.log('Документ начал генерироваться, включаем отслеживание...');
+            // console.log('Документ начал генерироваться, включаем отслеживание...');  // Закомментировано для продакшена
             
             if (!isPollingActive.value) {
                 isPollingActive.value = true;

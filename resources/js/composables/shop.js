@@ -48,7 +48,7 @@ export const useShop = (shopKey = 'shop.main') => {
     }
 
     const logError = (str) => {
-        console.log(str);
+        // console.log(str);  // Закомментировано для продакшена
         return null;
     }
 

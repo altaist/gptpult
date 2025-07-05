@@ -321,7 +321,7 @@ const {
         onDocumentUpdate: (newDocument, oldDocument) => {
             // Обновляем текущий документ когда приходят новые данные
             currentDocument.value = newDocument;
-            console.log('Документ обновлен:', newDocument);
+            // console.log('Документ обновлен:', newDocument);  // Закомментировано для продакшена
             
             // Проверяем нужно ли перейти на загрузочный экран
             checkAndRedirectToLoadingScreen();
@@ -392,7 +392,7 @@ const startTypewriterAnimation = () => {
     let charIndex = 0;
     let currentText = typewriterTexts[textIndex];
     
-    console.log('Анимация пишущей машинки запущена');
+    // console.log('Анимация пишущей машинки запущена');  // Закомментировано для продакшена
     
     typewriterInterval = setInterval(() => {
         if (charIndex < currentText.length) {
@@ -444,13 +444,13 @@ const checkAndRedirectToLoadingScreen = () => {
     
     // Дополнительная проверка: если мы уже на загрузочном экране, не делаем ничего
     if (shouldAutoload) {
-        console.log('Уже на загрузочном экране, пропускаем перенаправление');
+        // console.log('Уже на загрузочном экране, пропускаем перенаправление');  // Закомментировано для продакшена
         return;
     }
     
     // Проверяем если документ генерируется и мы не на загрузочном экране
     if ((status === 'full_generating' || status === 'pre_generating') && !shouldAutoload) {
-        console.log('Документ генерируется, переходим на загрузочный экран...', status);
+        // console.log('Документ генерируется, переходим на загрузочный экран...', status);  // Закомментировано для продакшена
         // Если документ генерируется, но мы не на загрузочном экране - переходим туда
         const currentUrl = new URL(window.location.href);
         currentUrl.searchParams.set('autoload', '1');
@@ -468,11 +468,11 @@ const checkAndRedirectToLoadingScreen = () => {
 watch(
     () => getIsGenerating(),
     (isGenerating, wasGenerating) => {
-        console.log('Статус генерации изменился:', { isGenerating, wasGenerating });
+        // console.log('Статус генерации изменился:', { isGenerating, wasGenerating });  // Закомментировано для продакшена
         
         if (isGenerating && !wasGenerating) {
             // Генерация началась - запускаем анимацию
-            console.log('Запускаем анимацию пишущей машинки...');
+            // console.log('Запускаем анимацию пишущей машинки...');  // Закомментировано для продакшена
             
             // Инициализируем клавиши если они еще не инициализированы
             if (typewriterKeys.value.length === 0) {
@@ -483,7 +483,7 @@ watch(
             startTypewriterAnimation();
         } else if (!isGenerating && wasGenerating) {
             // Генерация завершилась - останавливаем анимацию
-            console.log('Останавливаем анимацию пишущей машинки...');
+            // console.log('Останавливаем анимацию пишущей машинки...');  // Закомментировано для продакшена
             if (typewriterInterval) {
                 clearInterval(typewriterInterval);
                 typewriterInterval = null;
@@ -497,13 +497,13 @@ watch(
 watch(
     () => currentDocument.value?.status,
     (newStatus, oldStatus) => {
-        console.log('Статус документа изменился:', { newStatus, oldStatus });
+        // console.log('Статус документа изменился:', { newStatus, oldStatus });  // Закомментировано для продакшена
         
         // Если статус изменился на генерацию, запускаем анимацию
         if (['pre_generating', 'full_generating'].includes(newStatus) && 
             !['pre_generating', 'full_generating'].includes(oldStatus)) {
             
-            console.log('Документ начал генерироваться, запускаем анимацию...');
+            // console.log('Документ начал генерироваться, запускаем анимацию...');  // Закомментировано для продакшена
             
             // Инициализируем клавиши если они еще не инициализированы
             if (typewriterKeys.value.length === 0) {
@@ -539,7 +539,7 @@ onMounted(() => {
     // Обновляем URL если что-то изменилось
     if (urlChanged) {
         window.history.replaceState({}, '', currentUrl.toString());
-        console.log('URL очищен от параметров автозапуска для статуса:', currentStatus);
+        // console.log('URL очищен от параметров автозапуска для статуса:', currentStatus);  // Закомментировано для продакшена
     }
     
     checkAndRedirectToLoadingScreen();
@@ -561,16 +561,16 @@ onMounted(() => {
         const currentStatus = currentDocument.value?.status;
         const isAlreadyGenerating = ['full_generating', 'full_generated'].includes(currentStatus);
         
-        console.log('Проверка автозапуска:', {
-            shouldStartGeneration,
-            canStart: getCanStartFullGeneration(),
-            currentStatus,
-            isAlreadyGenerating
-        });
+        // console.log('Проверка автозапуска:', {  // Закомментировано для продакшена
+        //   shouldStartGeneration,
+        //   canStart: getCanStartFullGeneration(),
+        //   currentStatus,
+        //   isAlreadyGenerating
+        // });
         
         if (!isAlreadyGenerating) {
             setTimeout(() => {
-                console.log('Запускаем полную генерацию автоматически');
+                // console.log('Запускаем полную генерацию автоматически');  // Закомментировано для продакшена
                 startFullGeneration();
                 // Удаляем параметр из URL после запуска
                 const currentUrl = new URL(window.location.href);
@@ -578,7 +578,7 @@ onMounted(() => {
                 window.history.replaceState({}, '', currentUrl.toString());
             }, 1000); // Небольшая задержка для корректной инициализации
         } else {
-            console.log('Автозапуск отменен - документ уже генерируется или готов:', currentStatus);
+            // console.log('Автозапуск отменен - документ уже генерируется или готов:', currentStatus);  // Закомментировано для продакшена
             // Если документ уже генерируется или сгенерирован, просто удаляем параметр
             const currentUrl = new URL(window.location.href);
             currentUrl.searchParams.delete('start_generation');
@@ -684,16 +684,16 @@ const getIsFullGenerationComplete = () => {
 
 // Запуск полной генерации
 const startFullGeneration = async () => {
-    console.log('startFullGeneration() вызвана', {
-        currentStatus: currentDocument.value?.status,
-        timestamp: new Date().toISOString()
-    });
+    // console.log('startFullGeneration() вызвана', {  // Закомментировано для продакшена
+    //   currentStatus: currentDocument.value?.status,
+    //   timestamp: new Date().toISOString()
+    // });
     
     try {
         // Проверяем, что генерация еще не запущена
         const currentStatus = currentDocument.value?.status;
         if (['full_generating', 'full_generated'].includes(currentStatus)) {
-            console.warn('Попытка запустить полную генерацию для документа со статусом:', currentStatus);
+            // console.warn('Попытка запустить полную генерацию для документа со статусом:', currentStatus);  // Закомментировано для продакшена
             showModernNotification({
                 type: 'warning',
                 title: 'Генерация уже запущена',
@@ -703,12 +703,12 @@ const startFullGeneration = async () => {
             return;
         }
         
-        console.log('Отправляем запрос на сервер для запуска генерации');
+        // console.log('Отправляем запрос на сервер для запуска генерации');  // Закомментировано для продакшена
         isStartingFullGeneration.value = true;
         
         const response = await apiClient.post(route('documents.generate-full', props.document.id));
         
-        console.log('Получен ответ от сервера:', response);
+        // console.log('Получен ответ от сервера:', response);  // Закомментировано для продакшена
         
         // Обновляем статус документа локально для мгновенного отображения
         currentDocument.value.status = 'full_generating';
@@ -734,7 +734,7 @@ const startFullGeneration = async () => {
         // }, 200);
         
     } catch (error) {
-        console.error('Ошибка при запуске генерации:', error);
+        // console.error('Ошибка при запуске генерации:', error);  // Закомментировано для продакшена
         showModernNotification({
             type: 'negative',
             title: 'Ошибка генерации',
@@ -847,12 +847,9 @@ const canEdit = computed(() => {
 });
 
 // Обработчик обновления документа из компонента DocumentView
-const handleDocumentUpdate = () => {
-    // Можно добавить логику для перезагрузки данных документа
-    console.log('Документ был обновлен через редактирование');
-    
-    // Обновляем текущий документ, получив свежие данные
-    window.location.reload();
+const handleDocumentUpdate = (newDocument) => {
+    // console.log('Документ был обновлен через редактирование');  // Закомментировано для продакшена
+    currentDocument.value = newDocument;
 };
 
 // Состояние Telegram

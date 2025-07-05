@@ -475,11 +475,7 @@ async function saveEdit() {
         }, 500);
 
     } catch (error) {
-        console.error('Ошибка при сохранении:', error);
-        $q.notify({
-            type: 'negative',
-            message: 'Ошибка при сохранении изменений'
-        });
+        // console.error('Ошибка при сохранении:', error);  // Закомментировано для продакшена
     } finally {
         editDialog.loading = false;
     }
@@ -487,7 +483,7 @@ async function saveEdit() {
 
 // Обработчик обновления ссылок
 function handleReferencesUpdated(newReferences) {
-    console.log('Ссылки обновлены:', newReferences);
+    // console.log('Ссылки обновлены:', newReferences);  // Закомментировано для продакшена
     
     $q.notify({
         type: 'positive',

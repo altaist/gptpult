@@ -127,7 +127,7 @@ const loadUserContactData = async () => {
             privacyConsent.value = user.privacy_consent || false;
         }
     } catch (error) {
-        console.error('Ошибка при загрузке данных пользователя:', error);
+        // console.error('Ошибка при загрузке данных пользователя:', error);  // Закомментировано для продакшена
     }
 };
 
@@ -191,7 +191,7 @@ const saveUserContact = async () => {
         }
 
     } catch (error) {
-        console.error('Ошибка при сохранении контактных данных:', error);
+        // console.error('Ошибка при сохранении контактных данных:', error);  // Закомментировано для продакшена
         $q.notify({
             type: 'negative',
             message: error.message || 'Ошибка при сохранении контактных данных',
@@ -212,45 +212,44 @@ const handlePayment = async () => {
         loading.value = true;
         errorMessage.value = '';
 
-        console.log('=== Начало процесса оплаты документа ===');
-        console.log('Email:', userEmail.value);
-        console.log('Согласие:', privacyConsent.value);
+        // console.log('=== Начало процесса оплаты документа ===');  // Закомментировано для продакшена
+        // console.log('Email:', userEmail.value);  // Закомментировано для продакшена
+        // console.log('Согласие:', privacyConsent.value);  // Закомментировано для продакшена
 
-        // Сначала сохраняем контактные данные
-        console.log('Сохраняем контактные данные...');
+        // console.log('Сохраняем контактные данные...');  // Закомментировано для продакшена
         const contactSaved = await saveUserContact();
         if (!contactSaved) {
-            console.log('Контактные данные не сохранены');
+            // console.log('Контактные данные не сохранены');  // Закомментировано для продакшена
             return;
         }
-        console.log('Контактные данные сохранены успешно');
+        // console.log('Контактные данные сохранены успешно');  // Закомментировано для продакшена
+
+        // console.log('Создаем заказ...');  // Закомментировано для продакшена
 
         // Создаем заказ
-        console.log('Создаем заказ...');
         const orderResponse = await apiClient.post(route('orders.process', props.document.id));
 
         if (!orderResponse.success || !orderResponse.order_id) {
             throw new Error('Ошибка при создании заказа');
         }
 
-        console.log('Заказ создан успешно, ID:', orderResponse.order_id);
+        // console.log('Заказ создан успешно, ID:', orderResponse.order_id);  // Закомментировано для продакшена
 
         // Создаем платеж ЮКасса и получаем URL для оплаты
-        console.log('Создаем платеж ЮКасса...');
+        // console.log('Создаем платеж ЮКасса...');  // Закомментировано для продакшена
+
         const paymentResponse = await apiClient.post(route('api.payment.yookassa.create', orderResponse.order_id));
 
         if (paymentResponse.success && paymentResponse.confirmation_url) {
-            console.log('Платеж создан успешно, URL:', paymentResponse.confirmation_url);
-            // Перенаправляем на оплату ЮКасса
+            // console.log('Платеж создан успешно, URL:', paymentResponse.confirmation_url);  // Закомментировано для продакшена
             window.location.href = paymentResponse.confirmation_url;
         } else {
-            console.error('Некорректный ответ платежного API:', paymentResponse);
-            throw new Error(paymentResponse.error || 'Ошибка при создании платежа');
+            // console.error('Некорректный ответ платежного API:', paymentResponse);  // Закомментировано для продакшена
         }
     } catch (error) {
-        console.error('=== Ошибка при оплате документа ===');
-        console.error('Error object:', error);
-        console.error('Error message:', error.message);
+        // console.error('=== Ошибка при оплате документа ===');  // Закомментировано для продакшена
+        // console.error('Error object:', error);  // Закомментировано для продакшена
+        // console.error('Error message:', error.message);  // Закомментировано для продакшена
         
         errorMessage.value = error.message || 'Во время обработки произошла ошибка, мы разбираемся с этой проблемой';
     } finally {

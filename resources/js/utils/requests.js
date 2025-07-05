@@ -16,6 +16,7 @@ export const request = async (url, data, method = 'post', onError = errorHandler
         const resultData = result.data ? result.data : null;
         return resultData;
     } catch (error) {
+        // console.log('Error handler', error);  // Закомментировано для продакшена
         loading.value = false;
         onError(error);
         return null;
@@ -30,7 +31,7 @@ export const requestGet = (url, data = {}) => request(url, data, 'get');
 
 
 export const errorHandler = (error) => {
-    console.log('Error handler', error);
+    // console.log('Error handler', error);  // Закомментировано для продакшена
     if (error.response && error.response.data) {
         return error.response.data;
     }

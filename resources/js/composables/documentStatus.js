@@ -82,9 +82,10 @@ export function useDocumentStatus(documentId, options = {}) {
             isInitialLoad = false
             
             // Останавливаем опрос для финальных статусов
-            if (response.is_final) {
-                console.log('Статус документа финальный, останавливаем опрос:', response.status)
+            if (['full_generated', 'pre_generation_failed', 'full_generation_failed', 'approved', 'rejected'].includes(response.status)) {
+                // console.log('Статус документа финальный, останавливаем опрос:', response.status)  // Закомментировано для продакшена
                 stopPolling()
+                config.onComplete?.(response.status)
             }
             
         } catch (err) {
@@ -104,7 +105,7 @@ export function useDocumentStatus(documentId, options = {}) {
     const startPolling = () => {
         const currentDocumentId = typeof documentId === 'function' ? documentId() : documentId
         if (!currentDocumentId) {
-            console.warn('Не удается начать опрос: documentId не задан')
+            // console.warn('Не удается начать опрос: documentId не задан')  // Закомментировано для продакшена
             return
         }
         

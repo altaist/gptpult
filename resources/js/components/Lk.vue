@@ -308,12 +308,14 @@ const telegramLoading = ref(false)
 
 // Загрузить статус Telegram при монтировании компонента
 onMounted(async () => {
+  // console.log('Running in Telegram Mini App mode')  // Закомментировано для продакшена
   await loadTelegramStatus()
   
   // Если это Telegram Mini App, настраиваем интерфейс
   if (isTelegramMiniApp.value) {
-    // Можно скрыть некоторые элементы интерфейса для Mini App
-    console.log('Running in Telegram Mini App mode')
+    // console.log('Running in Telegram Mini App mode')  // Закомментировано для продакшена
+    // Добавляем CSS класс для Telegram WebApp стилей
+    document.body.classList.add('tg-viewport');
   }
 })
 
@@ -330,7 +332,7 @@ const loadTelegramStatus = async () => {
       telegramStatus.value = await response.json()
     }
   } catch (error) {
-    console.error('Ошибка при загрузке статуса Telegram:', error)
+    // console.error('Ошибка при загрузке статуса Telegram:', error)  // Закомментировано для продакшена
   }
 }
 
@@ -373,7 +375,7 @@ const linkTelegram = async () => {
     }
     
   } catch (error) {
-    console.error('Ошибка при связке с Telegram:', error)
+    // console.error('Ошибка при связке с Telegram:', error)  // Закомментировано для продакшена
     $q.notify({
       type: 'negative',
       message: 'Ошибка при связке с Telegram',
@@ -422,7 +424,7 @@ const unlinkTelegram = async () => {
       }
       
     } catch (error) {
-      console.error('Ошибка при отвязке Telegram:', error)
+      // console.error('Ошибка при отвязке Telegram:', error)  // Закомментировано для продакшена
       $q.notify({
         type: 'negative',
         message: 'Ошибка при отвязке Telegram',
@@ -511,11 +513,12 @@ const topUpBalance = async () => {
     
     if (data.redirect) {
       window.location.href = data.redirect
-    } else if (data.error) {
-      console.error('Ошибка при создании заказа:', data.error)
+    } else if (!data.success) {
+      // console.error('Ошибка при создании заказа:', data.error)  // Закомментировано для продакшена
+      return
     }
   } catch (error) {
-    console.error('Ошибка при пополнении баланса:', error)
+    // console.error('Ошибка при пополнении баланса:', error)  // Закомментировано для продакшена
   }
 }
 </script> 

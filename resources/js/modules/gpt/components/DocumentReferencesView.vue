@@ -86,7 +86,7 @@ const checkDocumentStatus = async () => {
             emit('references-updated', response.document.structure.references);
         }
     } catch (error) {
-        console.error('Ошибка при проверке статуса документа:', error);
+        // console.error('Ошибка при проверке статуса документа:', error);  // Закомментировано для продакшена
     }
 };
 

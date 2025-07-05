@@ -36,7 +36,7 @@ defineProps({
 });
 
 const onMenuClick = (menuId) => {
-    console.log(`Menu ${menuId}`);
+    // console.log(`Menu ${menuId}`);  // Закомментировано для продакшена
 }
 
 // Обработка выхода из системы
@@ -45,7 +45,7 @@ const handleLogout = async () => {
         await logout(true);
         router.visit('/');
     } catch (error) {
-        console.error('Logout failed:', error);
+        // console.error('Logout failed:', error);  // Закомментировано для продакшена
     }
 };
 </script>

@@ -35,7 +35,7 @@ export function useTelegramMiniApp() {
     const autoAuthToken = localStorage.getItem('auto_auth_token')
     if (autoAuthToken) {
       headers['X-Auto-Auth-Token'] = autoAuthToken
-      console.log('useTelegramMiniApp: Found auto_auth_token for document transfer')
+      // console.log('useTelegramMiniApp: Found auto_auth_token for document transfer')
     }
     
     // Проверяем куки Telegram
@@ -50,38 +50,38 @@ export function useTelegramMiniApp() {
     })
     
     if (telegramCookies.length > 0) {
-      console.log('useTelegramMiniApp: Found Telegram cookies:', telegramCookies)
+      // console.log('useTelegramMiniApp: Found Telegram cookies:', telegramCookies)
     }
     
     return headers
   }
 
   onMounted(() => {
-    console.log('useTelegramMiniApp: Initializing...', { 
-      hasTelegram: !!window.Telegram,
-      hasWebApp: !!(window.Telegram && window.Telegram.WebApp),
-      cookies: document.cookie,
-      userAgent: navigator.userAgent
-    })
+    // console.log('useTelegramMiniApp: Initializing...', { 
+    //   hasTelegram: !!window.Telegram,
+    //   hasWebApp: !!(window.Telegram && window.Telegram.WebApp),
+    //   cookies: document.cookie,
+    //   userAgent: navigator.userAgent
+    // })
 
     if (window.Telegram && window.Telegram.WebApp) {
       isTelegramMiniApp.value = true
       const tg = window.Telegram.WebApp
 
-      console.log('useTelegramMiniApp: Telegram WebApp detected', {
-        initData: tg.initData,
-        initDataUnsafe: tg.initDataUnsafe,
-        version: tg.version
-      })
+      // console.log('useTelegramMiniApp: Telegram WebApp detected', {
+      //   initData: tg.initData,
+      //   initDataUnsafe: tg.initDataUnsafe,
+      //   version: tg.version
+      // })
 
       // Получаем данные пользователя
       if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
         telegramData.value = tg.initDataUnsafe.user
         
-        console.log('useTelegramMiniApp: User data found', {
-          user: tg.initDataUnsafe.user,
-          initData: tg.initData
-        })
+        // console.log('useTelegramMiniApp: User data found', {
+        //   user: tg.initDataUnsafe.user,
+        //   initData: tg.initData
+        // })
         
         // Проверяем localStorage на наличие данных авторизации
         const storedUserId = localStorage.getItem('telegram_auth_user_id')
@@ -89,7 +89,7 @@ export function useTelegramMiniApp() {
         
         // Если есть сохраненные данные, отправляем их с заголовками
         if (storedUserId && storedTimestamp) {
-          console.log('useTelegramMiniApp: Found stored auth data, sending with headers')
+          // console.log('useTelegramMiniApp: Found stored auth data, sending with headers')
           
           // Отправляем запрос с заголовками для восстановления сессии
           const headers = addTelegramHeaders({
@@ -101,12 +101,12 @@ export function useTelegramMiniApp() {
             headers,
             credentials: 'include' // Важно для передачи куки
           }).then(response => {
-            console.log('useTelegramMiniApp: Auth restoration response:', response.status)
+            // console.log('useTelegramMiniApp: Auth restoration response:', response.status)
             
             // Проверяем специальный заголовок перенаправления
             const redirectUrl = response.headers.get('X-Telegram-Redirect')
             if (redirectUrl) {
-              console.log('useTelegramMiniApp: Received redirect header:', redirectUrl)
+              // console.log('useTelegramMiniApp: Received redirect header:', redirectUrl)
               window.location.href = redirectUrl
               return
             }
@@ -116,7 +116,7 @@ export function useTelegramMiniApp() {
               window.location.href = '/lk'
             }
           }).catch(error => {
-            console.error('useTelegramMiniApp: Auth restoration failed:', error)
+            // console.error('useTelegramMiniApp: Auth restoration failed:', error)
           })
         }
         
@@ -126,11 +126,11 @@ export function useTelegramMiniApp() {
           .filter(cookie => cookie.startsWith('telegram_auth_user_'))
         
         if (telegramAuthCookies.length > 0) {
-          console.log('useTelegramMiniApp: Found Telegram auth cookies:', telegramAuthCookies)
+          // console.log('useTelegramMiniApp: Found Telegram auth cookies:', telegramAuthCookies)
           
           // Если мы на странице логина и есть куки авторизации, попробуем перенаправить
           if (window.location.pathname === '/login') {
-            console.log('useTelegramMiniApp: User has auth cookies but on login page, attempting redirect')
+            // console.log('useTelegramMiniApp: User has auth cookies but on login page, attempting redirect')
             
             const headers = addTelegramHeaders({
               'X-Requested-With': 'XMLHttpRequest'
@@ -142,13 +142,13 @@ export function useTelegramMiniApp() {
               credentials: 'include'
             }).then(response => {
               if (response.ok) {
-                console.log('useTelegramMiniApp: Redirect to /lk successful')
+                // console.log('useTelegramMiniApp: Redirect to /lk successful')
                 window.location.href = '/lk'
               } else {
-                console.log('useTelegramMiniApp: /lk not accessible, staying on login')
+                // console.log('useTelegramMiniApp: /lk not accessible, staying on login')
               }
             }).catch(error => {
-              console.error('useTelegramMiniApp: /lk check failed:', error)
+              // console.error('useTelegramMiniApp: /lk check failed:', error)
             })
           }
         }
@@ -157,21 +157,21 @@ export function useTelegramMiniApp() {
         const isAlreadyAuthenticated = window?.Laravel?.auth?.user || document.querySelector('meta[name="user-authenticated"]')?.content === 'true'
         
         if (isAlreadyAuthenticated) {
-          console.log('useTelegramMiniApp: User already authenticated, skipping data sending')
+          // console.log('useTelegramMiniApp: User already authenticated, skipping data sending')
           
           // Если мы на странице логина и пользователь авторизован, принудительно перенаправляем
           if (window.location.pathname === '/login') {
-            console.log('useTelegramMiniApp: User is on login page but authenticated, redirecting to /lk')
+            // console.log('useTelegramMiniApp: User is on login page but authenticated, redirecting to /lk')
             window.location.href = '/lk'
             return
           }
         } else {
-          console.log('useTelegramMiniApp: User not authenticated, sending data to server')
+          // console.log('useTelegramMiniApp: User not authenticated, sending data to server')
           // Отправляем данные для автологина
           sendTelegramDataToServer(tg.initData)
         }
       } else {
-        console.log('useTelegramMiniApp: No user data in initDataUnsafe')
+        // console.log('useTelegramMiniApp: No user data in initDataUnsafe')
       }
 
       // Настраиваем Mini App
@@ -190,16 +190,16 @@ export function useTelegramMiniApp() {
 
       isInitialized.value = true
     } else {
-      console.log('useTelegramMiniApp: Not running in Telegram WebApp')
+      // console.log('useTelegramMiniApp: Not running in Telegram WebApp')
     }
   })
 
   // Отправить данные Telegram на сервер для автологина
   const sendTelegramDataToServer = async (initData) => {
-    console.log('useTelegramMiniApp: Sending data to server', {
-      initData: initData,
-      url: window.location.href
-    })
+    // console.log('useTelegramMiniApp: Sending data to server', {
+    //   initData: initData,
+    //   url: window.location.href
+    // })
 
     try {
       // Пробуем несколько способов отправки данных
@@ -216,15 +216,15 @@ export function useTelegramMiniApp() {
         credentials: 'include'
       })
       
-      console.log('useTelegramMiniApp: Header method response', {
-        status: response1.status,
-        ok: response1.ok
-      })
+      // console.log('useTelegramMiniApp: Header method response', {
+      //   status: response1.status,
+      //   ok: response1.ok
+      // })
 
       // Проверяем специальный заголовок перенаправления
       const redirectUrl = response1.headers.get('X-Telegram-Redirect')
       if (redirectUrl) {
-        console.log('useTelegramMiniApp: Received redirect header from main request:', redirectUrl)
+        // console.log('useTelegramMiniApp: Received redirect header from main request:', redirectUrl)
         window.location.href = redirectUrl
         return
       }
@@ -247,17 +247,17 @@ export function useTelegramMiniApp() {
           })
         })
         
-        console.log('useTelegramMiniApp: API method response', {
-          status: response2.status,
-          ok: response2.ok
-        })
+        // console.log('useTelegramMiniApp: API method response', {
+        //   status: response2.status,
+        //   ok: response2.ok
+        // })
         
         if (response2.ok) {
           const data = await response2.json()
-          console.log('useTelegramMiniApp: API response data', data)
+          // console.log('useTelegramMiniApp: API response data', data)
           
           if (data.success && data.user) {
-            console.log('useTelegramMiniApp: User authenticated via API')
+            // console.log('useTelegramMiniApp: User authenticated via API')
             
             // Сохраняем информацию об авторизации в localStorage для Telegram WebApp
             localStorage.setItem('telegram_auth_user_id', data.user.id)
@@ -270,7 +270,7 @@ export function useTelegramMiniApp() {
             const hadAutoAuthToken = localStorage.getItem('auto_auth_token')
             if (hadAutoAuthToken) {
               localStorage.removeItem('auto_auth_token')
-              console.log('useTelegramMiniApp: Cleared auto_auth_token after successful Telegram auth')
+              // console.log('useTelegramMiniApp: Cleared auto_auth_token after successful Telegram auth')
             }
             
             // Перезагружаем страницу для применения авторизации
@@ -279,19 +279,19 @@ export function useTelegramMiniApp() {
           }
         }
       } catch (apiError) {
-        console.error('useTelegramMiniApp: API method failed', apiError)
+        // console.error('useTelegramMiniApp: API method failed', apiError)
       }
       
       if (response1.ok) {
-        console.log('Telegram data sent successfully via header method')
+        // console.log('Telegram data sent successfully via header method')
         // Попробуем получить ответ
         const responseText = await response1.text()
-        console.log('Response body length:', responseText.length)
+        // console.log('Response body length:', responseText.length)
       } else {
-        console.error('Server responded with error:', response1.status, response1.statusText)
+        // console.error('Server responded with error:', response1.status, response1.statusText)
       }
     } catch (error) {
-      console.error('Error sending Telegram data:', error)
+      // console.error('Error sending Telegram data:', error)
     }
   }
 

@@ -208,7 +208,13 @@ const checkPaymentStatus = async () => {
             }
         }
     } catch (error) {
-        console.error('Ошибка проверки статуса платежа:', error);
+        // console.error('Ошибка проверки статуса платежа:', error);  // Закомментировано для продакшена
+        if (retryCount.value < maxRetries.value) {
+            retryCount.value++;
+            setTimeout(() => {
+                checkPaymentStatus();
+            }, retryInterval.value);
+        }
     }
 };
 

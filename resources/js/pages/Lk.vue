@@ -71,11 +71,11 @@ const remainingGenerations = computed(() => {
 
 // Загрузить статус Telegram при монтировании компонента
 onMounted(async () => {
+  // console.log('Running in Telegram Mini App mode');  // Закомментировано для продакшена
   await loadTelegramStatus();
   
   // Если это Telegram Mini App, настраиваем интерфейс
   if (isTelegramMiniApp.value) {
-    console.log('Running in Telegram Mini App mode');
     // Добавляем CSS класс для Telegram WebApp стилей
     document.body.classList.add('tg-viewport');
   }
@@ -94,7 +94,7 @@ const loadTelegramStatus = async () => {
       telegramStatus.value = await response.json();
     }
   } catch (error) {
-    console.error('Ошибка при загрузке статуса Telegram:', error);
+    // console.error('Ошибка при загрузке статуса Telegram:', error);  // Закомментировано для продакшена
   }
 };
 
@@ -135,7 +135,7 @@ const linkTelegram = async () => {
     }
     
   } catch (error) {
-    console.error('Ошибка при связке с Telegram:', error);
+    // console.error('Ошибка при связке с Telegram:', error);  // Закомментировано для продакшена
     $q.notify({
       type: 'negative',
       message: 'Ошибка при связке с Telegram',
@@ -184,7 +184,7 @@ const unlinkTelegram = async () => {
       }
       
     } catch (error) {
-      console.error('Ошибка при отвязке Telegram:', error);
+      // console.error('Ошибка при отвязке Telegram:', error);  // Закомментировано для продакшена
       $q.notify({
         type: 'negative',
         message: 'Ошибка при отвязке Telegram',
@@ -301,7 +301,7 @@ const loadUserContactData = async () => {
       privacyConsent.value = user.privacy_consent || false;
     }
   } catch (error) {
-    console.error('Ошибка при загрузке данных пользователя:', error);
+    // console.error('Ошибка при загрузке данных пользователя:', error);  // Закомментировано для продакшена
   }
 };
 
@@ -365,7 +365,7 @@ const saveUserContact = async () => {
     }
 
   } catch (error) {
-    console.error('Ошибка при сохранении контактных данных:', error);
+    // console.error('Ошибка при сохранении контактных данных:', error);  // Закомментировано для продакшена
     $q.notify({
       type: 'negative',
       message: error.message || 'Ошибка при сохранении контактных данных',
@@ -391,22 +391,22 @@ const processTopUp = async () => {
   isCreatingOrder.value = true;
 
   try {
-    console.log('=== Начало процесса пополнения ===');
-    console.log('Сумма:', topUpAmount.value);
-    console.log('Email:', userEmail.value);
-    console.log('Согласие:', privacyConsent.value);
+    // console.log('=== Начало процесса пополнения ===');  // Закомментировано для продакшена
+    // console.log('Сумма:', topUpAmount.value);  // Закомментировано для продакшена
+    // console.log('Email:', userEmail.value);  // Закомментировано для продакшена
+    // console.log('Согласие:', privacyConsent.value);  // Закомментировано для продакшена
 
     // Сначала сохраняем контактные данные
-    console.log('Сохраняем контактные данные...');
+    // console.log('Сохраняем контактные данные...');  // Закомментировано для продакшена
     const contactSaved = await saveUserContact();
     if (!contactSaved) {
-      console.log('Контактные данные не сохранены');
+      // console.log('Контактные данные не сохранены');  // Закомментировано для продакшена
       return;
     }
-    console.log('Контактные данные сохранены успешно');
+    // console.log('Контактные данные сохранены успешно');  // Закомментировано для продакшена
 
     // Создаем заказ на пополнение
-    console.log('Создаем заказ...');
+    // console.log('Создаем заказ...');  // Закомментировано для продакшена
     const orderHeaders = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
@@ -425,26 +425,26 @@ const processTopUp = async () => {
       })
     });
 
-    console.log('Order response status:', orderResponse.status);
-    console.log('Order response headers:', Object.fromEntries(orderResponse.headers.entries()));
+    // console.log('Order response status:', orderResponse.status);  // Закомментировано для продакшена
+    // console.log('Order response headers:', Object.fromEntries(orderResponse.headers.entries()));  // Закомментировано для продакшена
 
     if (!orderResponse.ok) {
       const orderErrorText = await orderResponse.text();
-      console.error('Order response error:', orderErrorText);
+      // console.error('Order response error:', orderErrorText);  // Закомментировано для продакшена
       throw new Error(`HTTP Error: ${orderResponse.status} - ${orderErrorText}`);
     }
 
     const orderData = await orderResponse.json();
-    console.log('Order data:', orderData);
+    // console.log('Order data:', orderData);  // Закомментировано для продакшена
     
     if (!orderData.success || !orderData.order_id) {
       throw new Error(orderData.error || 'Ошибка создания заказа');
     }
 
-    console.log('Заказ создан успешно, ID:', orderData.order_id);
+    // console.log('Заказ создан успешно, ID:', orderData.order_id);  // Закомментировано для продакшена
 
     // Создаем платеж ЮКасса
-    console.log('Создаем платеж ЮКасса...');
+    // console.log('Создаем платеж ЮКасса...');  // Закомментировано для продакшена
     const paymentHeaders = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
@@ -457,35 +457,35 @@ const processTopUp = async () => {
       credentials: 'include'
     });
 
-    console.log('Payment response status:', paymentResponse.status);
-    console.log('Payment response headers:', Object.fromEntries(paymentResponse.headers.entries()));
+    // console.log('Payment response status:', paymentResponse.status);  // Закомментировано для продакшена
+    // console.log('Payment response headers:', Object.fromEntries(paymentResponse.headers.entries()));  // Закомментировано для продакшена
 
     if (!paymentResponse.ok) {
       const paymentErrorText = await paymentResponse.text();
-      console.error('Payment response error:', paymentErrorText);
+      // console.error('Payment response error:', paymentErrorText);  // Закомментировано для продакшена
       throw new Error(`Payment API Error: ${paymentResponse.status} - ${paymentErrorText}`);
     }
 
     const paymentData = await paymentResponse.json();
-    console.log('Payment data received:', paymentData);
+    // console.log('Payment data received:', paymentData);  // Закомментировано для продакшена
 
     if (paymentData.success && paymentData.confirmation_url) {
-      console.log('Платеж создан успешно, URL:', paymentData.confirmation_url);
+      // console.log('Платеж создан успешно, URL:', paymentData.confirmation_url);  // Закомментировано для продакшена
       // Закрываем модальное окно
       showTopUpModal.value = false;
       
       // Переходим на страницу оплаты
       window.location.href = paymentData.confirmation_url;
     } else {
-      console.error('Некорректный ответ платежного API:', paymentData);
+      // console.error('Некорректный ответ платежного API:', paymentData);  // Закомментировано для продакшена
       throw new Error(paymentData.error || 'Некорректный ответ от платежного API');
     }
 
   } catch (error) {
-    console.error('=== Ошибка при пополнении баланса ===');
-    console.error('Error object:', error);
-    console.error('Error message:', error.message);
-    console.error('Error stack:', error.stack);
+    // console.error('=== Ошибка при пополнении баланса ===');  // Закомментировано для продакшена
+    // console.error('Error object:', error);  // Закомментировано для продакшена
+    // console.error('Error message:', error.message);  // Закомментировано для продакшена
+    // console.error('Error stack:', error.stack);  // Закомментировано для продакшена
     
     $q.notify({
       type: 'negative',
@@ -523,7 +523,7 @@ const loadTransitions = async () => {
       });
     }
   } catch (error) {
-    console.error('Ошибка при загрузке транзакций:', error);
+    // console.error('Ошибка при загрузке транзакций:', error);  // Закомментировано для продакшена
     $q.notify({
       type: 'negative',
       message: 'Ошибка при загрузке истории операций',
@@ -591,7 +591,7 @@ const testDecrementBalance = async () => {
     }
 
   } catch (error) {
-    console.error('Ошибка при уменьшении баланса:', error);
+    // console.error('Ошибка при уменьшении баланса:', error);  // Закомментировано для продакшена
     $q.notify({
       type: 'negative',
       message: 'Ошибка при уменьшении баланса',
@@ -715,7 +715,7 @@ const authTelegram = async () => {
     }, 3000);
     
   } catch (error) {
-    console.error('Ошибка при создании ссылки для авторизации:', error);
+    // console.error('Ошибка при создании ссылки для авторизации:', error);  // Закомментировано для продакшена
     $q.notify({
       type: 'negative',
       message: error.message || 'Ошибка при создании ссылки для авторизации',
