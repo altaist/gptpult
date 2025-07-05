@@ -91,16 +91,52 @@
 
                             <!-- Объем работы -->
                             <div class="form-section">
-                                <h3 class="section-title">Объем работы</h3>
-                                <p class="section-description">
-                                    Укажи приблизительное количество страниц (от 3 до 25)
-                                </p>
+                                <h3 class="section-title">Объем работы (от 4 до 25)</h3>
+                                
+                                <!-- Визуализация структуры документа -->
+                                <div class="document-structure">
+                                    <div class="structure-line">
+                                        <div class="structure-segment title-page" :style="{ flex: 1 }">
+                                            <div class="segment-bar">
+                                                <span class="segment-pages-on-bar">1</span>
+                                            </div>
+                                            <div class="segment-label">
+                                                <span class="segment-name">Титульник</span>
+                                            </div>
+                                        </div>
+                                        <div class="structure-segment contents-page" :style="{ flex: 1 }">
+                                            <div class="segment-bar">
+                                                <span class="segment-pages-on-bar">1</span>
+                                            </div>
+                                            <div class="segment-label">
+                                                <span class="segment-name">Содержание</span>
+                                            </div>
+                                        </div>
+                                        <div class="structure-segment main-text" :style="{ flex: form.pages_num - 3 }">
+                                            <div class="segment-bar">
+                                                <span class="segment-pages-on-bar">{{ form.pages_num - 3 }}</span>
+                                            </div>
+                                            <div class="segment-label">
+                                                <span class="segment-name">Текст работы</span>
+                                            </div>
+                                        </div>
+                                        <div class="structure-segment references-page" :style="{ flex: 1 }">
+                                            <div class="segment-bar">
+                                                <span class="segment-pages-on-bar">1</span>
+                                            </div>
+                                            <div class="segment-label">
+                                                <span class="segment-name">Список литературы</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
                                 <div class="pages-input-container">
                                     <div class="pages-counter">
                                         <button 
                                             type="button" 
                                             @click="decrementPages" 
-                                            :disabled="form.pages_num <= 3"
+                                            :disabled="form.pages_num <= 4"
                                             class="counter-btn"
                                         >
                                             <q-icon name="remove" />
@@ -193,7 +229,7 @@ const error = ref('');
 const form = ref({
     document_type_id: null,
     topic: '',
-    pages_num: 10
+    pages_num: 4
 });
 
 const showMobileHint = ref(false);
@@ -268,7 +304,7 @@ const incrementPages = () => {
 };
 
 const decrementPages = () => {
-    if (form.value.pages_num > 3) {
+    if (form.value.pages_num > 4) {
         form.value.pages_num--;
     }
 };
@@ -909,6 +945,149 @@ onUnmounted(() => {
     
     .submit-btn {
         min-width: 160px;
+    }
+}
+
+/* Визуализация структуры документа */
+.document-structure {
+    margin-bottom: 16px;
+}
+
+.structure-line {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    height: 40px;
+}
+
+.structure-segment {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    position: relative;
+    transition: flex 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); /* Плавная анимация изменения ширины */
+}
+
+.segment-bar {
+    height: 20px;
+    width: 100%;
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); /* Плавная анимация всех изменений */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+/* Скругления только у крайних блоков */
+.title-page .segment-bar {
+    background: #94a3b8;
+    border-radius: 4px 0 0 4px;
+}
+
+.contents-page .segment-bar {
+    background: #3b82f6;
+    border-radius: 0;
+}
+
+.main-text .segment-bar {
+    background: #10b981;
+    border-radius: 0;
+}
+
+.references-page .segment-bar {
+    background: #f59e0b;
+    border-radius: 0 4px 4px 0;
+}
+
+.segment-pages-on-bar {
+    font-size: 13px;
+    font-weight: 700;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease; /* Анимация изменения текста */
+}
+
+.segment-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    text-align: center;
+}
+
+.segment-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: #374151;
+    line-height: 1.2;
+    transition: all 0.3s ease; /* Анимация текста подписи */
+}
+
+/* Эффект пульсации при изменении значения */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    }
+}
+
+.main-text .segment-bar:hover {
+    animation: pulse 0.6s ease-in-out;
+}
+
+/* Адаптивность для структуры документа */
+@media (max-width: 768px) {
+    .document-structure {
+        margin-bottom: 12px;
+    }
+    
+    .structure-line {
+        height: 35px;
+    }
+    
+    .segment-bar {
+        height: 18px;
+    }
+    
+    .segment-pages-on-bar {
+        font-size: 12px;
+    }
+    
+    .segment-name {
+        font-size: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .document-structure {
+        margin-bottom: 10px;
+    }
+    
+    .structure-line {
+        height: 32px;
+        gap: 0;
+    }
+    
+    .segment-bar {
+        height: 16px;
+    }
+    
+    .segment-pages-on-bar {
+        font-size: 11px;
+    }
+    
+    .segment-name {
+        font-size: 9px;
     }
 }
 </style>
