@@ -39,6 +39,9 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    // Страница создания документа
+    Route::get('/new', NewDocumentController::class)->name('documents.new');
+
     // Группа маршрутов для документов
     Route::prefix('documents')->name('documents.')->group(function () {
         Route::post('/', [DocumentController::class, 'quickCreate'])->name('quick-create');
@@ -111,9 +114,6 @@ Route::middleware(['auth'])->group(function () {
 // Webhook для ЮКасса (без middleware auth)
 Route::post('/payment/yookassa/webhook', [YookassaWebhookController::class, 'handleWebhook'])
     ->name('payment.yookassa.webhook');
-
-// Страница создания документа (доступна всем, но с проверкой авторизации в компоненте)
-Route::get('/new', NewDocumentController::class)->name('documents.new');
 
 // Маршруты для автоматической авторизации
 Route::post('/login/auto', [App\Http\Controllers\Auth\AutoAuthController::class, 'autoLogin'])->name('login.auto');

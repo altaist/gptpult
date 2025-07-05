@@ -210,6 +210,20 @@ class DocumentController extends Controller
     public function quickCreate(Request $request)
     {
         try {
+            $user = Auth::user();
+            
+            // Проверяем лимиты перед созданием документа
+            $documentLimitService = app(\App\Services\Documents\DocumentLimitService::class);
+            $limitCheck = $documentLimitService->canCreateDocument($user);
+            
+            if (!$limitCheck['can_create']) {
+                return response()->json([
+                    'message' => $documentLimitService->getLimitMessage($user),
+                    'limit_reached' => true,
+                    'limit_info' => $limitCheck
+                ], 422);
+            }
+            
             $validated = $request->validate([
                 'document_type_id' => ['required', 'exists:document_types,id'],
                 'topic' => ['required', 'string', 'min:10', 'max:255'],

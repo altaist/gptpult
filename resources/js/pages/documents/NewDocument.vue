@@ -336,6 +336,13 @@ const onSubmit = async () => {
             throw new Error('Неверный формат ответа от сервера');
         }
     } catch (err) {
+        // Проверяем, является ли это ошибкой лимита
+        if (err.response && err.response.status === 422 && err.response.data.limit_reached) {
+            // Перенаправляем на страницу лимитов
+            router.visit(route('documents.new-document'));
+            return;
+        }
+        
         error.value = err.message || 'Произошла ошибка при создании документа';
         console.error('Ошибка при создании документа:', err);
     }
