@@ -376,7 +376,7 @@ class TelegramMiniAppAuth
             // Создаем нового пользователя
             $user = User::create([
                 'name' => $userName,
-                'email' => Str::random(10) . '@auto.user', // Автогенерированный email
+                'email' => null, // Убираем автогенерированный email
                 'password' => Hash::make(Str::random(16)), // Случайный пароль
                 'auth_token' => Str::random(32), // Токен для автовхода
                 'role_id' => UserRole::USER, // Обычный пользователь

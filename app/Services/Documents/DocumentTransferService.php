@@ -115,7 +115,10 @@ class DocumentTransferService
     public function findTempUserByAuthToken(string $authToken): ?User
     {
         return User::where('auth_token', $authToken)
-            ->where('email', 'like', '%@auto.user')
+            ->where(function ($query) {
+                $query->whereNull('email')
+                      ->orWhere('email', 'like', '%@auto.user');
+            })
             ->first();
     }
 
@@ -127,7 +130,9 @@ class DocumentTransferService
      */
     public function isTempUser(User $user): bool
     {
-        return $user->email && str_ends_with($user->email, '@auto.user');
+        // Временный пользователь - это пользователь без email или с автогенерированным email
+        return is_null($user->email) || 
+               ($user->email && str_ends_with($user->email, '@auto.user'));
     }
 
     /**

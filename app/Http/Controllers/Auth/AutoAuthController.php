@@ -167,7 +167,7 @@ class AutoAuthController extends Controller
         // Создаем нового пользователя
         $user = User::create([
             'name' => $request->name,
-            'email' => Str::random(10) . '@auto.user',
+            'email' => null, // Убираем автогенерированный email
             'password' => Hash::make(Str::random(16)),
             'auth_token' => $request->auth_token,
             'role_id' => 0, // Обычный пользователь
