@@ -113,7 +113,7 @@
                     </div>
 
                     <!-- Подпись о возможности закрыть страницу -->
-                    <div class="close-page-hint">
+                    <div v-if="user.telegram_id" class="close-page-hint">
                         <span>Вы можете закрыть эту страницу — уведомление о готовности придет в Telegram</span>
                     </div>
 

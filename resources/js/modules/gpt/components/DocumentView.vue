@@ -50,7 +50,7 @@
         </div>
 
         <!-- Тема документа -->
-        <div v-if="document.structure?.topic" class="content-section">
+        <!-- <div v-if="document.structure?.topic" class="content-section">
             <div class="section-card">
                 <div class="section-header">
                     <div class="section-title">
@@ -71,7 +71,7 @@
                     {{ document.structure.topic }}
                 </div>
             </div>
-        </div>
+        </div> -->
 
         <!-- Цели документа -->
         <div v-if="document.structure?.objectives && document.structure.objectives.length" class="content-section">

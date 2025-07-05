@@ -243,7 +243,8 @@ class WordDocumentService
         );
         
         // Тема работы
-        $decodedTitle = $this->decodeUnicodeString($document->title);
+        $documentTitle = $document->structure['document_title'] ?? $document->title;
+        $decodedTitle = $this->decodeUnicodeString($documentTitle);
         $section->addText(
             'по теме:',
             ['size' => 14, 'name' => 'Times New Roman'],
@@ -260,68 +261,62 @@ class WordDocumentService
         $section->addTextBreak(3);
         
         // Правая часть - сведения об исполнителе и руководителе
-        // Создаем невидимую таблицу для правильного выравнивания
-        $table = $section->addTable([
-            'borderSize' => 0,
-            'cellMargin' => 0,
-            'width' => 100 * 50, // 100% ширины
-            'unit' => 'pct'
-        ]);
-        
-        // Первая строка - пустая для отступа слева
-        $table->addRow();
-        $table->addCell(7000)->addText('', ['size' => 12, 'name' => 'Times New Roman']); // Левая пустая часть
-        $rightCell = $table->addCell(6000); // Правая часть для информации
+        // Используем стиль с правым выравниванием
+        $rightAlignStyle = [
+            'alignment' => Jc::RIGHT,
+            'spaceAfter' => 120,
+            'leftIndent' => 7000 // Отступ слева для размещения справа
+        ];
         
         // Сведения об исполнителе
-        $rightCell->addText(
+        $section->addText(
             'Выполнил:',
             ['size' => 12, 'name' => 'Times New Roman'],
-            ['alignment' => Jc::LEFT, 'spaceAfter' => 120]
+            $rightAlignStyle
         );
         
-        $rightCell->addText(
+        $section->addText(
             'студент [курс] курса группы [номер группы]',
             ['size' => 12, 'name' => 'Times New Roman', 'color' => '0066CC'],
-            ['alignment' => Jc::LEFT, 'spaceAfter' => 120]
+            $rightAlignStyle
         );
         
-        $rightCell->addText(
+        $section->addText(
             '___________________ [Фамилия И.О.]',
             ['size' => 12, 'name' => 'Times New Roman', 'color' => '0066CC'],
-            ['alignment' => Jc::LEFT, 'spaceAfter' => 200]
+            array_merge($rightAlignStyle, ['spaceAfter' => 200])
         );
         
         // Сведения о руководителе
-        $rightCell->addText(
+        $section->addText(
             'Руководитель:',
             ['size' => 12, 'name' => 'Times New Roman'],
-            ['alignment' => Jc::LEFT, 'spaceAfter' => 120]
+            $rightAlignStyle
         );
         
-        $rightCell->addText(
+        $section->addText(
             '[ученая степень, ученое звание]',
             ['size' => 12, 'name' => 'Times New Roman', 'color' => '0066CC'],
-            ['alignment' => Jc::LEFT, 'spaceAfter' => 120]
+            $rightAlignStyle
         );
         
-        $rightCell->addText(
+        $section->addText(
             '___________________ [Фамилия И.О.]',
             ['size' => 12, 'name' => 'Times New Roman', 'color' => '0066CC'],
-            ['alignment' => Jc::LEFT, 'spaceAfter' => 200]
+            array_merge($rightAlignStyle, ['spaceAfter' => 200])
         );
         
         // Оценка (если нужно)
-        $rightCell->addText(
+        $section->addText(
             'Оценка: ___________________',
             ['size' => 12, 'name' => 'Times New Roman'],
-            ['alignment' => Jc::LEFT, 'spaceAfter' => 120]
+            $rightAlignStyle
         );
         
-        $rightCell->addText(
+        $section->addText(
             'Дата: _____________________',
             ['size' => 12, 'name' => 'Times New Roman'],
-            ['alignment' => Jc::LEFT, 'spaceAfter' => 200]
+            array_merge($rightAlignStyle, ['spaceAfter' => 200])
         );
     }
 
