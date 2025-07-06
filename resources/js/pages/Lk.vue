@@ -929,7 +929,23 @@ const authTelegram = async () => {
                 <q-card-section class="modal-content">
                     <div class="amount-input-section">
                         <div class="custom-input-wrapper">
-                            <label class="custom-input-label">Сумма пополнения</label>
+                            <label class="custom-input-label">
+                                Сумма пополнения
+                                <q-icon 
+                                    name="info_outline" 
+                                    class="info-tooltip-icon"
+                                    size="18px"
+                                >
+                                    <q-tooltip 
+                                        class="bg-dark text-white"
+                                        :offset="[10, 10]"
+                                        anchor="top middle"
+                                        self="bottom middle"
+                                    >
+                                        Минимум 300₽. Сумма округляется до кратной 100₽ при завершении ввода
+                                    </q-tooltip>
+                                </q-icon>
+                            </label>
                             <div class="custom-input-container">
                                 <input
                                     v-model.number="topUpAmount"
@@ -944,15 +960,9 @@ const authTelegram = async () => {
                                 <span class="custom-input-suffix">₽</span>
                             </div>
                         </div>
-                        
-                        <div class="amount-info">
-                            <q-icon name="info" class="info-icon" />
-                            <span>Минимум 300₽. Сумма округляется до кратной 100₽ при завершении ввода</span>
-                        </div>
 
                         <!-- Быстрые кнопки выбора суммы -->
                         <div class="quick-amounts">
-                            <div class="quick-amounts-label">Быстрый выбор:</div>
                             <div class="quick-amounts-buttons">
                                 <button 
                                     v-for="amount in [300, 500, 1000, 1500]" 
@@ -2095,6 +2105,19 @@ const authTelegram = async () => {
     font-weight: 600;
     color: #374151;
     margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.info-tooltip-icon {
+    color: #6b7280;
+    cursor: help;
+    transition: color 0.2s ease;
+}
+
+.info-tooltip-icon:hover {
+    color: #3b82f6;
 }
 
 .custom-input-container {

@@ -329,7 +329,7 @@ const handleLogout = async () => {
     }
     
     .support-text {
-        font-size: 13px;
+        display: none;
     }
     
     .logout-btn {
@@ -342,7 +342,7 @@ const handleLogout = async () => {
     }
     
     .logout-text {
-        font-size: 13px;
+        display: none;
     }
     
     .actions-section {
@@ -383,11 +383,11 @@ const handleLogout = async () => {
     }
     
     .support-btn i {
-        font-size: 12px;
+        font-size: 16px;
     }
     
     .support-text {
-        font-size: 12px;
+        display: none;
     }
     
     .logout-btn {
@@ -396,11 +396,11 @@ const handleLogout = async () => {
     }
     
     .logout-btn i {
-        font-size: 12px;
+        font-size: 16px;
     }
     
     .logout-text {
-        font-size: 12px;
+        display: none;
     }
 }
 </style>
