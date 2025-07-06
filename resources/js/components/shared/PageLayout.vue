@@ -35,7 +35,7 @@ import PageContainer from '@/components/shared/PageContainer.vue';
 import PageHeader from '@/components/shared/PageHeader.vue';
 import PageFooter from '@/components/shared/PageFooter.vue';
 import { onMounted } from 'vue';
-import { checkAuth } from '@/composables/auth';
+import { authAndAutoReg } from '@/composables/auth';
 
 const props = defineProps({
     title: {
@@ -105,7 +105,7 @@ const localMenu = [
 
 onMounted(async () => {
     if (props.autoAuth) {
-        await checkAuth();
+        await authAndAutoReg();
     }
 });
 </script>

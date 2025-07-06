@@ -12,6 +12,28 @@ const api = axios.create({
     withCredentials: true
 });
 
+// Перехватчик запросов для добавления токена авторизации
+api.interceptors.request.use(
+    config => {
+        // Добавляем токен из localStorage если он есть
+        const authToken = localStorage.getItem('auto_auth_token');
+        if (authToken) {
+            config.headers['X-Auto-Auth-Token'] = authToken;
+        }
+        
+        // Добавляем CSRF токен если он есть
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        if (csrfToken) {
+            config.headers['X-CSRF-TOKEN'] = csrfToken;
+        }
+        
+        return config;
+    },
+    error => {
+        return Promise.reject(error);
+    }
+);
+
 // Состояние загрузки для каждого запроса
 const loadingStates = ref(new Map());
 
