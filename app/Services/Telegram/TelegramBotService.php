@@ -507,10 +507,10 @@ class TelegramBotService
                 $lastName = $telegramUser['last_name'] ?? '';
                 $userName = trim($firstName . ' ' . $lastName);
                 
-                // Обновляем пользователя без добавления email
+                // Обновляем email с автогенерированного на более постоянный
                 $userWithToken->update([
                     'name' => $userName,
-                    'email' => null, // Оставляем email как null
+                    'email' => Str::random(10) . '@linked.user', // Меняем с @auto.user на @linked.user
                     'telegram_id' => $chatId,
                     'telegram_username' => $telegramUser['username'] ?? null,
                     'telegram_linked_at' => now(),
@@ -520,8 +520,8 @@ class TelegramBotService
                 
                 Log::info('Converted temporary user to permanent', [
                     'user_id' => $userWithToken->id,
-                    'old_email_type' => 'null or @auto.user',
-                    'new_email_type' => 'null (no email)'
+                    'old_email_type' => '@auto.user',
+                    'new_email_type' => '@linked.user'
                 ]);
             } else {
                 // Это постоянный пользователь, просто связываем с Telegram

@@ -25,6 +25,17 @@
                         <span class="support-text">Поддержка</span>
                     </button>
                     
+                    <!-- Кнопка выхода (только для авторизованных пользователей) -->
+                    <button 
+                        v-if="showLogoutButton" 
+                        class="logout-btn" 
+                        @click="handleLogout" 
+                        title="Выйти из аккаунта"
+                    >
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span class="logout-text">Выйти</span>
+                    </button>
+                    
                     <!-- Основная правая кнопка -->
                     <btn 
                         v-if="rightBtnIcon" 
@@ -39,10 +50,11 @@
 </template>
 
 <script setup>
-import { user } from '@/composables/auth';
+import { isAuthenticated, user, fullLogout, shouldShowLogoutButton, shouldShowLogoutButtonWithData } from '@/composables/auth';
 import { router } from '@inertiajs/vue3';
 import Btn from '@/components/shared/Btn.vue';
 import PageTitle from '@/components/shared/PageTitle.vue';
+import { computed } from 'vue';
 
 const props = defineProps({
     title: {
@@ -71,10 +83,23 @@ const props = defineProps({
     logoGoHome: {
         type: Boolean,
         default: false
+    },
+    documentsCount: {
+        type: Number,
+        default: 0
+    },
+    balance: {
+        type: Number,
+        default: 0
     }
 });
 
 const emit = defineEmits(['click:left', 'click:right', 'click:title']);
+
+// Определяем должна ли показываться кнопка выхода
+const showLogoutButton = computed(() => 
+    shouldShowLogoutButtonWithData(props.documentsCount, props.balance)
+);
 
 const onLogoClick = () => {
     if (props.logoGoHome) {
@@ -104,6 +129,19 @@ const onRightBtnClick = () => {
 const openSupport = () => {
     // Открытие поддержки
     window.open('https://t.me/gptpult_help', '_blank');
+};
+
+// Обработчик выхода из системы
+const handleLogout = async () => {
+    try {
+        await fullLogout();
+        // Перенаправляем на главную страницу
+        window.location.href = '/';
+    } catch (error) {
+        console.error('Ошибка при выходе:', error);
+        // В случае ошибки всё равно перенаправляем на главную
+        window.location.href = '/';
+    }
 };
 </script>
 
@@ -201,6 +239,13 @@ const openSupport = () => {
     cursor: pointer;
     font-size: 14px;
     font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.support-btn:hover {
+    background: rgba(16, 185, 129, 0.2);
+    color: #059669;
+    transform: scale(1.02);
 }
 
 .support-btn i {
@@ -208,6 +253,36 @@ const openSupport = () => {
 }
 
 .support-text {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.logout-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 12px;
+    background: rgba(248, 113, 113, 0.1);
+    color: #f87171;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.logout-btn:hover {
+    background: rgba(248, 113, 113, 0.2);
+    color: #dc2626;
+    transform: scale(1.02);
+}
+
+.logout-btn i {
+    font-size: 16px;
+}
+
+.logout-text {
     font-size: 14px;
     font-weight: 500;
 }
@@ -257,6 +332,19 @@ const openSupport = () => {
         font-size: 13px;
     }
     
+    .logout-btn {
+        padding: 8px 12px;
+        gap: 6px;
+    }
+    
+    .logout-btn i {
+        font-size: 14px;
+    }
+    
+    .logout-text {
+        font-size: 13px;
+    }
+    
     .actions-section {
         gap: 8px;
     }
@@ -299,6 +387,19 @@ const openSupport = () => {
     }
     
     .support-text {
+        font-size: 12px;
+    }
+    
+    .logout-btn {
+        padding: 6px 10px;
+        gap: 4px;
+    }
+    
+    .logout-btn i {
+        font-size: 12px;
+    }
+    
+    .logout-text {
         font-size: 12px;
     }
 }

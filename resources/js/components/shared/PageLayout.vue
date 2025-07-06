@@ -9,6 +9,8 @@
             :right-btn-icon="rightBtnIcon"
             :right-btn-route="rightBtnRoute"
             :logo-go-home="logoGoHome"
+            :documents-count="documentsCount"
+            :balance="balance"
 
             @click:left="emit('click:header:left')"
             @click:right="emit('click:header:right')"
@@ -28,14 +30,21 @@
             @click:right="emit('click:footer:right')"
             @click:menu="emit('click:footer:menu', $event)"
         />
+        
+        <!-- Отладочный компонент -->
+        <logout-button-debug 
+            :documents-count="documentsCount"
+            :balance="balance"
+        />
     </div>
 </template>
 <script setup>
 import PageContainer from '@/components/shared/PageContainer.vue';
 import PageHeader from '@/components/shared/PageHeader.vue';
 import PageFooter from '@/components/shared/PageFooter.vue';
+import LogoutButtonDebug from '@/components/debug/LogoutButtonDebug.vue';
 import { onMounted } from 'vue';
-import { authAndAutoReg } from '@/composables/auth';
+import { checkAuth } from '@/composables/auth';
 
 const props = defineProps({
     title: {
@@ -76,6 +85,14 @@ const props = defineProps({
     logoGoHome: {
         type: Boolean,
         default: false
+    },
+    documentsCount: {
+        type: Number,
+        default: 0
+    },
+    balance: {
+        type: Number,
+        default: 0
     }
 });
 
@@ -105,7 +122,7 @@ const localMenu = [
 
 onMounted(async () => {
     if (props.autoAuth) {
-        await authAndAutoReg();
+        await checkAuth();
     }
 });
 </script>

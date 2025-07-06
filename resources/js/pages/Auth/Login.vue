@@ -1,12 +1,8 @@
 <script setup>
-import Checkbox from '@/_breeze/Components/Checkbox.vue';
-import InputError from '@/_breeze/Components/InputError.vue';
-import InputLabel from '@/_breeze/Components/InputLabel.vue';
-import PrimaryButton from '@/_breeze/Components/PrimaryButton.vue';
-import TextInput from '@/_breeze/Components/TextInput.vue';
-import { Head, Link, useForm, router } from '@inertiajs/vue3';
+import GuestLayout from '@/_breeze/Layouts/GuestLayout.vue';
+import { Head, router } from '@inertiajs/vue3';
 import { onMounted, ref } from 'vue';
-import { checkAuth, authAndAutoReg } from '@/composables/auth';
+import { checkAuth } from '@/composables/auth';
 
 defineProps({
     canResetPassword: {
@@ -17,309 +13,202 @@ defineProps({
     },
 });
 
-const form = useForm({
-    email: '',
-    password: '',
-    remember: false,
-});
+// Состояния
+const isLoading = ref(true);
+const showSupport = ref(false);
+const loadingText = ref('Проверяем авторизацию...');
+const supportTimer = ref(null);
 
-const showForm = ref(false);
+// Различные тексты загрузки
+const loadingTexts = [
+    'Проверяем авторизацию...',
+    'Подключаемся к серверу...',
+    'Инициализируем сессию...',
+    'Почти готово...'
+];
 
-const submit = () => {
-    form.post(route('login'), {
-        onFinish: () => form.reset('password'),
-    });
+let textIndex = 0;
+
+const goToDashboard = () => {
+    router.visit(route('dashboard'));
+};
+
+const showSupportInfo = () => {
+    showSupport.value = true;
+    loadingText.value = 'Возникли проблемы с загрузкой?';
+};
+
+const contactSupport = () => {
+    // Открываем Telegram бот поддержки
+    window.open('https://t.me/gptpult_bot', '_blank');
+};
+
+const tryManualLogin = () => {
+    // Показываем стандартную форму логина
+    isLoading.value = false;
+    showSupport.value = false;
+    clearTimeout(supportTimer.value);
 };
 
 onMounted(async () => {
-    // console.log('Требуется авторизация');  // Закомментировано для продакшена
+    // Устанавливаем таймер для показа поддержки через 15 секунд
+    supportTimer.value = setTimeout(showSupportInfo, 15000);
     
-    // Пытаемся автоматически авторизовать или зарегистрировать пользователя
-    try {
-        const user = await authAndAutoReg();
-        if (user) {
-            // Если пользователь авторизован, перенаправляем в ЛК
-            router.visit('/lk');
+    // Меняем текст загрузки каждые 3 секунды
+    const textInterval = setInterval(() => {
+        if (!showSupport.value && isLoading.value) {
+            textIndex = (textIndex + 1) % loadingTexts.length;
+            loadingText.value = loadingTexts[textIndex];
         } else {
-            // Если автоматическая авторизация не удалась, показываем форму через 3 секунды
-            setTimeout(() => {
-                showForm.value = true;
-            }, 3000);
+            clearInterval(textInterval);
         }
+    }, 3000);
+    
+    try {
+        await checkAuth();
     } catch (error) {
-        // console.error('Auto auth failed:', error);  // Закомментировано для продакшена
-        // В случае ошибки показываем форму через 2 секунды
-        setTimeout(() => {
-            showForm.value = true;
-        }, 2000);
+        console.error('Auth check failed:', error);
+        // Если авторизация не удалась, показываем поддержку
+        showSupportInfo();
     }
 });
 </script>
 
 <template>
-    <div class="login-container">
-        <Head title="Вход" />
-        
-        <!-- Простой белый экран с загрузкой -->
-        <div class="login-content">
-            <div class="loading-section">
-                <div class="loading-spinner"></div>
-                <div class="loading-text">Загрузка...</div>
+    <GuestLayout>
+        <Head title="Вход в систему" />
+
+        <!-- Экран загрузки -->
+        <div v-if="isLoading" class="loading-container">
+            <!-- Логотип или иконка -->
+            <div class="loading-logo">
+                <div class="spinner">
+                    <div class="spinner-ring"></div>
+                    <div class="spinner-ring"></div>
+                    <div class="spinner-ring"></div>
+                </div>
+            </div>
+
+            <!-- Текст загрузки -->
+            <div class="loading-text">
+                {{ loadingText }}
+            </div>
+
+            <!-- Блок поддержки (показывается через 15 секунд) -->
+            <div v-if="showSupport" class="support-block">
+                <div class="support-message">
+                    Загрузка занимает больше времени, чем обычно
+                </div>
+                
+                <div class="support-buttons">
+                    <button @click="contactSupport" class="support-btn primary">
+                        <i class="fab fa-telegram"></i>
+                        Связаться с поддержкой
+                    </button>
+                    
+                    <button @click="tryManualLogin" class="support-btn secondary">
+                        Войти вручную
+                    </button>
+                </div>
+
+                <div class="support-note">
+                    Или попробуйте обновить страницу
+                </div>
+            </div>
+
+            <!-- Кнопка перехода на главную (всегда видна) -->
+            <div class="navigation-block">
+                <button @click="goToDashboard" class="nav-btn">
+                    Перейти на главную
+                </button>
             </div>
         </div>
-        
-        <!-- Скрытая форма входа (для экстренных случаев) -->
-        <div v-if="showForm" class="hidden-form">
-            <div class="form-toggle">
-                <button @click="showForm = false" class="close-btn">×</button>
-            </div>
-            
-            <div v-if="status" class="mb-4 font-medium text-sm text-green-600">
-                {{ status }}
+
+        <!-- Стандартная форма логина (показывается только при ручном выборе) -->
+        <div v-else class="manual-login-form">
+            <div class="form-header">
+                <h2>Вход в систему</h2>
+                <p>Введите ваши данные для входа</p>
             </div>
 
-            <form @submit.prevent="submit">
-                <div>
-                    <InputLabel for="email" value="Email" />
-                    <TextInput
+            <form @submit.prevent="() => {}">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input
                         id="email"
                         type="email"
-                        class="mt-1 block w-full"
-                        v-model="form.email"
+                        class="form-input"
+                        placeholder="example@mail.ru"
                         required
-                        autofocus
-                        autocomplete="username"
                     />
-                    <InputError class="mt-2" :message="form.errors.email" />
                 </div>
 
-                <div class="mt-4">
-                    <InputLabel for="password" value="Password" />
-                    <TextInput
+                <div class="form-group">
+                    <label for="password">Пароль</label>
+                    <input
                         id="password"
                         type="password"
-                        class="mt-1 block w-full"
-                        v-model="form.password"
+                        class="form-input"
+                        placeholder="Введите пароль"
                         required
-                        autocomplete="current-password"
                     />
-                    <InputError class="mt-2" :message="form.errors.password" />
                 </div>
 
-                <div class="block mt-4">
-                    <label class="flex items-center">
-                        <Checkbox name="remember" v-model:checked="form.remember" />
-                        <span class="ms-2 text-sm text-gray-600">Remember me</span>
-                    </label>
+                <div class="form-actions">
+                    <button type="submit" class="submit-btn">
+                        Войти
+                    </button>
                 </div>
 
-                <div class="flex items-center justify-end mt-4">
-                    <Link
-                        v-if="canResetPassword"
-                        :href="route('password.request')"
-                        class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                    >
-                        Forgot your password?
-                    </Link>
-
-                    <PrimaryButton class="ms-4" :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
-                        Log in
-                    </PrimaryButton>
+                <div class="form-footer">
+                    <button @click="isLoading = true; showSupport = false" type="button" class="back-btn">
+                        ← Вернуться к автоматическому входу
+                    </button>
                 </div>
             </form>
         </div>
-        
-        <!-- Кнопка для показа формы (скрытая, активируется двойным кликом) -->
-        <div class="emergency-access" @dblclick="showForm = true"></div>
-    </div>
+    </GuestLayout>
 </template>
 
 <style scoped>
-.login-container {
-    min-height: 100vh;
-    background: #ffffff;
+.loading-container {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    min-height: 400px;
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.loading-logo {
+    margin-bottom: 32px;
+}
+
+.spinner {
     position: relative;
+    width: 80px;
+    height: 80px;
 }
 
-.login-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
+.spinner-ring {
+    position: absolute;
     width: 100%;
-}
-
-.loading-section {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-}
-
-.loading-spinner {
-    width: 40px;
-    height: 40px;
-    border: 3px solid #f3f4f6;
+    height: 100%;
+    border: 3px solid transparent;
     border-top: 3px solid #3b82f6;
     border-radius: 50%;
-    animation: spin 1s linear infinite;
+    animation: spin 1.5s linear infinite;
 }
 
-.loading-text {
-    font-size: 16px;
-    color: #6b7280;
-    font-weight: 500;
+.spinner-ring:nth-child(2) {
+    animation-delay: 0.15s;
+    border-top-color: #8b5cf6;
 }
 
-.hidden-form {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(255, 255, 255, 0.98);
-    backdrop-filter: blur(5px);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    padding: 40px;
-}
-
-.form-toggle {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-}
-
-.close-btn {
-    width: 40px;
-    height: 40px;
-    border: none;
-    background: #f3f4f6;
-    border-radius: 50%;
-    font-size: 24px;
-    color: #6b7280;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-}
-
-.close-btn:hover {
-    background: #e5e7eb;
-    color: #374151;
-}
-
-.emergency-access {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 50px;
-    height: 50px;
-    opacity: 0;
-    cursor: pointer;
-}
-
-/* Стили для формы */
-.hidden-form form {
-    max-width: 400px;
-    width: 100%;
-    background: #ffffff;
-    padding: 40px;
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    border: 1px solid #f3f4f6;
-}
-
-.hidden-form .mt-1 {
-    margin-top: 0.25rem;
-}
-
-.hidden-form .mt-4 {
-    margin-top: 1rem;
-}
-
-.hidden-form .mb-4 {
-    margin-bottom: 1rem;
-}
-
-.hidden-form .ms-2 {
-    margin-left: 0.5rem;
-}
-
-.hidden-form .ms-4 {
-    margin-left: 1rem;
-}
-
-.hidden-form .block {
-    display: block;
-}
-
-.hidden-form .w-full {
-    width: 100%;
-}
-
-.hidden-form .flex {
-    display: flex;
-}
-
-.hidden-form .items-center {
-    align-items: center;
-}
-
-.hidden-form .justify-end {
-    justify-content: flex-end;
-}
-
-.hidden-form .text-sm {
-    font-size: 0.875rem;
-}
-
-.hidden-form .text-gray-600 {
-    color: #6b7280;
-}
-
-.hidden-form .text-green-600 {
-    color: #059669;
-}
-
-.hidden-form .font-medium {
-    font-weight: 500;
-}
-
-.hidden-form .underline {
-    text-decoration: underline;
-}
-
-.hidden-form .rounded-md {
-    border-radius: 0.375rem;
-}
-
-.hidden-form .focus\:outline-none:focus {
-    outline: none;
-}
-
-.hidden-form .focus\:ring-2:focus {
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
-}
-
-.hidden-form .focus\:ring-offset-2:focus {
-    box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px rgba(59, 130, 246, 0.5);
-}
-
-.hidden-form .hover\:text-gray-900:hover {
-    color: #111827;
-}
-
-.hidden-form .opacity-25 {
-    opacity: 0.25;
+.spinner-ring:nth-child(3) {
+    animation-delay: 0.3s;
+    border-top-color: #06b6d4;
 }
 
 @keyframes spin {
@@ -327,24 +216,202 @@ onMounted(async () => {
     100% { transform: rotate(360deg); }
 }
 
+.loading-text {
+    font-size: 18px;
+    color: #374151;
+    margin-bottom: 40px;
+    font-weight: 500;
+}
+
+.support-block {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 32px;
+    max-width: 400px;
+    width: 100%;
+}
+
+.support-message {
+    color: #6b7280;
+    margin-bottom: 20px;
+    font-size: 16px;
+}
+
+.support-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.support-btn {
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 14px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.support-btn.primary {
+    background: #229954;
+    color: white;
+}
+
+.support-btn.primary:hover {
+    background: #1e8449;
+    transform: translateY(-1px);
+}
+
+.support-btn.secondary {
+    background: #f3f4f6;
+    color: #374151;
+    border: 1px solid #d1d5db;
+}
+
+.support-btn.secondary:hover {
+    background: #e5e7eb;
+}
+
+.support-note {
+    font-size: 13px;
+    color: #9ca3af;
+    text-align: center;
+}
+
+.navigation-block {
+    margin-top: 20px;
+}
+
+.nav-btn {
+    background: none;
+    border: none;
+    color: #6b7280;
+    font-size: 14px;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 8px 16px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.nav-btn:hover {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+/* Стили для ручной формы логина */
+.manual-login-form {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.form-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.form-header h2 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 8px;
+}
+
+.form-header p {
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 6px;
+    font-size: 14px;
+}
+
+.form-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: border-color 0.2s ease;
+    box-sizing: border-box;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-actions {
+    margin-bottom: 20px;
+}
+
+.submit-btn {
+    width: 100%;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.submit-btn:hover {
+    background: #2563eb;
+}
+
+.form-footer {
+    text-align: center;
+}
+
+.back-btn {
+    background: none;
+    border: none;
+    color: #6b7280;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 8px 16px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.back-btn:hover {
+    background: #f3f4f6;
+    color: #374151;
+}
+
 /* Адаптивность */
-@media (max-width: 768px) {
-    .hidden-form {
-        padding: 20px;
+@media (max-width: 640px) {
+    .loading-container {
+        padding: 20px 16px;
     }
     
-    .hidden-form form {
-        padding: 30px 20px;
-        margin: 0 10px;
+    .support-buttons {
+        flex-direction: column;
     }
     
-    .loading-spinner {
-        width: 35px;
-        height: 35px;
-    }
-    
-    .loading-text {
-        font-size: 14px;
+    .manual-login-form {
+        padding: 16px;
     }
 }
 </style>

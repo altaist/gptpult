@@ -9,6 +9,8 @@
             :right-btn-icon="rightBtnIcon"
             :right-btn-route="rightBtnRoute"
             :logo-go-home="logoGoHome"
+            :documents-count="documentsCount"
+            :balance="balance"
             @click:left="emit('click:header:left')"
             @click:right="emit('click:header:right')"
             @click:title="emit('click:header:title')"
@@ -82,6 +84,14 @@ const props = defineProps({
     showTitle: {
         type: Boolean,
         default: false
+    },
+    documentsCount: {
+        type: Number,
+        default: 0
+    },
+    balance: {
+        type: Number,
+        default: 0
     }
 });
 

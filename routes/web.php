@@ -209,10 +209,7 @@ Route::get('/test/full-flow', function () {
     $transferService = new \App\Services\Documents\DocumentTransferService();
     
     // Находим временного пользователя с документами
-    $tempUser = \App\Models\User::where(function ($query) {
-        $query->whereNull('email')
-              ->orWhere('email', 'like', '%@auto.user');
-    })
+    $tempUser = \App\Models\User::where('email', 'like', '%@auto.user')
         ->whereHas('documents')
         ->with('documents')
         ->first();
