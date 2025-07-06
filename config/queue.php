@@ -81,6 +81,15 @@ return [
             'after_commit' => false,
         ],
 
+        'redis_parallel' => [
+            'driver' => 'redis',
+            'connection' => env('REDIS_QUEUE_CONNECTION', 'default'),
+            'queue' => 'document_creates',
+            'retry_after' => (int) env('REDIS_QUEUE_RETRY_AFTER', 300),
+            'block_for' => 5,
+            'after_commit' => false,
+        ],
+
     ],
 
     /*

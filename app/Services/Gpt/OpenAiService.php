@@ -169,19 +169,7 @@ class OpenAiService implements GptServiceInterface
         $attempts = 0;
 
         while ($attempts < $maxAttempts) {
-            $response = $this->getHttpClient([
-                'OpenAI-Beta' => 'assistants=v2',
-            ])->get("https://api.openai.com/v1/threads/{$threadId}/runs/{$runId}");
-
-            if (!$response->successful()) {
-                Log::error('OpenAI Get Run Status failed', [
-                    'status' => $response->status(),
-                    'body' => $response->body(),
-                ]);
-                throw new \Exception('OpenAI Get Run Status failed: ' . $response->body());
-            }
-
-            $run = $response->json();
+            $run = $this->getRunStatus($threadId, $runId);
             
             if ($run['status'] === 'completed') {
                 // Логируем информацию о токенах при завершении run
@@ -210,6 +198,26 @@ class OpenAiService implements GptServiceInterface
         }
 
         throw new \Exception('Run timeout: не удалось дождаться завершения за 4 минуты (возможно OpenAI перегружен)');
+    }
+
+    /**
+     * Получить статус run
+     */
+    public function getRunStatus(string $threadId, string $runId): array
+    {
+        $response = $this->getHttpClient([
+            'OpenAI-Beta' => 'assistants=v2',
+        ])->get("https://api.openai.com/v1/threads/{$threadId}/runs/{$runId}");
+
+        if (!$response->successful()) {
+            Log::error('OpenAI Get Run Status failed', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+            throw new \Exception('OpenAI Get Run Status failed: ' . $response->body());
+        }
+
+        return $response->json();
     }
 
     public function getThreadMessages(string $threadId): array
