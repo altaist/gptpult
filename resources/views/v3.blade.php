@@ -370,7 +370,7 @@
     <nav class="navbar navbar-expand-lg fixed-top">
         <div class="container">
             <a class="navbar-brand" href="#">
-                <i class="fas fa-tv me-2"></i>GPT Пульт
+                <img src="{{ asset('gptpult.png') }}" alt="GPT Пульт" class="navbar-logo">
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -816,10 +816,10 @@
             <div class="row">
                 <div class="col-lg-4 mb-4">
                     <div class="footer-brand">
-                        <i class="fas fa-tv me-2"></i>GPT Пульт
+                        GPT Пульт
                     </div>
                     <p class="footer-text">
-                        Революционная платформа для создания учебных работ с использованием 
+                        Платформа для создания учебных работ с использованием 
                         искусственного интеллекта. Быстро, качественно, доступно.
                     </p>
                 </div>
@@ -841,10 +841,12 @@
                 </div>
                 <div class="col-lg-4 mb-4">
                     <h5 class="mb-3">Поддержка</h5>
-                    <p class="opacity-75">
-                        <i class="fas fa-envelope me-2"></i>dfdf576@gmail.com<br>
+                    <p class="opacity-75 mb-3">
                         <i class="fas fa-clock me-2"></i>24/7 поддержка
                     </p>
+                    <a href="https://t.me/gptpult_help" target="_blank" class="btn btn-outline-primary btn-sm">
+                        <i class="fab fa-telegram me-2"></i>Написать в Telegram
+                    </a>
                 </div>
             </div>
             <div class="footer-bottom">

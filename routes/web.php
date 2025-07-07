@@ -17,7 +17,7 @@ use App\Http\Controllers\TelegramController;
 use App\Http\Controllers\TelegramLinkController;
 
 Route::get('/', function () {
-    return view('v3');
+    return view('v4');
 });
 Route::get('/v2', function () {
     return view('v2');
@@ -25,6 +25,27 @@ Route::get('/v2', function () {
 Route::get('/v3', function () {
     return view('v3');
 });
+
+// Временные маршруты для просмотра дизайнов главной страницы
+Route::get('/design1', function () {
+    return view('v4-design1');
+})->name('design1');
+
+Route::get('/design2', function () {
+    return view('v4-design2');
+})->name('design2');
+
+Route::get('/design3', function () {
+    return view('v4-design3');
+})->name('design3');
+
+Route::get('/design4', function () {
+    return view('v4-design4');
+})->name('design4');
+
+Route::get('/design5', function () {
+    return view('v4-design5');
+})->name('design5');
 
 Route::get('/dashboard', [LkController::class, 'index'])
     ->middleware(['auth', 'verified'])

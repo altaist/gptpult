@@ -5,8 +5,7 @@
                 <!-- Левая часть - Логотип -->
                 <div class="logo-section">
                     <div class="logo-container" @click="onLogoClick">
-                        <i class="fas fa-tv logo-icon"></i>
-                        <span class="logo-text">GPT Пульт</span>
+                        <img src="/gptpult.png" alt="GPT Пульт" class="logo-image">
                     </div>
                 </div>
                 
@@ -102,11 +101,7 @@ const showLogoutButton = computed(() =>
 );
 
 const onLogoClick = () => {
-    if (props.logoGoHome) {
-        window.location.href = '/';
-    } else {
-        window.history.back();
-    }
+    window.location.href = '/';
 };
 
 const onLeftBtnClick = () => {
@@ -192,18 +187,15 @@ const handleLogout = async () => {
     border-radius: 12px;
 }
 
-.logo-icon {
-    font-size: 22px;
-    color: #3b82f6;
-    margin-right: 10px;
+.logo-image {
+    height: 60px;
+    width: auto;
+    object-fit: contain;
+    transition: all 0.3s ease;
 }
 
-.logo-text {
-    font-family: 'Bowler', 'Inter', sans-serif;
-    font-weight: 800;
-    font-size: 18px;
-    color: #1e293b;
-    line-height: 1;
+.logo-container:hover .logo-image {
+    transform: scale(1.05);
 }
 
 /* Заголовок */
@@ -306,13 +298,9 @@ const handleLogout = async () => {
         padding: 8px 12px;
     }
     
-    .logo-icon {
-        font-size: 20px;
-        margin-right: 8px;
-    }
-    
-    .logo-text {
-        font-size: 16px;
+    .logo-image {
+        height: 48px;
+        width: auto;
     }
     
     .header-title {
@@ -364,13 +352,9 @@ const handleLogout = async () => {
         padding: 6px 10px;
     }
     
-    .logo-icon {
-        font-size: 18px;
-        margin-right: 6px;
-    }
-    
-    .logo-text {
-        font-size: 14px;
+    .logo-image {
+        height: 42px;
+        width: auto;
     }
     
     .header-title {

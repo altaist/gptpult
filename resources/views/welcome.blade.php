@@ -1296,6 +1296,61 @@
             max-width: 600px;
             margin: 0 auto 4rem;
         }
+
+        /* Стили для кнопки профиля */
+        .profile-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 12px;
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6 !important;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        .profile-btn:hover {
+            background: rgba(59, 130, 246, 0.2);
+            color: #2563eb !important;
+            transform: scale(1.02);
+        }
+
+        .profile-btn i {
+            font-size: 16px;
+        }
+
+        .profile-text {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* Адаптивность для кнопки профиля */
+        @media (max-width: 768px) {
+            .profile-btn {
+                padding: 6px 12px;
+                gap: 6px;
+            }
+            
+            .profile-btn i {
+                font-size: 14px;
+            }
+            
+            .profile-text {
+                display: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .profile-btn {
+                padding: 6px 10px;
+                gap: 4px;
+            }
+            
+            .profile-btn i {
+                font-size: 16px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1310,7 +1365,7 @@
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg fixed-top">
         <div class="container">
-            <a class="navbar-brand" href="#">
+            <a class="navbar-brand" href="/">
                 <img src="{{ asset('logo.png') }}" alt="GPT Пульт" class="logo-img me-2">GPT Пульт
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -1327,9 +1382,17 @@
                     <li class="nav-item">
                         <a class="nav-link" href="#contact">Контакты</a>
                     </li>
+                    @auth
+                    <li class="nav-item">
+                        <a class="nav-link profile-btn" href="/lk" title="Личный кабинет">
+                            <i class="fas fa-user"></i>
+                            <span class="profile-text">Профиль</span>
+                        </a>
+                    </li>
+                    @endauth
                 </ul>
+            </div>
         </div>
-    </div>
     </nav>
 
     <!-- Hero Section -->
