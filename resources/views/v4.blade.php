@@ -1853,88 +1853,49 @@
         }
 
         .visual-card {
-            background: linear-gradient(145deg, #ffffff, #f8fafc);
+            background: #ffffff;
             border-radius: 24px;
-            padding: 2.5rem 2rem;
-            box-shadow: 0 12px 40px rgba(99, 102, 241, 0.12);
-            border: 1px solid rgba(99, 102, 241, 0.08);
+            padding: 3rem 2.5rem;
+            border: 2px solid #e2e8f0;
             width: 100%;
-            max-width: 400px;
-            transition: all 0.3s ease;
-        }
-
-        .visual-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 20px 60px rgba(99, 102, 241, 0.18);
+            max-width: 100%;
         }
 
         .visual-header {
             text-align: center;
-            margin-bottom: 2rem;
-        }
-
-        .visual-icon {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 2rem;
-            margin: 0 auto 1rem;
-            box-shadow: 0 8px 30px rgba(99, 102, 241, 0.25);
+            margin-bottom: 2.5rem;
         }
 
         .visual-title {
-            font-size: 1.4rem;
+            font-size: 1.5rem;
             font-weight: 700;
-            color: var(--text-primary);
+            color: #1e293b;
             margin: 0;
+            line-height: 1.3;
         }
 
         .visual-steps {
             display: flex;
             flex-direction: column;
-            gap: 1rem;
+            gap: 1.2rem;
         }
 
         .visual-step {
             display: flex;
             align-items: center;
-            gap: 1rem;
-            padding: 0.8rem 1rem;
-            background: rgba(99, 102, 241, 0.05);
+            padding: 1.5rem 1.2rem;
+            background: #ffffff;
             border-radius: 12px;
-            border-left: 4px solid var(--primary-color);
-            transition: all 0.3s ease;
-        }
-
-        .visual-step:hover {
-            background: rgba(99, 102, 241, 0.08);
-            transform: translateX(4px);
-        }
-
-        .step-number {
-            width: 28px;
-            height: 28px;
-            background: var(--primary-color);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.9rem;
-            font-weight: 600;
-            flex-shrink: 0;
+            border: 2px solid #3b82f6;
         }
 
         .step-text {
-            font-size: 0.95rem;
-            color: var(--text-primary);
-            font-weight: 500;
+            font-size: 1.1rem;
+            color: #1e293b;
+            font-weight: 600;
             line-height: 1.4;
+            width: 100%;
+            text-align: center;
         }
 
         .service-stats-row {
@@ -2066,17 +2027,24 @@
             }
 
             .visual-card {
-                padding: 2rem 1.5rem;
-            }
-
-            .visual-icon {
-                width: 70px;
-                height: 70px;
-                font-size: 1.8rem;
+                padding: 2.5rem 2rem;
             }
 
             .visual-title {
-                font-size: 1.2rem;
+                font-size: 1.3rem;
+            }
+
+            .visual-steps {
+                gap: 1rem;
+            }
+
+            .visual-step {
+                padding: 1.3rem 1rem;
+                border: 2px solid #3b82f6;
+            }
+
+            .step-text {
+                font-size: 1rem;
             }
 
             .service-stats-row {
@@ -2123,7 +2091,24 @@
             }
 
             .visual-card {
-                padding: 1.5rem 1rem;
+                padding: 2rem 1.5rem;
+            }
+
+            .visual-title {
+                font-size: 1.2rem;
+            }
+
+            .visual-steps {
+                gap: 0.8rem;
+            }
+
+            .visual-step {
+                padding: 1.2rem 0.8rem;
+                border: 2px solid #3b82f6;
+            }
+
+            .step-text {
+                font-size: 0.95rem;
             }
 
             .service-stat {
@@ -2200,6 +2185,61 @@
             .advantage-content {
                 font-size: 0.9rem;
             }
+        }
+
+        /* Telegram Logo */
+        .telegram-logo-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 300px;
+            padding: 2rem;
+        }
+
+        .telegram-logo {
+            font-size: 12rem;
+            color: white;
+            text-shadow: 0 4px 20px rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .telegram-logo:hover {
+            transform: scale(1.05);
+            text-shadow: 0 6px 30px rgba(255, 255, 255, 0.5);
+        }
+
+        /* Mobile responsive for telegram logo */
+        @media (max-width: 768px) {
+            .telegram-logo-container {
+                display: none;
+            }
+
+            .telegram-logo {
+                display: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .telegram-logo-container {
+                display: none;
+            }
+
+            .telegram-logo {
+                display: none;
+            }
+        }
+
+        /* Advantages Grid - removed, replaced with telegram logo */
+        .advantages-grid {
+            display: none;
+        }
+
+        .advantage-item {
+            display: none;
+        }
+
+        .advantage-content {
+            display: none;
         }
     </style>
 </head>
@@ -2334,16 +2374,15 @@
             <div class="row">
                 <div class="col-12 text-center mb-5">
                     <h2 class="section-title">Что такое GPT Пульт?</h2>
-                    <p class="section-subtitle">Революционная платформа для создания учебных работ с помощью искусственного интеллекта</p>
                 </div>
             </div>
             
-            <div class="row align-items-center mb-5">
-                <div class="col-lg-6 mb-4 mb-lg-0">
+            <div class="row align-items-center mb-5 justify-content-center">
+                <div class="col-lg-5 mb-4 mb-lg-0">
                     <div class="service-description">
                         <h3 class="service-title">Современное решение для студентов</h3>
                         <p class="service-text">
-                            GPT Пульт — это инновационная платформа, которая использует передовые технологии искусственного интеллекта для создания качественных учебных работ. Мы автоматизировали процесс написания рефератов, эссе, курсовых и других академических текстов.
+                            Наша платформа использует передовые технологии искусственного интеллекта для создания качественных учебных работ. Мы автоматизировали процесс написания рефератов, эссе, курсовых и других академических текстов.
                         </p>
                         <div class="work-types-grid">
                             <div class="work-type-item" onclick="window.location.href='/new'">
@@ -2379,31 +2418,24 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-lg-6">
+                <div class="col-lg-5">
                     <div class="service-visual">
                         <div class="visual-card">
                             <div class="visual-header">
-                                <div class="visual-icon">
-                                    <i class="fas fa-brain"></i>
-                                </div>
-                                <h4 class="visual-title">Как мы работаем с ИИ?</h4>
+                                <h4 class="visual-title">Настроили ИИ специально для тебя</h4>
                             </div>
                             <div class="visual-steps">
                                 <div class="visual-step">
-                                    <span class="step-number">1</span>
-                                    <span class="step-text">Анализируем тему с помощью GPT-4</span>
+                                    <span class="step-text">Используем модели от разных компаний</span>
                                 </div>
                                 <div class="visual-step">
-                                    <span class="step-number">2</span>
-                                    <span class="step-text">Создаем персонализированную структуру</span>
+                                    <span class="step-text">Все генерируется по ГОСТу</span>
                                 </div>
                                 <div class="visual-step">
-                                    <span class="step-number">3</span>
-                                    <span class="step-text">Генерируем уникальный контент</span>
+                                    <span class="step-text">Система проверки результата</span>
                                 </div>
                                 <div class="visual-step">
-                                    <span class="step-number">4</span>
-                                    <span class="step-text">Проверяем и оптимизируем результат</span>
+                                    <span class="step-text">Получаешь результат за 10 минут</span>
                                 </div>
                             </div>
                         </div>
@@ -2419,7 +2451,7 @@
                                 <i class="fas fa-users"></i>
                             </div>
                             <div class="stat-info">
-                                <div class="stat-number">25,000+</div>
+                                <div class="stat-number">3,000+</div>
                                 <div class="stat-label">Довольных студентов</div>
                             </div>
                         </div>
@@ -2428,7 +2460,7 @@
                                 <i class="fas fa-file-alt"></i>
                             </div>
                             <div class="stat-info">
-                                <div class="stat-number">150,000+</div>
+                                <div class="stat-number">10,000+</div>
                                 <div class="stat-label">Созданных работ</div>
                             </div>
                         </div>
@@ -2437,8 +2469,8 @@
                                 <i class="fas fa-check-circle"></i>
                             </div>
                             <div class="stat-info">
-                                <div class="stat-number">99.8%</div>
-                                <div class="stat-label">Уникальность</div>
+                                <div class="stat-number">90%</div>
+                                <div class="stat-label">Гарантия уникальности</div>
                             </div>
                         </div>
                         <div class="service-stat">
@@ -2446,8 +2478,8 @@
                                 <i class="fas fa-clock"></i>
                             </div>
                             <div class="stat-info">
-                                <div class="stat-number">8 мин</div>
-                                <div class="stat-label">Средний срок</div>
+                                <div class="stat-number">10 мин</div>
+                                <div class="stat-label">Время генерации</div>
                             </div>
                         </div>
                     </div>
@@ -2626,7 +2658,7 @@
                             </div>
                         </div>
                         <div class="pricing-cta">
-                            <a href="/new" class="pricing-btn featured">
+                            <a href="/lk" class="pricing-btn featured">
                                 Заказать сейчас
                             </a>
                         </div>
@@ -2656,26 +2688,9 @@
                     </div>
                 </div>
                 <div class="col-lg-6">
-                    <div class="advantages-grid">
-                        <div class="advantage-item">
-                            <div class="advantage-content">
-                                Мгновенные уведомления
-                            </div>
-                        </div>
-                        <div class="advantage-item">
-                            <div class="advantage-content">
-                                Быстрое создание задач
-                            </div>
-                        </div>
-                        <div class="advantage-item">
-                            <div class="advantage-content">
-                                Результат за 10 минут
-                            </div>
-                        </div>
-                        <div class="advantage-item">
-                            <div class="advantage-content">
-                                Всегда под рукой
-                            </div>
+                    <div class="telegram-logo-container">
+                        <div class="telegram-logo">
+                            <i class="fab fa-telegram"></i>
                         </div>
                     </div>
                 </div>
@@ -2739,10 +2754,45 @@
                     </a>
                 </div>
             </div>
+            
+            <!-- Реквизиты -->
+            <div class="row mt-5 pt-4">
+                <div class="col-12">
+                    <div class="footer-requisites" style="background: rgba(255,255,255,0.05); padding: 2rem; border-radius: 12px; margin-bottom: 2rem;">
+                        <h6 class="mb-3" style="color: #60a5fa; font-weight: 600;">Реквизиты</h6>
+                        <div class="row">
+                            <div class="col-lg-6 mb-3">
+                                <div style="font-size: 0.85rem; opacity: 0.7; line-height: 1.6;">
+                                    <p class="mb-2"><strong>Название организации:</strong><br>
+                                    ИНДИВИДУАЛЬНЫЙ ПРЕДПРИНИМАТЕЛЬ ВЛАСЕНКО СЕРГЕЙ ВЛАДИМИРОВИЧ</p>
+                                    
+                                    <p class="mb-2"><strong>Юридический адрес:</strong><br>
+                                    630132, РОССИЯ, НОВОСИБИРСКАЯ ОБЛ, Г НОВОСИБИРСК, УЛ 1905 ГОДА, Д 85/2, КВ 250</p>
+                                    
+                                    <p class="mb-2"><strong>ИНН:</strong> 041105019528</p>
+                                    <p class="mb-2"><strong>ОГРНИП:</strong> 318547600089160</p>
+                                </div>
+                            </div>
+                            <div class="col-lg-6 mb-3">
+                                <div style="font-size: 0.85rem; opacity: 0.7; line-height: 1.6;">
+                                    <p class="mb-2"><strong>Расчетный счет:</strong> 40802810700000572721</p>
+                                    <p class="mb-2"><strong>Банк:</strong> АО «ТБанк»</p>
+                                    <p class="mb-2"><strong>ИНН банка:</strong> 7710140679</p>
+                                    <p class="mb-2"><strong>БИК банка:</strong> 044525974</p>
+                                    <p class="mb-2"><strong>Корреспондентский счет:</strong> 30101810145250000974</p>
+                                    <p class="mb-0"><strong>Юридический адрес банка:</strong><br>
+                                    127287, г. Москва, ул. Хуторская 2-я, д. 38А, стр. 26</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
             <div class="footer-bottom">
                 <p>&copy; 2025 GPT Пульт. Все права защищены.</p>
+            </div>
         </div>
-    </div>
     </footer>
 
     <!-- Scripts -->

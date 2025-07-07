@@ -11,9 +11,12 @@ class DocumentTypeSeeder extends Seeder
     public function run(): void
     {
         $types = [
-            'Реферат',
             'Отчет о практике',
-            'Эссе'
+            'Курсовая работа',
+            'Доклад',
+            'Эссе',
+            'Реферат',
+            'Научная статья'
         ];
 
         foreach ($types as $type) {
