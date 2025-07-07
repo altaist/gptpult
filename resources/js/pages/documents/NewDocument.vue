@@ -61,9 +61,6 @@
                                             { 'active': form.document_type_id === type.id }
                                         ]"
                                     >
-                                        <div class="work-type-icon">
-                                            <q-icon :name="getWorkTypeIcon(type.name)" size="28px" />
-                                        </div>
                                         <span class="work-type-name">{{ type.name }}</span>
                                     </button>
                                 </div>
@@ -254,15 +251,6 @@ const checkMobile = () => {
 
 const selectWorkType = (type) => {
     form.value.document_type_id = type.id;
-};
-
-const getWorkTypeIcon = (typeName) => {
-    const icons = {
-        'Реферат': 'description',
-        'Отчет о практике': 'assignment',
-        'Эссе': 'edit_note'
-    };
-    return icons[typeName] || 'article';
 };
 
 const getSubmitHint = () => {
@@ -603,17 +591,15 @@ onUnmounted(() => {
 
 .work-type-btn {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 6px;
-    padding: 16px 8px;
+    justify-content: center;
+    padding: 20px 12px;
     border: 2px solid #e2e8f0;
     border-radius: 16px;
     background: #ffffff;
     cursor: pointer;
     transition: all 0.2s ease;
-    min-height: 85px;
-    justify-content: center;
+    min-height: 60px;
 }
 
 .work-type-btn:hover {
@@ -629,25 +615,8 @@ onUnmounted(() => {
     box-shadow: 0 8px 24px rgba(59, 130, 246, 0.25);
 }
 
-.work-type-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
-    background: rgba(59, 130, 246, 0.1);
-    color: #3b82f6;
-    transition: all 0.2s ease;
-}
-
-.work-type-btn.active .work-type-icon {
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-}
-
 .work-type-name {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
     text-align: center;
     line-height: 1.2;
