@@ -210,15 +210,19 @@ export function useTelegramMiniApp() {
     // })
 
     try {
-      // Пробуем несколько способов отправки данных
-      
-      // Способ 1: Отправляем данные как заголовок к текущей странице
+      // Способ 1: Отправляем данные как заголовок к текущей странице с правильными параметрами
       const headers1 = addTelegramHeaders({
         'X-Telegram-Init-Data': initData,
-        'X-Requested-With': 'XMLHttpRequest'
+        'X-Requested-With': 'XMLHttpRequest',
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
       })
       
-      const response1 = await fetch(window.location.href, {
+      // Создаем URL с параметрами для GET запроса
+      const currentUrl = new URL(window.location.href)
+      currentUrl.searchParams.set('tgWebAppData', initData)
+      
+      const response1 = await fetch(currentUrl.toString(), {
         method: 'GET',
         headers: headers1,
         credentials: 'include'
@@ -238,35 +242,93 @@ export function useTelegramMiniApp() {
         return
       }
 
-      // Способ 2: Отправляем через API эндпоинт для автологина
+      // Способ 2: Отправляем через специальный API эндпоинт для Telegram WebApp
       try {
         const headers2 = addTelegramHeaders({
           'Content-Type': 'application/json',
           'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
           'X-Telegram-Init-Data': initData,
-          'X-Requested-With': 'XMLHttpRequest'
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json'
         })
         
-        const response2 = await fetch('/login/auto', {
+        const response2 = await fetch('/telegram/auth', {
           method: 'POST',
           headers: headers2,
           credentials: 'include',
           body: JSON.stringify({
-            telegram_init_data: initData
+            init_data: initData,
+            tgWebAppData: initData
           })
         })
         
-        // console.log('useTelegramMiniApp: API method response', {
+        // console.log('useTelegramMiniApp: Telegram auth API response', {
         //   status: response2.status,
         //   ok: response2.ok
         // })
         
         if (response2.ok) {
           const data = await response2.json()
-          // console.log('useTelegramMiniApp: API response data', data)
+          // console.log('useTelegramMiniApp: Telegram auth API response data', data)
           
           if (data.success && data.user && !isRedirecting) {
-            // console.log('useTelegramMiniApp: User authenticated via API')
+            // console.log('useTelegramMiniApp: User authenticated via Telegram WebApp API')
+            
+            // Сохраняем информацию об авторизации в localStorage для Telegram WebApp
+            localStorage.setItem('telegram_auth_user_id', data.user.id)
+            localStorage.setItem('telegram_auth_timestamp', Date.now())
+            
+            // Также сохраняем в куки для дублирования
+            setCookie(`telegram_auth_user_${data.user.id}`, data.user.id, 7)
+            
+            // Очищаем токен временного пользователя, если он был использован
+            const hadAutoAuthToken = localStorage.getItem('auto_auth_token')
+            if (hadAutoAuthToken) {
+              localStorage.removeItem('auto_auth_token')
+              // console.log('useTelegramMiniApp: Cleared auto_auth_token after successful Telegram auth')
+            }
+            
+            // Перенаправляем в ЛК если мы на странице логина
+            if (window.location.pathname === '/login') {
+              isRedirecting = true
+              window.location.href = '/lk'
+            }
+            return
+          }
+        }
+      } catch (apiError) {
+        // console.error('useTelegramMiniApp: Telegram auth API method failed', apiError)
+      }
+
+      // Способ 3: Используем обычный автологин API как fallback
+      try {
+        const headers3 = addTelegramHeaders({
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+          'X-Telegram-Init-Data': initData,
+          'X-Requested-With': 'XMLHttpRequest'
+        })
+        
+        const response3 = await fetch('/login/auto', {
+          method: 'POST',
+          headers: headers3,
+          credentials: 'include',
+          body: JSON.stringify({
+            telegram_init_data: initData
+          })
+        })
+        
+        // console.log('useTelegramMiniApp: Auto login API response', {
+        //   status: response3.status,
+        //   ok: response3.ok
+        // })
+        
+        if (response3.ok) {
+          const data = await response3.json()
+          // console.log('useTelegramMiniApp: Auto login API response data', data)
+          
+          if (data.success && data.user && !isRedirecting) {
+            // console.log('useTelegramMiniApp: User authenticated via auto login API')
             
             // Сохраняем информацию об авторизации в localStorage для Telegram WebApp
             localStorage.setItem('telegram_auth_user_id', data.user.id)
@@ -290,8 +352,8 @@ export function useTelegramMiniApp() {
             return
           }
         }
-      } catch (apiError) {
-        // console.error('useTelegramMiniApp: API method failed', apiError)
+      } catch (autoLoginError) {
+        // console.error('useTelegramMiniApp: Auto login API method failed', autoLoginError)
       }
       
       if (response1.ok) {

@@ -206,17 +206,22 @@ class AutoAuthController extends Controller
      */
     public function telegramAuth(Request $request)
     {
-        Log::info('TelegramAuth: Received request', [
-            'has_init_data' => $request->has('init_data'),
+        Log::info('TelegramAuth: Processing Telegram WebApp authentication', [
+            'method' => $request->method(),
+            'content_type' => $request->header('Content-Type'),
             'user_agent' => $request->userAgent(),
-            'method' => $request->method()
+            'has_init_data' => $request->has('init_data'),
+            'has_tgWebAppData' => $request->has('tgWebAppData'),
+            'has_header_init_data' => !empty($request->header('X-Telegram-Init-Data'))
         ]);
 
-        // Получаем init_data из тела запроса
-        $initData = $request->input('init_data');
-        
-        if (!$initData) {
-            Log::warning('TelegramAuth: No init_data provided');
+        // Получаем данные Telegram WebApp
+        $telegramInitData = $request->input('init_data') 
+            ?? $request->input('tgWebAppData')
+            ?? $request->header('X-Telegram-Init-Data');
+            
+        if (!$telegramInitData) {
+            Log::warning('TelegramAuth: No Telegram init data provided');
             return response()->json([
                 'success' => false,
                 'error' => 'No Telegram init data provided'
@@ -225,101 +230,90 @@ class AutoAuthController extends Controller
 
         try {
             // Парсим данные Telegram
-            parse_str($initData, $data);
+            parse_str($telegramInitData, $data);
             
-            Log::info('TelegramAuth: Parsed init data', [
+            Log::info('TelegramAuth: Parsed Telegram data', [
+                'data_keys' => array_keys($data),
                 'has_user' => isset($data['user']),
-                'data_keys' => array_keys($data)
+                'has_auth_date' => isset($data['auth_date'])
             ]);
             
             if (!isset($data['user'])) {
-                Log::warning('TelegramAuth: No user data in init_data');
+                Log::warning('TelegramAuth: No user data in init data');
                 return response()->json([
                     'success' => false,
-                    'error' => 'No user data in init_data'
+                    'error' => 'No user data in Telegram init data'
                 ], 400);
             }
 
             $userData = json_decode($data['user'], true);
             
             if (!$userData || !isset($userData['id'])) {
-                Log::warning('TelegramAuth: Invalid user data', [
-                    'user_data' => $userData
-                ]);
+                Log::warning('TelegramAuth: Invalid user data format');
                 return response()->json([
                     'success' => false,
-                    'error' => 'Invalid user data'
+                    'error' => 'Invalid Telegram user data format'
                 ], 400);
             }
 
-            Log::info('TelegramAuth: Processing user', [
+            Log::info('TelegramAuth: Telegram user data decoded', [
                 'telegram_id' => $userData['id'],
-                'first_name' => $userData['first_name'] ?? null,
-                'username' => $userData['username'] ?? null
+                'username' => $userData['username'] ?? 'N/A',
+                'first_name' => $userData['first_name'] ?? 'N/A'
             ]);
-
+            
             // Ищем пользователя по telegram_id
             $user = User::where('telegram_id', $userData['id'])->first();
             
-            if ($user) {
-                Log::info('TelegramAuth: User found, logging in', [
-                    'user_id' => $user->id,
+            if (!$user) {
+                Log::warning('TelegramAuth: User not found for Telegram ID', [
                     'telegram_id' => $userData['id']
                 ]);
-                
-                // Авторизуем пользователя
-                Auth::login($user, true); // remember = true
-                
-                // Создаем специальные куки для Telegram WebApp (аналогично middleware)
-                $this->setupTelegramCookies($user);
                 
                 return response()->json([
-                    'success' => true,
-                    'user' => $user->only(['id', 'name', 'email']),
-                    'message' => 'Successfully logged in via Telegram WebApp'
-                ]);
-            } else {
-                Log::info('TelegramAuth: User not found, creating new account', [
+                    'success' => false,
+                    'error' => 'User not found for Telegram ID: ' . $userData['id'],
                     'telegram_id' => $userData['id']
-                ]);
-                
-                // Создаем нового пользователя
-                $user = $this->createTelegramUser($userData);
-                
-                if ($user) {
-                    Log::info('TelegramAuth: New user created and logged in', [
-                        'user_id' => $user->id,
-                        'telegram_id' => $userData['id']
-                    ]);
-                    
-                    // Авторизуем пользователя
-                    Auth::login($user, true);
-                    
-                    // Создаем специальные куки для Telegram WebApp
-                    $this->setupTelegramCookies($user);
-                    
-                    return response()->json([
-                        'success' => true,
-                        'user' => $user->only(['id', 'name', 'email']),
-                        'message' => 'New account created and logged in via Telegram WebApp'
-                    ]);
-                } else {
-                    Log::error('TelegramAuth: Failed to create new user');
-                    return response()->json([
-                        'success' => false,
-                        'error' => 'Failed to create new account'
-                    ], 500);
-                }
+                ], 404);
             }
+
+            Log::info('TelegramAuth: User found, authenticating', [
+                'user_id' => $user->id,
+                'telegram_id' => $userData['id'],
+                'user_email' => $user->email
+            ]);
+            
+            // Авторизуем пользователя
+            Auth::login($user, true); // remember = true для длительной сессии
+            
+            // Regenerate session для безопасности
+            $request->session()->regenerate();
+            
+            Log::info('TelegramAuth: User successfully authenticated', [
+                'user_id' => $user->id,
+                'session_id' => $request->session()->getId()
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email
+                ],
+                'message' => 'Successfully authenticated via Telegram WebApp',
+                'redirect_url' => '/lk'
+            ]);
+            
         } catch (\Exception $e) {
-            Log::error('TelegramAuth: Exception occurred', [
+            Log::error('TelegramAuth: Error processing Telegram authentication', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
             
             return response()->json([
                 'success' => false,
-                'error' => 'Internal server error'
+                'error' => 'Error processing Telegram authentication: ' . $e->getMessage()
             ], 500);
         }
     }

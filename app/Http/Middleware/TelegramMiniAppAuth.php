@@ -330,23 +330,63 @@ class TelegramMiniAppAuth
     }
 
     /**
-     * Извлечь данные Telegram из запроса
+     * Извлечение данных от Telegram Mini App
      */
     private function extractTelegramData(Request $request): ?array
     {
-        // Проверяем заголовки от Telegram Mini App
+        // Проверяем различные источники данных Telegram WebApp
         $telegramInitData = $request->header('X-Telegram-Init-Data') 
             ?? $request->query('tgWebAppData') 
-            ?? $request->input('tgWebAppData');
+            ?? $request->input('tgWebAppData')
+            ?? $request->input('init_data')
+            ?? $request->input('telegram_init_data');
 
         Log::info('TelegramMiniAppAuth: Extracting Telegram data', [
             'header_data' => $request->header('X-Telegram-Init-Data'),
             'query_data' => $request->query('tgWebAppData'),
             'input_data' => $request->input('tgWebAppData'),
-            'final_data' => $telegramInitData
+            'init_data_input' => $request->input('init_data'),
+            'telegram_init_data_input' => $request->input('telegram_init_data'),
+            'final_data' => $telegramInitData ? 'present' : 'null',
+            'method' => $request->method(),
+            'content_type' => $request->header('Content-Type'),
+            'all_headers' => $request->headers->all()
         ]);
 
         if (!$telegramInitData) {
+            // Пытаемся извлечь из raw input если это POST запрос
+            if ($request->isMethod('POST') && $request->getContent()) {
+                $rawContent = $request->getContent();
+                
+                try {
+                    $jsonData = json_decode($rawContent, true);
+                    if ($jsonData && isset($jsonData['init_data'])) {
+                        $telegramInitData = $jsonData['init_data'];
+                        Log::info('TelegramMiniAppAuth: Found init_data in JSON body', [
+                            'init_data' => $telegramInitData ? 'present' : 'null'
+                        ]);
+                    } elseif ($jsonData && isset($jsonData['tgWebAppData'])) {
+                        $telegramInitData = $jsonData['tgWebAppData'];
+                        Log::info('TelegramMiniAppAuth: Found tgWebAppData in JSON body', [
+                            'tgWebAppData' => $telegramInitData ? 'present' : 'null'
+                        ]);
+                    } elseif ($jsonData && isset($jsonData['telegram_init_data'])) {
+                        $telegramInitData = $jsonData['telegram_init_data'];
+                        Log::info('TelegramMiniAppAuth: Found telegram_init_data in JSON body', [
+                            'telegram_init_data' => $telegramInitData ? 'present' : 'null'
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('TelegramMiniAppAuth: Failed to parse JSON body', [
+                        'error' => $e->getMessage(),
+                        'raw_content' => substr($rawContent, 0, 200) // Первые 200 символов для отладки
+                    ]);
+                }
+            }
+        }
+
+        if (!$telegramInitData) {
+            Log::info('TelegramMiniAppAuth: No Telegram init data found in any source');
             return null;
         }
 
@@ -354,20 +394,28 @@ class TelegramMiniAppAuth
             // Парсим данные
             parse_str($telegramInitData, $data);
             
-            Log::info('TelegramMiniAppAuth: Parsed Telegram init data', ['parsed_data' => $data]);
+            Log::info('TelegramMiniAppAuth: Parsed Telegram init data', [
+                'parsed_data_keys' => array_keys($data),
+                'has_user' => isset($data['user']),
+                'has_auth_date' => isset($data['auth_date']),
+                'has_hash' => isset($data['hash'])
+            ]);
             
             if (isset($data['user'])) {
                 $userData = json_decode($data['user'], true);
-                Log::info('TelegramMiniAppAuth: Decoded user data', ['user_data' => $userData]);
+                Log::info('TelegramMiniAppAuth: Decoded user data', [
+                    'user_data' => $userData,
+                    'user_id' => $userData['id'] ?? 'missing'
+                ]);
                 
                 if ($userData && isset($userData['id'])) {
                     return $userData;
                 }
             }
         } catch (\Exception $e) {
-            Log::warning('Failed to parse Telegram init data', [
+            Log::warning('TelegramMiniAppAuth: Failed to parse Telegram init data', [
                 'error' => $e->getMessage(),
-                'raw_data' => $telegramInitData
+                'raw_data' => substr($telegramInitData, 0, 200) // Первые 200 символов для отладки
             ]);
         }
 
