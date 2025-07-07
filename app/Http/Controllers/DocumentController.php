@@ -37,6 +37,14 @@ class DocumentController extends Controller
     }
 
     /**
+     * Показать список документов (доступ запрещен)
+     */
+    public function index()
+    {
+        abort(403, 'У вас нет прав для просмотра списка документов');
+    }
+
+    /**
      * Показать форму создания документа
      */
     public function create()
