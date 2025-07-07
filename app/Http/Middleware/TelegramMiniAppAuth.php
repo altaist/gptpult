@@ -36,7 +36,8 @@ class TelegramMiniAppAuth
             'accepts_html' => $request->accepts('text/html'),
             'is_login_path' => $request->is('login'),
             'is_telegram' => $isTelegram,
-            'session_id' => $request->session()->getId()
+            'session_id' => $request->session()->getId(),
+            'has_telegram_cookies' => $this->hasTelegramCookies($request)
         ]);
 
         // Если пользователь уже авторизован
@@ -62,6 +63,31 @@ class TelegramMiniAppAuth
             }
             
             return $next($request);
+        }
+
+        // НОВАЯ ЛОГИКА: Для Telegram WebApp сначала пытаемся восстановить по связанному telegram_id
+        if ($isTelegram && $request->is('login')) {
+            // Пытаемся найти пользователя по telegram_id в cookie
+            $telegramUser = $this->findUserByTelegramCookies($request);
+            
+            if ($telegramUser) {
+                Log::info('TelegramMiniAppAuth: Found linked Telegram user, logging in', [
+                    'user_id' => $telegramUser->id,
+                    'telegram_id' => $telegramUser->telegram_id
+                ]);
+                
+                // Принудительно настраиваем сессию для Telegram
+                $this->setupTelegramSession($request, $telegramUser);
+                
+                // Перенаправляем в ЛК
+                if ($request->ajax() || $request->header('X-Inertia')) {
+                    $response = $next($request);
+                    $response->headers->set('X-Telegram-Redirect', '/lk');
+                    return $response;
+                } else {
+                    return redirect('/lk');
+                }
+            }
         }
 
         // Для Telegram пытаемся восстановить авторизацию из специальных куки
@@ -215,7 +241,9 @@ class TelegramMiniAppAuth
         } else {
             Log::info('TelegramMiniAppAuth: No valid Telegram data found', [
                 'has_telegram_data' => !is_null($telegramData),
-                'telegram_data' => $telegramData
+                'telegram_data' => $telegramData,
+                'is_telegram' => $isTelegram,
+                'user_agent' => $request->userAgent()
             ]);
         }
 
@@ -527,6 +555,46 @@ class TelegramMiniAppAuth
         }
         
         Log::info('Токен временного пользователя не найден ни в одном источнике');
+        return null;
+    }
+
+    /**
+     * Проверяем наличие пользователя в Telegram cookies
+     */
+    private function hasTelegramCookies(Request $request): bool
+    {
+        $telegramCookies = collect($request->cookies->all())
+            ->filter(function ($value, $key) {
+                return str_starts_with($key, 'telegram_auth_user_');
+            });
+        
+        return $telegramCookies->isNotEmpty();
+    }
+
+    /**
+     * Найти пользователя по telegram_id в Telegram cookies
+     */
+    private function findUserByTelegramCookies(Request $request): ?User
+    {
+        $telegramCookies = collect($request->cookies->all())
+            ->filter(function ($value, $key) {
+                return str_starts_with($key, 'telegram_auth_user_');
+            });
+        
+        if ($telegramCookies->isNotEmpty()) {
+            $userId = $telegramCookies->first();
+            $user = User::find($userId);
+            
+            if ($user && $user->telegram_id) {
+                Log::info('TelegramMiniAppAuth: Found user in Telegram cookies', [
+                    'user_id' => $user->id,
+                    'telegram_id' => $user->telegram_id,
+                    'cookies_found' => $telegramCookies->keys()->toArray()
+                ]);
+                return $user;
+            }
+        }
+        
         return null;
     }
 }

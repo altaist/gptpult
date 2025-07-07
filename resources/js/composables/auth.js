@@ -8,6 +8,9 @@ export const isAuthenticated = computed(() => !!user.value);
 export const errorMessage = ref('');
 let justLoggedOut = false;
 
+// Флаг для предотвращения множественных редиректов
+let isRedirectingAuth = false
+
 // Инициализация: загружаем пользователя из localStorage
 const initUser = () => {
     const storedUser = getStoredUser();
@@ -294,6 +297,11 @@ export const shouldShowLogoutButton = () => {
 
 // Проверка авторизации при загрузке страницы
 export const checkAuth = async () => {
+    // Если уже происходит редирект, не выполняем повторную проверку
+    if (isRedirectingAuth) {
+        return false
+    }
+
     // console.log('checkAuth: Starting authentication check...')  // Закомментировано для продакшена
     
     try {
@@ -302,8 +310,9 @@ export const checkAuth = async () => {
             // console.log('checkAuth: User already authenticated via Inertia')  // Закомментировано для продакшена
             
             // Если пользователь на странице входа, но уже авторизован - редиректим
-            if (window.location.pathname === '/login') {
+            if (window.location.pathname === '/login' && !isRedirectingAuth) {
                 // console.log('checkAuth: User is on login page but authenticated, redirecting to /lk')  // Закомментировано для продакшена
+                isRedirectingAuth = true
                 window.location.href = '/lk';
                 return true;
             }
@@ -332,8 +341,9 @@ export const checkAuth = async () => {
                     // console.log('checkAuth: User authenticated via Telegram WebApp')  // Закомментировано для продакшена
                     
                     // Если на странице входа, редиректим в ЛК
-                    if (window.location.pathname === '/login') {
+                    if (window.location.pathname === '/login' && !isRedirectingAuth) {
                         // console.log('checkAuth: Redirecting authenticated user from login page')  // Закомментировано для продакшена
+                        isRedirectingAuth = true
                         window.location.href = '/lk';
                         return true;
                     }
@@ -346,13 +356,14 @@ export const checkAuth = async () => {
         }
         
         // Пытаемся восстановить авторизацию из localStorage или автозарегистрироваться только на странице логина
-        if (window.location.pathname === '/login') {
+        if (window.location.pathname === '/login' && !isRedirectingAuth) {
             const authResult = await authLocalSaved(true);
             if (authResult) {
                 // console.log('checkAuth: User authenticated via localStorage or auto-registered')  // Закомментировано для продакшена
                 
                 // Редиректим в ЛК
                 // console.log('checkAuth: Redirecting restored user from login page')  // Закомментировано для продакшена
+                isRedirectingAuth = true
                 window.location.href = '/lk';
                 return true;
             }
@@ -362,8 +373,9 @@ export const checkAuth = async () => {
         // console.log('checkAuth: Authentication result:', !!result)  // Закомментировано для продакшена
         
         // Если пользователь авторизован и на странице логина
-        if (result && window.location.pathname === '/login') {
+        if (result && window.location.pathname === '/login' && !isRedirectingAuth) {
             // console.log('checkAuth: Final check - redirecting authenticated user from login page')  // Закомментировано для продакшена
+            isRedirectingAuth = true
             window.location.href = '/lk';
         }
         

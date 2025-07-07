@@ -55,6 +55,9 @@ const addTelegramHeaders = (headers = {}) => {
 
 // Добавляем глобальный перехватчик для Telegram WebApp перенаправлений
 if (window.Telegram?.WebApp) {
+    // Флаг для предотвращения множественных редиректов
+    let isRedirectingFetch = false;
+    
     // Перехватываем все fetch запросы
     const originalFetch = window.fetch;
     window.fetch = function(url, options = {}) {
@@ -74,10 +77,11 @@ if (window.Telegram?.WebApp) {
         return originalFetch.apply(this, [url, options]).then(response => {
             // Проверяем заголовок перенаправления
             const redirectUrl = response.headers.get('X-Telegram-Redirect');
-            if (redirectUrl && window.location.pathname !== redirectUrl) {
+            if (redirectUrl && window.location.pathname !== redirectUrl && !isRedirectingFetch) {
                 // console.log('Global fetch interceptor: Telegram redirect to:', redirectUrl);  // Закомментировано для продакшена
                 
                 // Если в Telegram WebApp, делаем редирект через window.location
+                isRedirectingFetch = true;
                 if (window.Telegram?.WebApp) {
                     window.location.href = redirectUrl;
                 } else {

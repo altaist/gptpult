@@ -142,6 +142,9 @@ Route::post('/register/auto', [App\Http\Controllers\Auth\AutoAuthController::cla
 Route::get('/logout', [App\Http\Controllers\Auth\AutoAuthController::class, 'logout'])->name('logout.get');
 Route::get('/auto-login/{auth_token}', [App\Http\Controllers\Auth\AutoAuthController::class, 'autoLoginByToken'])->name('auto.login');
 
+// Специальный маршрут для Telegram WebApp авторизации
+Route::post('/telegram/auth', [App\Http\Controllers\Auth\AutoAuthController::class, 'telegramAuth'])->name('telegram.webapp.auth');
+
 // Маршруты для платежей
 Route::get('/payment/complete/{orderId}', [PaymentController::class, 'handlePaymentComplete'])
     ->name('payment.complete');
