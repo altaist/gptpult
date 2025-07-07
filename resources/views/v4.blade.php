@@ -1446,8 +1446,8 @@
         /* CTA Section */
         .cta-section {
             padding: 120px 0 80px 0;
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 50%, #4338ca 100%);
-            color: white;
+            background: #ffffff;
+            color: var(--text-primary);
             text-align: center;
             position: relative;
             overflow: hidden;
@@ -1461,8 +1461,8 @@
             right: 0;
             bottom: 0;
             background: 
-                radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.08) 0%, transparent 50%);
+                radial-gradient(circle at 20% 20%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(147, 197, 253, 0.06) 0%, transparent 50%);
             z-index: 1;
         }
 
@@ -1474,7 +1474,7 @@
         .cta-section .section-title {
             font-size: 3.5rem;
             font-weight: 800;
-            color: white;
+            color: var(--primary-color);
             margin-bottom: 1.5rem;
             letter-spacing: -0.025em;
             line-height: 1.1;
@@ -1482,7 +1482,7 @@
 
         .cta-section .section-subtitle {
             font-size: 1.3rem;
-            color: rgba(255, 255, 255, 0.9);
+            color: var(--text-secondary);
             margin-bottom: 3rem;
             max-width: 700px;
             margin-left: auto;
@@ -1491,19 +1491,19 @@
         }
 
         .btn-hero-white {
-            background: white;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
             border: none;
             padding: 22px 45px;
             font-size: 1.2rem;
             font-weight: 700;
             border-radius: 18px;
-            color: var(--primary-color);
+            color: white;
             text-decoration: none;
             display: inline-flex;
             align-items: center;
             gap: 12px;
             transition: all 0.3s ease;
-            box-shadow: 0 10px 40px rgba(255, 255, 255, 0.2);
+            box-shadow: 0 10px 40px rgba(99, 102, 241, 0.3);
             position: relative;
             overflow: hidden;
         }
@@ -1515,15 +1515,15 @@
             left: -100%;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.1), transparent);
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
             transition: left 0.5s;
         }
 
         .btn-hero-white:hover {
-            background: #f8fafc;
-            color: var(--primary-hover);
+            background: linear-gradient(135deg, var(--primary-hover), #4338ca);
+            color: white;
             transform: translateY(-4px);
-            box-shadow: 0 20px 60px rgba(255, 255, 255, 0.3);
+            box-shadow: 0 15px 40px rgba(99, 102, 241, 0.4);
             text-decoration: none;
         }
 
@@ -1593,7 +1593,8 @@
         /* Telegram Bot Section */
         .telegram-bot-section {
             padding: 80px 0;
-            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 50%, #4338ca 100%);
+            color: white;
             position: relative;
             overflow: hidden;
         }
@@ -1606,8 +1607,8 @@
             right: 0;
             bottom: 0;
             background: 
-                radial-gradient(circle at 15% 20%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
-                radial-gradient(circle at 85% 80%, rgba(147, 197, 253, 0.06) 0%, transparent 50%);
+                radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.08) 0%, transparent 50%);
             z-index: 1;
         }
 
@@ -1623,7 +1624,7 @@
         .bot-title {
             font-size: 2.5rem;
             font-weight: 800;
-            color: #1e293b;
+            color: white;
             margin-bottom: 1.5rem;
             line-height: 1.2;
             font-family: var(--heading-font);
@@ -1631,14 +1632,14 @@
 
         .bot-description {
             font-size: 1.1rem;
-            color: #475569;
+            color: rgba(255, 255, 255, 0.9);
             line-height: 1.6;
             margin-bottom: 1rem;
         }
 
         .bot-features {
             font-size: 1rem;
-            color: #64748b;
+            color: rgba(255, 255, 255, 0.8);
             line-height: 1.6;
             margin-bottom: 2rem;
         }
@@ -1650,114 +1651,23 @@
         .bot-btn {
             display: inline-flex;
             align-items: center;
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-            color: white;
+            background: white;
+            color: var(--primary-color);
             padding: 15px 30px;
             border-radius: 16px;
             text-decoration: none;
             font-weight: 600;
             font-size: 1.1rem;
             transition: all 0.3s ease;
-            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+            box-shadow: 0 8px 25px rgba(255, 255, 255, 0.2);
         }
 
         .bot-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 12px 35px rgba(59, 130, 246, 0.4);
-            color: white;
+            box-shadow: 0 12px 35px rgba(255, 255, 255, 0.3);
+            color: var(--primary-hover);
             text-decoration: none;
-        }
-
-        .subscription-card {
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-            border-radius: 24px;
-            padding: 0;
-            margin: 1rem;
-            box-shadow: 0 20px 40px rgba(59, 130, 246, 0.25);
-            overflow: hidden;
-            position: relative;
-        }
-
-        .subscription-content {
-            padding: 3rem 2.5rem 2rem;
-            position: relative;
-            z-index: 2;
-        }
-
-        .subscription-title {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: white;
-            margin-bottom: 2rem;
-            line-height: 1.3;
-            font-family: var(--heading-font);
-        }
-
-        .subscription-cta {
-            margin-bottom: 1rem;
-        }
-
-        .subscription-btn {
-            display: inline-block;
-            background: white;
-            color: #3b82f6;
-            padding: 12px 30px;
-            border-radius: 12px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
-        }
-
-        .subscription-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(255, 255, 255, 0.3);
-            color: #2563eb;
-            text-decoration: none;
-        }
-
-        .subscription-footer {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 1.5rem 2.5rem;
-            backdrop-filter: blur(10px);
-        }
-
-        .subscription-subtitle {
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 0.95rem;
-            margin: 0;
-            line-height: 1.5;
-        }
-
-        /* Mobile responsive */
-        @media (max-width: 768px) {
-            .telegram-bot-section {
-                padding: 60px 0;
-            }
-
-            .bot-title {
-                font-size: 2rem;
-                margin-bottom: 1rem;
-            }
-
-            .bot-description,
-            .bot-features {
-                font-size: 1rem;
-            }
-
-            .subscription-title {
-                font-size: 1.5rem;
-                margin-bottom: 1.5rem;
-            }
-
-            .subscription-content {
-                padding: 2.5rem 2rem 1.5rem;
-            }
-
-            .subscription-footer {
-                padding: 1.5rem 2rem;
-            }
+            background: #f8fafc;
         }
 
         /* About Service Section */
@@ -1820,6 +1730,65 @@
             color: var(--text-secondary);
             line-height: 1.7;
             margin-bottom: 2.5rem;
+        }
+
+        .work-types-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .work-type-item {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 2px solid rgba(99, 102, 241, 0.12);
+            border-radius: 16px;
+            padding: 1.5rem 1rem;
+            text-align: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .work-type-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(147, 197, 253, 0.04) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .work-type-item:hover {
+            transform: translateY(-6px);
+            border-color: var(--primary-color);
+            box-shadow: 0 12px 40px rgba(99, 102, 241, 0.2);
+        }
+
+        .work-type-item:hover::before {
+            opacity: 1;
+        }
+
+        .work-type-item:active {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.25);
+        }
+
+        .work-type-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .work-type-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: block;
+            line-height: 1.3;
         }
 
         .service-highlights {
@@ -1979,52 +1948,81 @@
             display: flex;
             align-items: center;
             gap: 1rem;
-            padding: 2rem 1.5rem;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 8px 30px rgba(99, 102, 241, 0.08);
+            padding: 2.5rem 2rem;
+            background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: 24px;
+            box-shadow: 0 12px 40px rgba(99, 102, 241, 0.08);
             border: 1px solid rgba(99, 102, 241, 0.06);
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .service-stat::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.03) 0%, rgba(147, 197, 253, 0.02) 100%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
         }
 
         .service-stat:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 16px 40px rgba(99, 102, 241, 0.15);
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 60px rgba(99, 102, 241, 0.15);
             border-color: rgba(99, 102, 241, 0.12);
         }
 
+        .service-stat:hover::before {
+            opacity: 1;
+        }
+
         .stat-icon-circle {
-            width: 60px;
-            height: 60px;
+            width: 70px;
+            height: 70px;
             background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
-            border-radius: 16px;
+            border-radius: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 1.5rem;
+            font-size: 1.6rem;
             flex-shrink: 0;
-            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.25);
+            box-shadow: 0 8px 30px rgba(99, 102, 241, 0.25);
+            transition: all 0.4s ease;
+            position: relative;
+            z-index: 2;
+        }
+
+        .service-stat:hover .stat-icon-circle {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 12px 40px rgba(99, 102, 241, 0.35);
         }
 
         .stat-info {
             flex: 1;
+            position: relative;
+            z-index: 2;
         }
 
         .service-stat .stat-number {
-            font-size: 1.8rem;
-            font-weight: 800;
+            font-size: 2.2rem;
+            font-weight: 900;
             color: var(--primary-color);
             line-height: 1;
-            margin-bottom: 0.3rem;
+            margin-bottom: 0.4rem;
+            letter-spacing: -0.02em;
         }
 
         .service-stat .stat-label {
-            font-size: 0.9rem;
+            font-size: 1rem;
             color: var(--text-secondary);
-            font-weight: 500;
+            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.8px;
         }
 
         /* Mobile responsive */
@@ -2053,8 +2051,18 @@
                 margin-bottom: 2rem;
             }
 
-            .service-highlight {
-                padding: 1.2rem;
+            .work-types-grid {
+                grid-template-columns: 1fr;
+                gap: 0.8rem;
+                margin-top: 1.5rem;
+            }
+
+            .work-type-item {
+                padding: 1.2rem 0.8rem;
+            }
+
+            .work-type-title {
+                font-size: 0.95rem;
             }
 
             .visual-card {
@@ -2078,17 +2086,21 @@
             }
 
             .service-stat {
-                padding: 1.5rem 1.2rem;
+                padding: 2rem 1.5rem;
             }
 
             .stat-icon-circle {
-                width: 50px;
-                height: 50px;
-                font-size: 1.3rem;
+                width: 60px;
+                height: 60px;
+                font-size: 1.4rem;
             }
 
             .service-stat .stat-number {
-                font-size: 1.6rem;
+                font-size: 2rem;
+            }
+
+            .service-stat .stat-label {
+                font-size: 0.9rem;
             }
         }
 
@@ -2097,22 +2109,96 @@
                 font-size: 2rem;
             }
 
-            .service-highlights {
-                gap: 1rem;
+            .work-types-grid {
+                gap: 0.6rem;
+                margin-top: 1rem;
             }
 
-            .service-highlight {
-                padding: 1rem;
+            .work-type-item {
+                padding: 1rem 0.6rem;
             }
 
-            .highlight-icon {
-                width: 45px;
-                height: 45px;
-                font-size: 1.2rem;
+            .work-type-title {
+                font-size: 0.9rem;
             }
 
             .visual-card {
                 padding: 1.5rem 1rem;
+            }
+
+            .service-stat {
+                padding: 1.8rem 1.2rem;
+            }
+
+            .stat-icon-circle {
+                width: 55px;
+                height: 55px;
+                font-size: 1.3rem;
+            }
+
+            .service-stat .stat-number {
+                font-size: 1.8rem;
+            }
+        }
+
+        /* Advantages Grid */
+        .advantages-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            padding: 1rem;
+        }
+
+        .advantage-item {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.25);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .advantage-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            z-index: 1;
+        }
+
+        .advantage-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 35px rgba(59, 130, 246, 0.35);
+        }
+
+        .advantage-content {
+            color: white;
+            font-weight: 600;
+            font-size: 1rem;
+            text-align: center;
+            line-height: 1.4;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Mobile responsive for advantages */
+        @media (max-width: 768px) {
+            .advantages-grid {
+                grid-template-columns: 1fr;
+                gap: 0.8rem;
+                padding: 0.5rem;
+            }
+
+            .advantage-item {
+                padding: 1.2rem;
+            }
+
+            .advantage-content {
+                font-size: 0.9rem;
             }
         }
     </style>
@@ -2259,23 +2345,35 @@
                         <p class="service-text">
                             GPT Пульт — это инновационная платформа, которая использует передовые технологии искусственного интеллекта для создания качественных учебных работ. Мы автоматизировали процесс написания рефератов, эссе, курсовых и других академических текстов.
                         </p>
-                        <div class="service-highlights">
-                            <div class="service-highlight">
-                                <div class="highlight-icon">
-                                    <i class="fas fa-robot"></i>
-                                </div>
-                                <div class="highlight-content">
-                                    <h4 class="highlight-title">ИИ последнего поколения</h4>
-                                    <p class="highlight-description">Используем GPT-4 для создания уникального контента</p>
+                        <div class="work-types-grid">
+                            <div class="work-type-item" onclick="window.location.href='/new'">
+                                <div class="work-type-content">
+                                    <span class="work-type-title">Отчет о практике</span>
                                 </div>
                             </div>
-                            <div class="service-highlight">
-                                <div class="highlight-icon">
-                                    <i class="fas fa-graduation-cap"></i>
+                            <div class="work-type-item" onclick="window.location.href='/new'">
+                                <div class="work-type-content">
+                                    <span class="work-type-title">Курсовая работа</span>
                                 </div>
-                                <div class="highlight-content">
-                                    <h4 class="highlight-title">Академические стандарты</h4>
-                                    <p class="highlight-description">Соответствие всем требованиям учебных заведений</p>
+                            </div>
+                            <div class="work-type-item" onclick="window.location.href='/new'">
+                                <div class="work-type-content">
+                                    <span class="work-type-title">Доклад</span>
+                                </div>
+                            </div>
+                            <div class="work-type-item" onclick="window.location.href='/new'">
+                                <div class="work-type-content">
+                                    <span class="work-type-title">Эссе</span>
+                                </div>
+                            </div>
+                            <div class="work-type-item" onclick="window.location.href='/new'">
+                                <div class="work-type-content">
+                                    <span class="work-type-title">Реферат</span>
+                                </div>
+                            </div>
+                            <div class="work-type-item" onclick="window.location.href='/new'">
+                                <div class="work-type-content">
+                                    <span class="work-type-title">Научная статья</span>
                                 </div>
                             </div>
                         </div>
@@ -2288,24 +2386,24 @@
                                 <div class="visual-icon">
                                     <i class="fas fa-brain"></i>
                                 </div>
-                                <h4 class="visual-title">Как это работает?</h4>
+                                <h4 class="visual-title">Как мы работаем с ИИ?</h4>
                             </div>
                             <div class="visual-steps">
                                 <div class="visual-step">
                                     <span class="step-number">1</span>
-                                    <span class="step-text">Анализ темы и требований</span>
+                                    <span class="step-text">Анализируем тему с помощью GPT-4</span>
                                 </div>
                                 <div class="visual-step">
                                     <span class="step-number">2</span>
-                                    <span class="step-text">Генерация структуры работы</span>
+                                    <span class="step-text">Создаем персонализированную структуру</span>
                                 </div>
                                 <div class="visual-step">
                                     <span class="step-number">3</span>
-                                    <span class="step-text">Написание уникального контента</span>
+                                    <span class="step-text">Генерируем уникальный контент</span>
                                 </div>
                                 <div class="visual-step">
                                     <span class="step-number">4</span>
-                                    <span class="step-text">Проверка и форматирование</span>
+                                    <span class="step-text">Проверяем и оптимизируем результат</span>
                                 </div>
                             </div>
                         </div>
@@ -2321,7 +2419,7 @@
                                 <i class="fas fa-users"></i>
                             </div>
                             <div class="stat-info">
-                                <div class="stat-number">10,000+</div>
+                                <div class="stat-number">25,000+</div>
                                 <div class="stat-label">Довольных студентов</div>
                             </div>
                         </div>
@@ -2330,7 +2428,7 @@
                                 <i class="fas fa-file-alt"></i>
                             </div>
                             <div class="stat-info">
-                                <div class="stat-number">50,000+</div>
+                                <div class="stat-number">150,000+</div>
                                 <div class="stat-label">Созданных работ</div>
                             </div>
                         </div>
@@ -2339,7 +2437,7 @@
                                 <i class="fas fa-check-circle"></i>
                             </div>
                             <div class="stat-info">
-                                <div class="stat-number">99.9%</div>
+                                <div class="stat-number">99.8%</div>
                                 <div class="stat-label">Уникальность</div>
                             </div>
                         </div>
@@ -2348,7 +2446,7 @@
                                 <i class="fas fa-clock"></i>
                             </div>
                             <div class="stat-info">
-                                <div class="stat-number">10 мин</div>
+                                <div class="stat-number">8 мин</div>
                                 <div class="stat-label">Средний срок</div>
                             </div>
                         </div>
@@ -2358,63 +2456,7 @@
         </div>
     </section>
 
-    <!-- Advantages Section -->
-    <section class="advantages-section" id="features">
-        <div class="container">
-            <div class="row">
-                <div class="col-12 text-center mb-5">
-                    <h2 class="section-title">Наши преимущества</h2>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-lg-3 col-md-6 mb-4">
-                    <div class="advantage-card">
-                        <div class="advantage-card-icon">
-                            <i class="fas fa-clock"></i>
-                        </div>
-                        <h3 class="advantage-card-title">Быстрый результат</h3>
-                        <p class="advantage-card-description">
-                            Получите готовую работу всего за 10 минут. Никаких долгих ожиданий и переписок с исполнителями.
-                        </p>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6 mb-4">
-                    <div class="advantage-card">
-                        <div class="advantage-card-icon">
-                            <i class="fas fa-shield-alt"></i>
-                        </div>
-                        <h3 class="advantage-card-title">100% уникальность</h3>
-                        <p class="advantage-card-description">
-                            Каждая работа создается с нуля и проходит проверку на плагиат. Гарантируем высокую уникальность.
-                        </p>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6 mb-4">
-                    <div class="advantage-card">
-                        <div class="advantage-card-icon">
-                            <i class="fas fa-dollar-sign"></i>
-                        </div>
-                        <h3 class="advantage-card-title">Доступные цены</h3>
-                        <p class="advantage-card-description">
-                            Стоимость работ в 10 раз ниже, чем у фрилансеров. Качественно и недорого для каждого студента.
-                        </p>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6 mb-4">
-                    <div class="advantage-card">
-                        <div class="advantage-card-icon">
-                            <i class="fas fa-headset"></i>
-                        </div>
-                        <h3 class="advantage-card-title">Поддержка 24/7</h3>
-                        <p class="advantage-card-description">
-                            Наша команда всегда готова помочь. Обращайтесь в любое время через чат или телефон.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
+    
     <!-- Comparison Section -->
     <section class="comparison-section">
         <div class="container comparison-container">
@@ -2515,9 +2557,6 @@
                 <div class="col-lg-4 col-md-6 mb-4">
                     <div class="pricing-card">
                         <div class="pricing-header">
-                            <div class="pricing-icon">
-                                <i class="fas fa-leaf"></i>
-                            </div>
                             <h3 class="pricing-title">Бесплатный</h3>
                             <div class="pricing-price">
                                 <span class="pricing-amount">0₽</span>
@@ -2558,9 +2597,6 @@
                     <div class="pricing-card featured">
                         <div class="pricing-badge">Популярный</div>
                         <div class="pricing-header">
-                            <div class="pricing-icon">
-                                <i class="fas fa-star"></i>
-                            </div>
                             <h3 class="pricing-title">Абонемент</h3>
                             <div class="pricing-price">
                                 <span class="pricing-amount">300₽</span>
@@ -2620,17 +2656,26 @@
                     </div>
                 </div>
                 <div class="col-lg-6">
-                    <div class="subscription-card">
-                        <div class="subscription-content">
-                            <h3 class="subscription-title">Получай уведомления в Telegram – переходи в бота GPT Пульт</h3>
-                            <div class="subscription-cta">
-                                <a href="https://t.me/gptpult_bot" target="_blank" class="subscription-btn">
-                                    Перейти в бота
-                                </a>
+                    <div class="advantages-grid">
+                        <div class="advantage-item">
+                            <div class="advantage-content">
+                                Мгновенные уведомления
                             </div>
                         </div>
-                        <div class="subscription-footer">
-                            <p class="subscription-subtitle">GPT Пульт в Telegram – переходи и будь на шаг впереди!</p>
+                        <div class="advantage-item">
+                            <div class="advantage-content">
+                                Быстрое создание задач
+                            </div>
+                        </div>
+                        <div class="advantage-item">
+                            <div class="advantage-content">
+                                Результат за 10 минут
+                            </div>
+                        </div>
+                        <div class="advantage-item">
+                            <div class="advantage-content">
+                                Всегда под рукой
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -2643,8 +2688,8 @@
         <div class="container">
             <div class="row">
                 <div class="col-12 text-center mb-5">
-                    <h2 class="section-title" style="color: white;">Готов начать?</h2>
-                    <p class="section-subtitle" style="color: rgba(255,255,255,0.9);">
+                    <h2 class="section-title">Готов начать?</h2>
+                    <p class="section-subtitle">
                         Присоединяйся к тысячам студентов, которые уже используют GPT Пульт для успешной учебы
                     </p>
                     <a href="/new" class="btn-hero-white">

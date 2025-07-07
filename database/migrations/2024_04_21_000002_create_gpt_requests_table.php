@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('gpt_requests', function (Blueprint $table) {
             $table->id();
             $table->foreignId('document_id')->constrained()->onDelete('cascade');
-            $table->foreignId('document_part_id')->nullable()->constrained()->onDelete('cascade');
+            // $table->foreignId('document_part_id')->nullable()->constrained()->onDelete('cascade'); // ВРЕМЕННО ОТКЛЮЧЕНО: таблица document_parts не существует
             $table->text('prompt');
             $table->text('response')->nullable();
             $table->string('status')->default('pending'); // pending, processing, completed, failed

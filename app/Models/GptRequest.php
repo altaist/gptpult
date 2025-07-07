@@ -13,7 +13,7 @@ class GptRequest extends Model
 
     protected $fillable = [
         'document_id',
-        'document_part_id',
+        // 'document_part_id', // ВРЕМЕННО ОТКЛЮЧЕНО: таблица document_parts не существует
         'prompt',
         'response',
         'status',
@@ -35,9 +35,10 @@ class GptRequest extends Model
 
     /**
      * Получить часть документа, к которой относится запрос
+     * ВРЕМЕННО ОТКЛЮЧЕНО: модель DocumentPart не существует
      */
-    public function documentPart(): BelongsTo
-    {
-        return $this->belongsTo(DocumentPart::class);
-    }
+    // public function documentPart(): BelongsTo
+    // {
+    //     return $this->belongsTo(DocumentPart::class);
+    // }
 } 
