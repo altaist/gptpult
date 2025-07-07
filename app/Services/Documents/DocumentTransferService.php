@@ -127,7 +127,7 @@ class DocumentTransferService
      */
     public function isTempUser(User $user): bool
     {
-        return $user->email && str_ends_with($user->email, '@auto.user');
+        return $user->email && (str_ends_with($user->email, '@auto.user') || str_ends_with($user->email, '@linked.user'));
     }
 
     /**

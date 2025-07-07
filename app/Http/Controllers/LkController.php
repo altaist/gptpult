@@ -189,6 +189,14 @@ class LkController extends Controller
                 ], 422);
             }
 
+            // Проверяем, что email не является автогенерированным
+            if (str_ends_with($email, '@auto.user') || str_ends_with($email, '@linked.user')) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Введите действительный email адрес для получения чека'
+                ], 422);
+            }
+
             // Проверяем уникальность email (исключая текущего пользователя)
             $existingUser = \App\Models\User::where('email', $email)
                 ->where('id', '!=', $user->id)

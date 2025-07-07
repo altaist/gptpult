@@ -866,7 +866,7 @@ const shouldShowTelegramAuth = computed(() => {
     // Показываем если нет связанного Telegram И email автогенерированный
     return !user.telegram_id && 
            user.email && 
-           user.email.endsWith('@auto.user');
+           (user.email.endsWith('@auto.user') || user.email.endsWith('@linked.user'));
 });
 
 // Авторизация через Telegram (не связка, а именно авторизация)

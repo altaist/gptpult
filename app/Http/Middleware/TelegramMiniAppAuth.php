@@ -520,7 +520,7 @@ class TelegramMiniAppAuth
         // 4. Проверяем сессию (если есть текущий авторизованный пользователь)
         if (Auth::check()) {
             $currentUser = Auth::user();
-            if ($currentUser && $currentUser->auth_token && str_ends_with($currentUser->email, '@auto.user')) {
+            if ($currentUser && $currentUser->auth_token && (str_ends_with($currentUser->email, '@auto.user') || str_ends_with($currentUser->email, '@linked.user'))) {
                 Log::info('Найден токен текущего временного пользователя в сессии');
                 return $currentUser->auth_token;
             }

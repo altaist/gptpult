@@ -72,7 +72,7 @@ const userInfo = computed(() => {
         telegram_id: user.value.telegram_id,
         telegram_linked_at: user.value.telegram_linked_at,
         privacy_consent: user.value.privacy_consent,
-        hasAutoEmail: user.value.email?.endsWith('@auto.user'),
+        hasAutoEmail: user.value.email?.endsWith('@auto.user') || user.value.email?.endsWith('@linked.user'),
         localStorage: {
             auto_auth_token: localStorage.getItem('auto_auth_token') ? '***скрыт***' : null,
             telegram_auth_user_id: localStorage.getItem('telegram_auth_user_id'),

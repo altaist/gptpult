@@ -210,7 +210,7 @@ export const shouldShowLogoutButtonWithData = (documentsCount = 0, balance = 0) 
     const currentUser = user.value;
     if (currentUser) {
         // 5.1. Если email НЕ является автогенерированным
-        if (currentUser.email && !currentUser.email.endsWith('@auto.user')) {
+        if (currentUser.email && !currentUser.email.endsWith('@auto.user') && !currentUser.email.endsWith('@linked.user')) {
             return true;
         }
         
@@ -412,7 +412,7 @@ export const debugLogoutButtonCriteria = (documentsCount = 0, balance = 0) => {
     const currentUser = user.value;
     if (currentUser) {
         // 5.1. Email
-        if (currentUser.email && !currentUser.email.endsWith('@auto.user')) {
+        if (currentUser.email && !currentUser.email.endsWith('@auto.user') && !currentUser.email.endsWith('@linked.user')) {
             criteria.push(`Реальный email: ${currentUser.email}`);
             return { shouldShow: true, reason: 'Реальный email', criteria };
         } else if (currentUser.email) {
