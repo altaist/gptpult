@@ -266,15 +266,25 @@ class AutoAuthController extends Controller
             $user = User::where('telegram_id', $userData['id'])->first();
             
             if (!$user) {
-                Log::warning('TelegramAuth: User not found for Telegram ID', [
+                Log::info('TelegramAuth: User not found, creating new user', [
                     'telegram_id' => $userData['id']
                 ]);
                 
-                return response()->json([
-                    'success' => false,
-                    'error' => 'User not found for Telegram ID: ' . $userData['id'],
+                // Создаем нового пользователя автоматически
+                $user = $this->createTelegramUser($userData);
+                
+                if (!$user) {
+                    Log::error('TelegramAuth: Failed to create new user');
+                    return response()->json([
+                        'success' => false,
+                        'error' => 'Failed to create user account'
+                    ], 500);
+                }
+                
+                Log::info('TelegramAuth: New user created successfully', [
+                    'user_id' => $user->id,
                     'telegram_id' => $userData['id']
-                ], 404);
+                ]);
             }
 
             Log::info('TelegramAuth: User found, authenticating', [
@@ -289,6 +299,9 @@ class AutoAuthController extends Controller
             // Regenerate session для безопасности
             $request->session()->regenerate();
             
+            // Настраиваем куки для Telegram WebApp
+            $this->setupTelegramCookies($user);
+            
             Log::info('TelegramAuth: User successfully authenticated', [
                 'user_id' => $user->id,
                 'session_id' => $request->session()->getId()
@@ -299,7 +312,9 @@ class AutoAuthController extends Controller
                 'user' => [
                     'id' => $user->id,
                     'name' => $user->name,
-                    'email' => $user->email
+                    'email' => $user->email,
+                    'auth_token' => $user->auth_token,
+                    'telegram_id' => $user->telegram_id
                 ],
                 'message' => 'Successfully authenticated via Telegram WebApp',
                 'redirect_url' => '/lk'
@@ -371,13 +386,13 @@ class AutoAuthController extends Controller
     {
         $cookieName = 'telegram_auth_user_' . $user->id;
         $cookieValue = $user->id;
-        $cookieLifetime = config('session.lifetime', 120);
+        $telegramCookieLifetime = 7 * 24 * 60; // 7 дней в минутах
         
         // Создаем куки с правильными параметрами для Telegram WebApp
         $cookie = cookie(
             $cookieName,
             $cookieValue,
-            $cookieLifetime,
+            $telegramCookieLifetime,
             '/', // path
             null, // domain
             true, // secure - обязательно true для HTTPS
@@ -391,7 +406,8 @@ class AutoAuthController extends Controller
         
         Log::info('TelegramAuth: Cookies setup completed', [
             'user_id' => $user->id,
-            'cookie_name' => $cookieName
+            'cookie_name' => $cookieName,
+            'cookie_lifetime_minutes' => $telegramCookieLifetime
         ]);
     }
 } 

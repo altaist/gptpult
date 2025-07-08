@@ -21,36 +21,79 @@ const initUser = () => {
     // Слушаем глобальное событие unauthorized
     window.addEventListener('auth:unauthorized', (event) => {
         console.log('Received auth:unauthorized event, clearing state', event.detail);
-        clearAuthState();
         
-        // Если мы на странице логина, пытаемся создать новый аккаунт
-        if (window.location.pathname === '/login') {
-            console.log('On login page, attempting to create new account');
+        // Проверяем, есть ли данные Telegram WebApp для создания нового аккаунта
+        const hasTelegramData = window.Telegram?.WebApp?.initDataUnsafe?.user;
+        
+        if (hasTelegramData) {
+            console.log('Telegram WebApp data available, attempting to create account instead of redirecting');
             
             // Небольшая задержка для очистки состояния
             setTimeout(async () => {
                 if (!isRedirectingAuth) {
                     try {
+                        clearAuthState(); // Очищаем только после попытки создания аккаунта
+                        
+                        // Пытаемся создать новый аккаунт через authLocalSaved
                         const authResult = await authLocalSaved(true);
                         if (authResult) {
-                            console.log('New account created after 401 error, redirecting to /lk');
+                            console.log('New Telegram account created after 401 error, redirecting to /lk');
                             isRedirectingAuth = true;
                             window.location.href = '/lk';
                             return;
                         }
+                        
+                        // Если создание аккаунта не удалось, пытаемся отправить данные напрямую
+                        if (window.Telegram?.WebApp?.initData) {
+                            console.log('Trying direct Telegram auth after account creation failed');
+                            
+                            const headers = {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                                'X-Telegram-Init-Data': window.Telegram.WebApp.initData,
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json'
+                            };
+                            
+                            const response = await fetch('/telegram/auth', {
+                                method: 'POST',
+                                headers,
+                                credentials: 'include',
+                                body: JSON.stringify({
+                                    init_data: window.Telegram.WebApp.initData
+                                })
+                            });
+                            
+                            if (response.ok) {
+                                const data = await response.json();
+                                if (data.success && data.user) {
+                                    console.log('Direct Telegram auth successful, redirecting to /lk');
+                                    isRedirectingAuth = true;
+                                    window.location.href = '/lk';
+                                    return;
+                                }
+                            }
+                        }
+                        
+                        console.warn('All Telegram auth methods failed, staying on current page');
                     } catch (error) {
-                        console.warn('Failed to create account after 401:', error);
+                        console.warn('Failed to handle Telegram auth after 401:', error);
                     }
                 }
             }, 200);
         } else {
+            // Нет данных Telegram - обычная очистка состояния
+            clearAuthState();
+            
             // Если мы НЕ на странице логина, перенаправляем туда
-            setTimeout(() => {
-                if (!isRedirectingAuth) {
-                    isRedirectingAuth = true;
-                    window.location.href = '/login';
-                }
-            }, 100);
+            if (window.location.pathname !== '/login') {
+                setTimeout(() => {
+                    if (!isRedirectingAuth) {
+                        isRedirectingAuth = true;
+                        window.location.href = '/login';
+                    }
+                }, 100);
+            }
         }
     });
 };
@@ -104,6 +147,50 @@ export const authLocalSaved = async (autoreg = false) => {
     if (autoreg) {
         try {
             const twaUser = getTwaUser();
+            
+            // Если есть данные Telegram WebApp, отправляем их для создания связанного аккаунта
+            if (twaUser && window.Telegram?.WebApp?.initData) {
+                console.log('Creating account with Telegram WebApp data');
+                
+                // Отправляем данные напрямую на Telegram auth endpoint
+                const headers = {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    'X-Telegram-Init-Data': window.Telegram.WebApp.initData,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                };
+                
+                const telegramResponse = await fetch('/telegram/auth', {
+                    method: 'POST',
+                    headers,
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        init_data: window.Telegram.WebApp.initData
+                    })
+                });
+                
+                if (telegramResponse.ok) {
+                    const telegramData = await telegramResponse.json();
+                    if (telegramData.success && telegramData.user) {
+                        console.log('Successfully created Telegram linked account');
+                        setUser(telegramData.user);
+                        
+                        // Сохраняем информацию об авторизации
+                        if (telegramData.user.auth_token) {
+                            saveToLocalStorage('auto_auth_token', telegramData.user.auth_token);
+                        }
+                        localStorage.setItem('telegram_auth_user_id', telegramData.user.id);
+                        localStorage.setItem('telegram_auth_timestamp', Date.now());
+                        
+                        return telegramData.user;
+                    }
+                }
+                
+                console.log('Telegram auth endpoint failed, trying fallback registration');
+            }
+            
+            // Fallback: обычная автоматическая регистрация
             const data = twaUser ? {
                 telegram: {
                     id: twaUser.tgId,
@@ -130,6 +217,7 @@ export const authLocalSaved = async (autoreg = false) => {
                 return response.user;
             }
         } catch (error) {
+            console.log('Registration failed:', error.message || error);
             // console.error('Registration error:', error);  // Закомментировано для продакшена
         }
     }
@@ -627,7 +715,16 @@ export const checkSessionStatus = async () => {
     } catch (error) {
         // Если получили 401 - сессия неактивна
         if (error.status === 401) {
-            clearAuthState();
+            // Проверяем, есть ли данные Telegram для создания нового аккаунта
+            const hasTelegramData = window.Telegram?.WebApp?.initDataUnsafe?.user;
+            
+            if (!hasTelegramData) {
+                // Только очищаем состояние если нет данных Telegram
+                clearAuthState();
+            } else {
+                console.log('Session inactive but Telegram data available - not clearing state yet');
+            }
+            
             return false;
         }
         
