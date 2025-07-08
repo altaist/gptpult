@@ -148,10 +148,12 @@ body {
     text-decoration: none;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     transition: all 0.3s ease;
     box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
     position: relative;
     overflow: hidden;
+    text-align: center;
 }
 
 .btn-hero-primary:hover {
@@ -1123,6 +1125,10 @@ body {
     transition: all 0.3s ease;
     border: 2px solid #3b82f6;
     width: 100%;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .pricing-btn:hover {
@@ -1153,4 +1159,40 @@ body {
 
 .pricing-note i {
     color: #22c55e;
+}
+
+.btn-hero-secondary {
+    background: transparent;
+    border: 2px solid #3b82f6;
+    padding: 18px 38px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: 50px;
+    color: #3b82f6;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+}
+
+.btn-hero-secondary:hover {
+    background: #3b82f6;
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px rgba(59, 130, 246, 0.4);
+    text-decoration: none;
+}
+
+.btn-hero-primary i {
+    margin-right: 8px;
+    font-size: 1rem;
+}
+
+.btn-hero-secondary i {
+    margin-right: 8px;
+    font-size: 1rem;
 } 

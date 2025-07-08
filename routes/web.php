@@ -17,7 +17,7 @@ use App\Http\Controllers\TelegramController;
 use App\Http\Controllers\TelegramLinkController;
 
 Route::get('/', function () {
-    return view('v4');
+    return view('v5');
 });
 Route::get('/v2', function () {
     return view('v2');
