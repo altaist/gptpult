@@ -315,6 +315,11 @@ export const shouldShowLogoutButtonWithData = (documentsCount = 0, balance = 0) 
         return false;
     }
     
+    // 0. Если пользователь зашел через Telegram Web App - кнопку выхода не показываем
+    if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
+        return false;
+    }
+    
     // 1. Если есть хотя бы 1 документ
     if (documentsCount > 0) {
         return true;
