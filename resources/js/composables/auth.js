@@ -332,6 +332,10 @@ export const shouldShowLogoutButtonWithData = (documentsCount = 0, balance = 0) 
         if (currentUser.email && !currentUser.email.endsWith('@auto.user') && !currentUser.email.endsWith('@linked.user')) {
             return true;
         }
+
+        if (currentUser.name !== 'Guest') {
+            return true;
+        }
         
         // 3.2. Если есть данные о согласии на обработку персональных данных
         if (currentUser.privacy_consent) {
@@ -342,16 +346,19 @@ export const shouldShowLogoutButtonWithData = (documentsCount = 0, balance = 0) 
         if (currentUser.telegram_id) {
             return true;
         }
+        console.log(currentUser.telegram_id);
         
         // 3.4. Если пользователь связан с Telegram (имеет telegram_username в БД)
         if (currentUser.telegram_username) {
             return true;
         }
+        console.log(currentUser.telegram_username);
         
         // 3.5. Если пользователь связан с Telegram (дата связывания в БД)
         if (currentUser.telegram_linked_at) {
             return true;
         }
+        console.log(currentUser.telegram_linked_at);
         
         // 3.6. Если аккаунт существует более 1 часа (проверяем created_at из БД)
         if (currentUser.created_at) {
@@ -394,11 +401,12 @@ export const shouldShowLogoutButtonWithData = (documentsCount = 0, balance = 0) 
     if (telegramUserId) {
         return true;
     }
-    
+    console.log(telegramUserId);
     // 4.2. Проверяем куки Telegram (fallback)
     if (document.cookie.includes('telegram_auth_user_')) {
         return true;
     }
+    console.log(document.cookie.includes('telegram_auth_user_'));
     
     // 4.3. Проверяем URL параметры для определения типа входа (fallback)
     const urlParams = new URLSearchParams(window.location.search);
@@ -406,6 +414,7 @@ export const shouldShowLogoutButtonWithData = (documentsCount = 0, balance = 0) 
         // Пользователь пришел через Telegram WebApp
         return true;
     }
+    console.log('false');
     
     // Если ни один из критериев не сработал - это "пустой" аккаунт
     return false;
