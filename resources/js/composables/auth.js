@@ -197,42 +197,35 @@ export const shouldShowLogoutButtonWithData = (documentsCount = 0, balance = 0) 
         return true;
     }
     
-    // 3. Проверяем авторизацию через Telegram
-    const telegramUserId = localStorage.getItem('telegram_auth_user_id');
-    if (telegramUserId) {
-        return true;
-    }
-    
-    // 4. Проверяем есть ли токен авторизации (значит пользователь создавал документы)
-    /*const authToken = localStorage.getItem('auto_auth_token');
-    if (authToken) {
-        return true;
-    }*/
-    
-    // 5. Проверяем данные пользователя
+    // 3. Проверяем данные пользователя из БД
     const currentUser = user.value;
     if (currentUser) {
-        // 5.1. Если email НЕ является автогенерированным
+        // 3.1. Если email НЕ является автогенерированным
         if (currentUser.email && !currentUser.email.endsWith('@auto.user') && !currentUser.email.endsWith('@linked.user')) {
             return true;
         }
         
-        // 5.2. Если есть данные о согласии на обработку персональных данных
+        // 3.2. Если есть данные о согласии на обработку персональных данных
         if (currentUser.privacy_consent) {
             return true;
         }
         
-        // 5.3. Если пользователь связан с Telegram (имеет telegram_id)
+        // 3.3. Если пользователь связан с Telegram (имеет telegram_id в БД)
         if (currentUser.telegram_id) {
             return true;
         }
         
-        // 5.4. Если пользователь связан с Telegram (дата связывания)
+        // 3.4. Если пользователь связан с Telegram (имеет telegram_username в БД)
+        if (currentUser.telegram_username) {
+            return true;
+        }
+        
+        // 3.5. Если пользователь связан с Telegram (дата связывания в БД)
         if (currentUser.telegram_linked_at) {
             return true;
         }
         
-        // 5.5. Если аккаунт существует более 1 часа (проверяем created_at)
+        // 3.6. Если аккаунт существует более 1 часа (проверяем created_at из БД)
         if (currentUser.created_at) {
             const createdAt = new Date(currentUser.created_at);
             const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
@@ -241,45 +234,45 @@ export const shouldShowLogoutButtonWithData = (documentsCount = 0, balance = 0) 
             }
         }
         
-        // 5.6. Если в person есть данные о том, что аккаунт не автосозданный
+        // 3.7. Если в person есть данные о том, что аккаунт не автосозданный
         if (currentUser.person && currentUser.person.telegram && currentUser.person.telegram.auto_created === false) {
             return true;
         }
         
-        // 5.7. Если пользователь имеет настройки или статистику (значит взаимодействовал с системой)
-        if (currentUser.settings && Object.keys(currentUser.settings).length > 0) {
+        // 3.8. Если пользователь имеет настройки или статистику в БД (значит взаимодействовал с системой)
+        /*if (currentUser.settings && Object.keys(currentUser.settings).length > 0) {
             return true;
         }
         
         if (currentUser.statistics && Object.keys(currentUser.statistics).length > 0) {
             return true;
         }
+        
+        // 3.9. Если роль пользователя не обычная (например, админ, модератор)
+        if (currentUser.role_id && currentUser.role_id > 0) {
+            return true;
+        }
+        
+        // 3.10. Если у пользователя есть auth_token в БД (значит создавал документы)
+        if (currentUser.auth_token) {
+            return true;
+        }*/
     }
     
-    // 6. Проверяем localStorage на наличие других признаков активности
+    // 4. FALLBACK: Проверяем localStorage только если данные пользователя недостаточны
     
-    // 6.1. Если есть данные магазина
-    /*if (localStorage.getItem('shop.main')) {
+    // 4.1. Проверяем авторизацию через Telegram в localStorage (fallback)
+    const telegramUserId = localStorage.getItem('telegram_auth_user_id');
+    if (telegramUserId) {
         return true;
     }
     
-    // 6.2. Если есть сохраненные настройки
-    if (localStorage.getItem('settings')) {
-        return true;
-    }
-    
-    // 6.3. Если пользователь выбрал язык
-    const lang = localStorage.getItem('lang') || localStorage.getItem('locale');
-    if (lang && lang !== 'ru') { // Если не русский язык по умолчанию
-        return true;
-    }*/
-    
-    // 6.4. Проверяем куки Telegram (дополнительная проверка)
+    // 4.2. Проверяем куки Telegram (fallback)
     if (document.cookie.includes('telegram_auth_user_')) {
         return true;
     }
     
-    // 7. Проверяем URL параметры для определения типа входа
+    // 4.3. Проверяем URL параметры для определения типа входа (fallback)
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has('tgWebAppStartParam') || urlParams.has('telegram')) {
         // Пользователь пришел через Telegram WebApp

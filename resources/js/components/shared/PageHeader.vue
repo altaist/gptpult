@@ -96,9 +96,9 @@ const props = defineProps({
 const emit = defineEmits(['click:left', 'click:right', 'click:title']);
 
 // Определяем должна ли показываться кнопка выхода
-const showLogoutButton = computed(() => 
-    shouldShowLogoutButtonWithData(props.documentsCount, props.balance)
-);
+const showLogoutButton = computed(() => {
+    return shouldShowLogoutButtonWithData(props.documentsCount, props.balance);
+});
 
 const onLogoClick = () => {
     window.location.href = '/';
