@@ -239,13 +239,16 @@ class TelegramMiniAppAuth
         // Создаем специальные куки для Telegram WebApp
         $cookieName = 'telegram_auth_user_' . $user->id;
         $cookieValue = $user->id;
-        $cookieLifetime = config('session.lifetime', 120);
+        $cookieLifetime = config('session.lifetime', 1440); // Используем увеличенное время или 24 часа по умолчанию
+        
+        // Для Telegram устанавливаем еще больший срок - 7 дней
+        $telegramCookieLifetime = 7 * 24 * 60; // 7 дней в минутах
         
         // Создаем куки с правильными параметрами для Telegram WebApp
         $cookie = cookie(
             $cookieName,
             $cookieValue,
-            $cookieLifetime,
+            $telegramCookieLifetime,
             '/', // path
             null, // domain
             true, // secure - обязательно true для HTTPS
@@ -262,7 +265,7 @@ class TelegramMiniAppAuth
             '%s=%s; Max-Age=%d; Path=/; Secure; SameSite=None',
             $cookieName,
             $cookieValue,
-            $cookieLifetime * 60
+            $telegramCookieLifetime * 60 // конвертируем в секунды
         );
         
         // Принудительно сохраняем в response headers
@@ -274,6 +277,7 @@ class TelegramMiniAppAuth
             'user_id' => $user->id,
             'session_id' => $request->session()->getId(),
             'cookie_name' => $cookieName,
+            'cookie_lifetime_minutes' => $telegramCookieLifetime,
             'auth_check' => Auth::check()
         ]);
     }

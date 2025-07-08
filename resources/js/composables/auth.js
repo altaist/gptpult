@@ -23,9 +23,28 @@ const initUser = () => {
         console.log('Received auth:unauthorized event, clearing state', event.detail);
         clearAuthState();
         
-        // Если мы НЕ на странице логина, перенаправляем туда
-        if (window.location.pathname !== '/login') {
-            // Даем небольшую задержку чтобы состояние очистилось
+        // Если мы на странице логина, пытаемся создать новый аккаунт
+        if (window.location.pathname === '/login') {
+            console.log('On login page, attempting to create new account');
+            
+            // Небольшая задержка для очистки состояния
+            setTimeout(async () => {
+                if (!isRedirectingAuth) {
+                    try {
+                        const authResult = await authLocalSaved(true);
+                        if (authResult) {
+                            console.log('New account created after 401 error, redirecting to /lk');
+                            isRedirectingAuth = true;
+                            window.location.href = '/lk';
+                            return;
+                        }
+                    } catch (error) {
+                        console.warn('Failed to create account after 401:', error);
+                    }
+                }
+            }, 200);
+        } else {
+            // Если мы НЕ на странице логина, перенаправляем туда
             setTimeout(() => {
                 if (!isRedirectingAuth) {
                     isRedirectingAuth = true;
@@ -330,8 +349,24 @@ export const checkAuth = async () => {
                     const sessionValid = await checkSessionStatus();
                     
                     if (sessionValid === false) {
-                        // Сессия точно неактивна - НЕ делаем редирект
-                        console.log('Session is inactive, staying on current page');
+                        // Сессия точно неактивна - пытаемся создать новый аккаунт
+                        console.log('Session is inactive, trying to create new account');
+                        
+                        // Если на странице логина, пытаемся автозарегистрироваться
+                        if (window.location.pathname === '/login') {
+                            try {
+                                const authResult = await authLocalSaved(true);
+                                if (authResult) {
+                                    console.log('New account created successfully, redirecting to /lk');
+                                    isRedirectingAuth = true;
+                                    window.location.href = '/lk';
+                                    return true;
+                                }
+                            } catch (error) {
+                                console.warn('Failed to create new account:', error);
+                            }
+                        }
+                        
                         return false;
                     }
                     
