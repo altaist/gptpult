@@ -2315,7 +2315,7 @@
         <div class="features-container">
             <div class="features-header">
                 <h2 class="features-title">
-                    Быстрее от идеи к готовой работе
+                    Почему студенты выбирают нас
                 </h2>
             </div>
 

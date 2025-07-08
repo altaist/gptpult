@@ -17,6 +17,23 @@ const initUser = () => {
     if (storedUser) {
         user.value = storedUser;
     }
+    
+    // Слушаем глобальное событие unauthorized
+    window.addEventListener('auth:unauthorized', (event) => {
+        console.log('Received auth:unauthorized event, clearing state', event.detail);
+        clearAuthState();
+        
+        // Если мы НЕ на странице логина, перенаправляем туда
+        if (window.location.pathname !== '/login') {
+            // Даем небольшую задержку чтобы состояние очистилось
+            setTimeout(() => {
+                if (!isRedirectingAuth) {
+                    isRedirectingAuth = true;
+                    window.location.href = '/login';
+                }
+            }, 100);
+        }
+    });
 };
 initUser();
 
@@ -53,9 +70,13 @@ export const authLocalSaved = async (autoreg = false) => {
                 return response.user;
             }
         } catch (error) {
-            // Если токен неверный, удаляем его
+            // Если токен неверный, удаляем его и очищаем состояние
             if (error.status === 401) {
-                localStorage.removeItem('auto_auth_token');
+                console.log('Auto auth token is invalid, clearing auth state');
+                clearAuthState();
+                // НЕ возвращаем ошибку, продолжаем попытку регистрации
+            } else {
+                console.warn('Auto auth failed with non-401 error:', error);
             }
         }
     }
@@ -300,6 +321,35 @@ export const checkAuth = async () => {
     try {
         // Проверяем есть ли уже пользователь через Inertia
         if (isAuthenticated.value) {
+            // Дополнительная проверка активности сессии
+            const inertiaValid = checkInertiaAuth();
+            
+            if (!inertiaValid) {
+                // Если Inertia props пусты, проверяем сессию через API
+                try {
+                    const sessionValid = await checkSessionStatus();
+                    
+                    if (sessionValid === false) {
+                        // Сессия точно неактивна - НЕ делаем редирект
+                        console.log('Session is inactive, staying on current page');
+                        return false;
+                    }
+                    
+                    if (sessionValid === null) {
+                        // Неопределенное состояние (ошибка сети и т.д.)
+                        // Остаемся на текущей странице
+                        console.log('Session status unclear, staying on current page');
+                        return false;
+                    }
+                } catch (error) {
+                    // При ошибке API не делаем редирект
+                    console.warn('Session check failed:', error);
+                    clearAuthState();
+                    return false;
+                }
+            }
+            
+            
             // console.log('checkAuth: User already authenticated via Inertia')  // Закомментировано для продакшена
             
             // Если пользователь на странице входа, но уже авторизован - редиректим
@@ -513,4 +563,123 @@ export const debugLogoutButtonCriteria = (documentsCount = 0, balance = 0) => {
         criteria 
     };
 };
+
+// Функция для полной очистки состояния авторизации
+export const clearAuthState = () => {
+    user.value = null;
+    localStorage.removeItem('user');
+    localStorage.removeItem('auto_auth_token');
+    
+    // Сбрасываем флаг редиректа
+    isRedirectingAuth = false;
+    
+    console.log('Auth state cleared due to invalid session');
+}
+
+// Функция для проверки активности сессии
+export const checkSessionStatus = async () => {
+    try {
+        // Делаем простой API запрос для проверки авторизации
+        const response = await apiClient.get('/api/user');
+        
+        if (response && response.id) {
+            // Сессия активна, обновляем данные пользователя
+            setUser(response);
+            return true;
+        }
+        
+        return false;
+    } catch (error) {
+        // Если получили 401 - сессия неактивна
+        if (error.status === 401) {
+            clearAuthState();
+            return false;
+        }
+        
+        // Для других ошибок считаем что сессия может быть активна
+        // (например, проблемы с сетью)
+        console.warn('Session check failed with non-401 error:', error);
+        return null; // неопределенное состояние
+    }
+}
+
+// Функция для проверки состояния Inertia props
+export const checkInertiaAuth = () => {
+    try {
+        const userFromInertia = usePage().props.auth?.user;
+        
+        if (userFromInertia && userFromInertia.id) {
+            // Пользователь найден в Inertia props - сессия активна
+            setUser(userFromInertia);
+            return true;
+        }
+        
+        // Пользователь не найден в Inertia props
+        return false;
+    } catch (error) {
+        // Ошибка доступа к Inertia props
+        console.error('Error accessing Inertia props:', error);
+        return false;
+    }
+}
+
+// Безопасная проверка авторизации перед редиректом
+export const safeAuthCheck = async () => {
+    try {
+        // 1. Проверяем Inertia props
+        const inertiaUser = usePage().props.auth?.user;
+        if (inertiaUser && inertiaUser.id) {
+            setUser(inertiaUser);
+            return { isAuthenticated: true, source: 'inertia' };
+        }
+        
+        // 2. Проверяем localStorage
+        const localUser = getStoredUser();
+        if (localUser && localUser.id) {
+            // Валидируем через API запрос
+            try {
+                const sessionValid = await checkSessionStatus();
+                if (sessionValid === true) {
+                    return { isAuthenticated: true, source: 'localStorage+api' };
+                }
+                if (sessionValid === false) {
+                    // Сессия неактивна - данные уже очищены в clearAuthState
+                    return { isAuthenticated: false, source: 'session_expired' };
+                }
+            } catch (error) {
+                console.warn('Session validation failed:', error);
+                clearAuthState();
+                return { isAuthenticated: false, source: 'validation_error' };
+            }
+        }
+        
+        // 3. Проверяем токен авторизации
+        const token = loadFromLocalStorage('auto_auth_token');
+        if (token) {
+            try {
+                const response = await apiClient.post(route('login.auto'), { auth_token: token });
+                if (response && response.user) {
+                    response.user.token = token;
+                    setUser(response.user);
+                    return { isAuthenticated: true, source: 'auto_token' };
+                }
+            } catch (error) {
+                if (error.status === 401) {
+                    console.log('Auto token expired, clearing auth state');
+                    clearAuthState();
+                    return { isAuthenticated: false, source: 'token_expired' };
+                } else {
+                    console.warn('Auto token validation failed:', error);
+                }
+            }
+        }
+        
+        return { isAuthenticated: false, source: 'none' };
+        
+    } catch (error) {
+        console.error('SafeAuthCheck error:', error);
+        clearAuthState();
+        return { isAuthenticated: false, source: 'error', error };
+    }
+}
 

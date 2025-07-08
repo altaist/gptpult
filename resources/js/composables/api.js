@@ -31,8 +31,13 @@ api.interceptors.response.use(
 
         // Обработка ошибок авторизации
         if (response.status === 401) {
+            // Эмитируем событие для очистки состояния авторизации
+            window.dispatchEvent(new CustomEvent('auth:unauthorized', {
+                detail: { error: response.data, url: error.config?.url }
+            }));
+            
             throw {
-                message: response.data.message || 'Требуется авторизация',
+                message: response.data.message || 'Сессия истекла',
                 original: error,
                 status: 401
             };
