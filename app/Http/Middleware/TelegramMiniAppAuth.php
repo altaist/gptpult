@@ -40,31 +40,6 @@ class TelegramMiniAppAuth
             'has_telegram_cookies' => $this->hasTelegramCookies($request)
         ]);
 
-        // Если пользователь уже авторизован
-        if (Auth::check()) {
-            Log::info('TelegramMiniAppAuth: User already authenticated', [
-                'user_id' => Auth::id(),
-                'current_path' => $request->path(),
-                'is_login_path' => $request->is('login'),
-                'should_redirect' => $request->is('login')
-            ]);
-            
-            // Если пользователь авторизован и находится на странице логина, перенаправляем его
-            if ($request->is('login')) {
-                if ($request->ajax() || $request->header('X-Inertia')) {
-                    Log::info('TelegramMiniAppAuth: Sending redirect header for authenticated AJAX user');
-                    $response = $next($request);
-                    $response->headers->set('X-Telegram-Redirect', '/lk');
-                    return $response;
-                } else {
-                    Log::info('TelegramMiniAppAuth: Redirecting authenticated user from login page');
-                    return redirect('/lk');
-                }
-            }
-            
-            return $next($request);
-        }
-
         // НОВАЯ ЛОГИКА: Для Telegram WebApp сначала пытаемся восстановить по связанному telegram_id
         if ($isTelegram && $request->is('login')) {
             // Пытаемся найти пользователя по telegram_id в cookie

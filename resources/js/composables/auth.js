@@ -204,10 +204,10 @@ export const shouldShowLogoutButtonWithData = (documentsCount = 0, balance = 0) 
     }
     
     // 4. Проверяем есть ли токен авторизации (значит пользователь создавал документы)
-    const authToken = localStorage.getItem('auto_auth_token');
+    /*const authToken = localStorage.getItem('auto_auth_token');
     if (authToken) {
         return true;
-    }
+    }*/
     
     // 5. Проверяем данные пользователя
     const currentUser = user.value;
@@ -259,7 +259,7 @@ export const shouldShowLogoutButtonWithData = (documentsCount = 0, balance = 0) 
     // 6. Проверяем localStorage на наличие других признаков активности
     
     // 6.1. Если есть данные магазина
-    if (localStorage.getItem('shop.main')) {
+    /*if (localStorage.getItem('shop.main')) {
         return true;
     }
     
@@ -272,7 +272,7 @@ export const shouldShowLogoutButtonWithData = (documentsCount = 0, balance = 0) 
     const lang = localStorage.getItem('lang') || localStorage.getItem('locale');
     if (lang && lang !== 'ru') { // Если не русский язык по умолчанию
         return true;
-    }
+    }*/
     
     // 6.4. Проверяем куки Telegram (дополнительная проверка)
     if (document.cookie.includes('telegram_auth_user_')) {

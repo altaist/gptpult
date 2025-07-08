@@ -40,7 +40,7 @@ const showSupportInfo = () => {
 
 const contactSupport = () => {
     // Открываем Telegram бот поддержки
-    window.open('https://t.me/gptpult_bot', '_blank');
+    window.open('https://t.me/gptpult_help', '_blank');
 };
 
 const tryManualLogin = () => {
