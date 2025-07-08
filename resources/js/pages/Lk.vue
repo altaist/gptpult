@@ -289,6 +289,22 @@ const getGenerationsCount = (amount) => {
   return Math.floor(amount / 100);
 };
 
+// Функция для правильного склонения слова "генерация"
+const getWordForm = (number) => {
+  const lastDigit = number % 10;
+  const lastTwoDigits = number % 100;
+  if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
+    return 'генераций';
+  }
+  if (lastDigit === 1) {
+    return 'генерация';
+  } else if (lastDigit >= 2 && lastDigit <= 4) {
+    return 'генерации';
+  } else {
+    return 'генераций';
+  }
+};
+
 // Функция для пополнения баланса - открыть модальное окно
 const topUpBalance = async () => {
   await loadUserContactData();
@@ -1050,7 +1066,7 @@ const authTelegram = async () => {
                             <div class="benefits-title">Что входит в абонемент:</div>
                             <div class="benefit-item">
                                 <q-icon name="check_circle" class="benefit-icon" />
-                                <span>{{ getGenerationsCount(topUpAmount) }} генераций документов</span>
+                                <span>{{ getGenerationsCount(topUpAmount) }} {{ getWordForm(getGenerationsCount(topUpAmount)) }} документов</span>
                             </div>
                             <div class="benefit-item">
                                 <q-icon name="check_circle" class="benefit-icon" />
