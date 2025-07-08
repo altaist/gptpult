@@ -321,7 +321,7 @@ const {
         onDocumentUpdate: (newDocument, oldDocument) => {
             // Обновляем текущий документ когда приходят новые данные
             currentDocument.value = newDocument;
-            console.log('Документ обновлен:', newDocument);
+            // console.log('Документ обновлен:', newDocument);
             
             // Проверяем нужно ли перейти на загрузочный экран
             checkAndRedirectToLoadingScreen();
@@ -347,9 +347,21 @@ if (shouldAutoload) {
 const currentTypedText = ref('');
 const printedLines = ref([]);
 const typewriterKeys = ref([]);
+const allTextsCompleted = ref(false); // Флаг завершения всех текстов
+const currentTextIndex = ref(0); // Текущий индекс текста
 
 // Интервал для анимации печати
 let typewriterInterval = null;
+
+// Функция сохранения состояния анимации
+const saveTypewriterState = () => {
+    const state = {
+        allTextsCompleted: allTextsCompleted.value,
+        currentTextIndex: currentTextIndex.value
+    };
+    sessionStorage.setItem('typewriter_state', JSON.stringify(state));
+    // console.log('Сохранено состояние анимации:', state);
+};
 
 // Инициализация клавиш машинки
 const initTypewriterKeys = () => {
@@ -376,6 +388,9 @@ const typewriterTexts = [
     'Проверяем качество...'
 ];
 
+// Финальный текст после завершения всех основных текстов
+const finalText = 'Еще чуть-чуть...';
+
 // Новая функция анимации печати на машинке
 const startTypewriterAnimation = () => {
     // Останавливаем предыдущую анимацию если она была запущена
@@ -384,15 +399,23 @@ const startTypewriterAnimation = () => {
         typewriterInterval = null;
     }
     
-    // Сбрасываем состояние анимации
-    currentTypedText.value = '';
-    printedLines.value = [];
+    // Проверяем, не завершены ли уже все тексты из предыдущей сессии
+    if (allTextsCompleted.value) {
+        // Если все тексты уже были показаны, сразу показываем финальный текст
+        showFinalText();
+        return;
+    }
     
-    let textIndex = 0;
+    // Сбрасываем состояние анимации только если начинаем с начала
+    if (currentTextIndex.value === 0) {
+        currentTypedText.value = '';
+        printedLines.value = [];
+    }
+    
     let charIndex = 0;
-    let currentText = typewriterTexts[textIndex];
+    let currentText = typewriterTexts[currentTextIndex.value];
     
-    console.log('Анимация пишущей машинки запущена');
+    // console.log('Анимация пишущей машинки запущена с индекса:', currentTextIndex.value);
     
     typewriterInterval = setInterval(() => {
         if (charIndex < currentText.length) {
@@ -415,11 +438,77 @@ const startTypewriterAnimation = () => {
             }
             
             // Переходим к следующему тексту
-            textIndex = (textIndex + 1) % typewriterTexts.length;
-            currentText = typewriterTexts[textIndex];
+            currentTextIndex.value++;
+            saveTypewriterState(); // Сохраняем состояние при каждом шаге
+            
+            // Проверяем, не закончились ли все тексты
+            if (currentTextIndex.value >= typewriterTexts.length) {
+                // Все тексты показаны, переходим к финальному
+                allTextsCompleted.value = true;
+                saveTypewriterState(); // Сохраняем состояние сразу
+                clearInterval(typewriterInterval);
+                typewriterInterval = null;
+                
+                // Показываем финальный текст после небольшой паузы
+                setTimeout(() => {
+                    showFinalText();
+                }, 500);
+                return;
+            }
+            
+            currentText = typewriterTexts[currentTextIndex.value];
             charIndex = 0;
         }
-    }, 150); // Замедляем печать с 80ms до 150ms
+    }, 150);
+};
+
+// Функция показа финального текста
+const showFinalText = () => {
+    if (typewriterInterval) {
+        clearInterval(typewriterInterval);
+        typewriterInterval = null;
+    }
+    
+    currentTypedText.value = '';
+    let charIndex = 0;
+    
+    // console.log('Показываем финальный текст:', finalText);
+    
+    typewriterInterval = setInterval(() => {
+        if (charIndex < finalText.length) {
+            const char = finalText[charIndex];
+            currentTypedText.value += char;
+            animateRandomKeyPress();
+            charIndex++;
+        } else {
+            // Финальный текст написан, перемещаем в напечатанные строки
+            printedLines.value.push(currentTypedText.value);
+            currentTypedText.value = '';
+            
+            // Ограничиваем количество напечатанных строк
+            if (printedLines.value.length > 3) {
+                printedLines.value.shift();
+            }
+            
+            // Сбрасываем индекс для повторной печати того же текста
+            charIndex = 0;
+            
+            // Делаем паузу перед следующей итерацией
+            clearInterval(typewriterInterval);
+            typewriterInterval = null;
+            
+            setTimeout(() => {
+                // Запускаем снова тот же финальный текст
+                showFinalText();
+            }, 1000); // Пауза 1 секунда между повторениями
+        }
+    }, 120);
+};
+
+// Функция циклического мигания для финального текста
+const startFinalBlinking = () => {
+    // Эта функция больше не нужна, так как showFinalText теперь циклическая
+    // console.log('Финальная анимация запущена (циклическая)');
 };
 
 // Анимация нажатия случайной клавиши
@@ -444,13 +533,13 @@ const checkAndRedirectToLoadingScreen = () => {
     
     // Дополнительная проверка: если мы уже на загрузочном экране, не делаем ничего
     if (shouldAutoload) {
-        console.log('Уже на загрузочном экране, пропускаем перенаправление');
+        // console.log('Уже на загрузочном экране, пропускаем перенаправление');
         return;
     }
     
     // Проверяем если документ генерируется и мы не на загрузочном экране
     if ((status === 'full_generating' || status === 'pre_generating') && !shouldAutoload) {
-        console.log('Документ генерируется, переходим на загрузочный экран...', status);
+        // console.log('Документ генерируется, переходим на загрузочный экран...', status);
         // Если документ генерируется, но мы не на загрузочном экране - переходим туда
         const currentUrl = new URL(window.location.href);
         currentUrl.searchParams.set('autoload', '1');
@@ -468,11 +557,11 @@ const checkAndRedirectToLoadingScreen = () => {
 watch(
     () => getIsGenerating(),
     (isGenerating, wasGenerating) => {
-        console.log('Статус генерации изменился:', { isGenerating, wasGenerating });
+        // console.log('Статус генерации изменился:', { isGenerating, wasGenerating });
         
         if (isGenerating && !wasGenerating) {
             // Генерация началась - запускаем анимацию
-            console.log('Запускаем анимацию пишущей машинки...');
+            // console.log('Запускаем анимацию пишущей машинки...');
             
             // Инициализируем клавиши если они еще не инициализированы
             if (typewriterKeys.value.length === 0) {
@@ -483,7 +572,7 @@ watch(
             startTypewriterAnimation();
         } else if (!isGenerating && wasGenerating) {
             // Генерация завершилась - останавливаем анимацию
-            console.log('Останавливаем анимацию пишущей машинки...');
+            // console.log('Останавливаем анимацию пишущей машинки...');
             if (typewriterInterval) {
                 clearInterval(typewriterInterval);
                 typewriterInterval = null;
@@ -497,13 +586,13 @@ watch(
 watch(
     () => currentDocument.value?.status,
     (newStatus, oldStatus) => {
-        console.log('Статус документа изменился:', { newStatus, oldStatus });
+        // console.log('Статус документа изменился:', { newStatus, oldStatus });
         
         // Если статус изменился на генерацию, запускаем анимацию
         if (['pre_generating', 'full_generating'].includes(newStatus) && 
             !['pre_generating', 'full_generating'].includes(oldStatus)) {
             
-            console.log('Документ начал генерироваться, запускаем анимацию...');
+            // console.log('Документ начал генерироваться, запускаем анимацию...');
             
             // Инициализируем клавиши если они еще не инициализированы
             if (typewriterKeys.value.length === 0) {
@@ -519,6 +608,15 @@ watch(
 
 // Проверяем при монтировании компонента
 onMounted(() => {
+    // Добавляем обработчик для сохранения состояния при обновлении страницы
+    const handleBeforeUnload = () => {
+        saveTypewriterState();
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    // Сохраняем ссылку на обработчик для удаления в onUnmounted
+    window._typewriterBeforeUnloadHandler = handleBeforeUnload;
+    
     // Сразу очищаем URL от потенциально опасных параметров
     const currentUrl = new URL(window.location.href);
     let urlChanged = false;
@@ -539,14 +637,31 @@ onMounted(() => {
     // Обновляем URL если что-то изменилось
     if (urlChanged) {
         window.history.replaceState({}, '', currentUrl.toString());
-        console.log('URL очищен от параметров автозапуска для статуса:', currentStatus);
+        // console.log('URL очищен от параметров автозапуска для статуса:', currentStatus);
     }
     
     checkAndRedirectToLoadingScreen();
     
+    // Восстанавливаем состояние анимации ВСЕГДА (не только при генерации)
+    const savedState = sessionStorage.getItem('typewriter_state');
+    if (savedState) {
+        const state = JSON.parse(savedState);
+        allTextsCompleted.value = state.allTextsCompleted || false;
+        currentTextIndex.value = state.currentTextIndex || 0;
+        // console.log('Восстановлено состояние анимации:', state);
+    }
+    
     if (getIsGenerating()) {
         initTypewriterKeys();
-        startTypewriterAnimation();
+        
+        // Если все тексты уже завершены, сразу запускаем финальный цикл
+        if (allTextsCompleted.value) {
+            // console.log('Автоматический запуск финального цикла при восстановлении состояния');
+            showFinalText();
+        } else {
+            // Иначе запускаем обычную анимацию
+            startTypewriterAnimation();
+        }
         
         // Включаем отслеживание если оно ещё не включено
         if (!isPollingActive.value && !shouldAutoload) {
@@ -561,16 +676,16 @@ onMounted(() => {
         const currentStatus = currentDocument.value?.status;
         const isAlreadyGenerating = ['full_generating', 'full_generated'].includes(currentStatus);
         
-        console.log('Проверка автозапуска:', {
-            shouldStartGeneration,
-            canStart: getCanStartFullGeneration(),
-            currentStatus,
-            isAlreadyGenerating
-        });
+        // console.log('Проверка автозапуска:', {
+        //     shouldStartGeneration,
+        //     canStart: getCanStartFullGeneration(),
+        //     currentStatus,
+        //     isAlreadyGenerating
+        // });
         
         if (!isAlreadyGenerating) {
             setTimeout(() => {
-                console.log('Запускаем полную генерацию автоматически');
+                // console.log('Запускаем полную генерацию автоматически');
                 startFullGeneration();
                 // Удаляем параметр из URL после запуска
                 const currentUrl = new URL(window.location.href);
@@ -578,7 +693,7 @@ onMounted(() => {
                 window.history.replaceState({}, '', currentUrl.toString());
             }, 1000); // Небольшая задержка для корректной инициализации
         } else {
-            console.log('Автозапуск отменен - документ уже генерируется или готов:', currentStatus);
+            // console.log('Автозапуск отменен - документ уже генерируется или готов:', currentStatus);
             // Если документ уже генерируется или сгенерирован, просто удаляем параметр
             const currentUrl = new URL(window.location.href);
             currentUrl.searchParams.delete('start_generation');
@@ -590,6 +705,15 @@ onMounted(() => {
 // Останавливаем анимации при размонтировании
 onUnmounted(() => {
     if (typewriterInterval) clearInterval(typewriterInterval);
+    
+    // Удаляем обработчик beforeunload
+    if (window._typewriterBeforeUnloadHandler) {
+        window.removeEventListener('beforeunload', window._typewriterBeforeUnloadHandler);
+        delete window._typewriterBeforeUnloadHandler;
+    }
+    
+    // Сохраняем состояние анимации
+    saveTypewriterState();
 });
 
 // Маппинг статусов для отображения без API
@@ -849,7 +973,7 @@ const canEdit = computed(() => {
 // Обработчик обновления документа из компонента DocumentView
 const handleDocumentUpdate = () => {
     // Можно добавить логику для перезагрузки данных документа
-    console.log('Документ был обновлен через редактирование');
+    // console.log('Документ был обновлен через редактирование');
     
     // Обновляем текущий документ, получив свежие данные
     window.location.reload();
