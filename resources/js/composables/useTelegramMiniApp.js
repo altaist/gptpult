@@ -167,11 +167,17 @@ export function useTelegramMiniApp() {
             return
           }
         } else {
-          // console.log('useTelegramMiniApp: User not authenticated, sending data to server')
-          // Отправляем данные для автологина только если не перенаправляемся
-          if (!isRedirecting) {
-            sendTelegramDataToServer(tg.initData)
-          }
+          // console.log('useTelegramMiniApp: User not authenticated, waiting for checkAuth to handle authentication')
+          // Не отправляем данные сразу - позволяем checkAuth обработать их первым
+          // Это предотвращает дублирование запросов
+          
+          // Ждем 1 секунду и проверяем, не был ли пользователь авторизован через checkAuth
+          setTimeout(() => {
+            if (!isRedirecting && window.location.pathname === '/login') {
+              // console.log('useTelegramMiniApp: checkAuth did not handle authentication, sending data as fallback')
+              sendTelegramDataToServer(tg.initData)
+            }
+          }, 1000)
         }
       } else {
         // console.log('useTelegramMiniApp: No user data in initDataUnsafe')

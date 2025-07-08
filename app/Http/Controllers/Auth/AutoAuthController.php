@@ -210,15 +210,24 @@ class AutoAuthController extends Controller
             'method' => $request->method(),
             'content_type' => $request->header('Content-Type'),
             'user_agent' => $request->userAgent(),
+            'all_headers' => $request->headers->all(),
             'has_init_data' => $request->has('init_data'),
             'has_tgWebAppData' => $request->has('tgWebAppData'),
-            'has_header_init_data' => !empty($request->header('X-Telegram-Init-Data'))
+            'has_header_init_data' => !empty($request->header('X-Telegram-Init-Data')),
+            'input_data' => $request->all(),
+            'raw_content' => $request->getContent()
         ]);
 
         // Получаем данные Telegram WebApp
         $telegramInitData = $request->input('init_data') 
             ?? $request->input('tgWebAppData')
             ?? $request->header('X-Telegram-Init-Data');
+            
+        Log::info('TelegramAuth: Extracted init data', [
+            'init_data_source' => $telegramInitData ? 'found' : 'not_found',
+            'init_data_length' => $telegramInitData ? strlen($telegramInitData) : 0,
+            'init_data_preview' => $telegramInitData ? substr($telegramInitData, 0, 100) . '...' : null
+        ]);
             
         if (!$telegramInitData) {
             Log::warning('TelegramAuth: No Telegram init data provided');
