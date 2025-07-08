@@ -127,17 +127,9 @@ class TelegramBotService
             return $this->sendLinkedUserMenu($chatId, $linkedUser);
         }
 
-        // Если аккаунт не связан, отправляем инструкции по связке
-        Log::info('No token and no linked user, showing welcome message', ['chat_id' => $chatId]);
-        return $this->sendMessage($chatId, 
-            "🤖 <b>Добро пожаловать в GPT Пульт!</b>\n\n" .
-            "Для связки аккаунта с Telegram используйте кнопку <b>\"Связать\"</b> в личном кабинете.\n\n" .
-            "После связки вы сможете:\n" .
-            "• Быстро входить в ЛК одним кликом\n" .
-            "• Создавать новые документы\n" .
-            "• Получать уведомления о готовых заданиях\n\n" .
-            "💬 Нужна помощь? Обратитесь в поддержку: @gptpult_help"
-        );
+        // НОВАЯ ЛОГИКА: Если аккаунт не связан, автоматически создаем нового пользователя
+        Log::info('No token and no linked user, creating new account automatically', ['chat_id' => $chatId]);
+        return $this->createAutoAccount($chatId, $user);
     }
 
     /**
@@ -146,6 +138,7 @@ class TelegramBotService
     public function handleMessage(array $message): array
     {
         $chatId = $message['chat']['id'];
+        $user = $message['from'];
         
         // Проверяем, связан ли аккаунт
         $linkedUser = User::where('telegram_id', $chatId)->first();
@@ -154,13 +147,9 @@ class TelegramBotService
             return $this->sendLinkedUserMenu($chatId, $linkedUser);
         }
 
-        // Если аккаунт не связан, отправляем инструкции
-        return $this->sendMessage($chatId, 
-            "🤖 <b>Привет!</b>\n\n" .
-            "Для использования бота необходимо связать ваш Telegram с аккаунтом GPT Пульт.\n\n" .
-            "Войдите в личный кабинет и нажмите кнопку <b>\"Связать\"</b> в разделе Telegram.\n\n" .
-            "💬 Нужна помощь? Обратитесь в поддержку: @gptpult_help"
-        );
+        // НОВАЯ ЛОГИКА: Если аккаунт не связан, автоматически создаем нового пользователя
+        Log::info('No linked user found, creating new account automatically', ['chat_id' => $chatId]);
+        return $this->createAutoAccount($chatId, $user);
     }
 
     /**
@@ -214,18 +203,29 @@ class TelegramBotService
 
         if (!$user) {
             Log::warning('Invalid link token', ['token' => $token]);
+
+            // Используем новую клавиатуру с двумя кнопками
+            $keyboard = $this->createLoginKeyboard($user);
+
             return $this->sendMessage($chatId, 
                 "❌ Недействительный токен связки.\n\n" .
-                "Получите новый токен в личном кабинете."
+                "Получите новый токен в личном кабинете.",
+                $keyboard
             );
+            
         }
 
         // Проверяем срок действия токена
         if (!$this->isTokenValid($user)) {
             Log::warning('Expired link token', ['user_id' => $user->id, 'token' => $token]);
+
+            // Используем новую клавиатуру с двумя кнопками
+            $keyboard = $this->createLoginKeyboard($user);
+
             return $this->sendMessage($chatId, 
                 "❌ Токен связки истёк.\n\n" .
-                "Получите новый токен в личном кабинете."
+                "Получите новый токен в личном кабинете.",
+                $keyboard
             );
         }
 
@@ -299,7 +299,7 @@ class TelegramBotService
 
         $messageText = "✅ <b>Аккаунт успешно связан!</b>\n\n" .
             "Добро пожаловать, {$user->name}!\n\n" .
-            "Теперь вы можете войти в личный кабинет одним кликом:";
+            "Теперь вы можете войти в личный кабинет:";
 
         return $this->sendMessage($chatId, $messageText, $keyboard);
     }
@@ -419,18 +419,28 @@ class TelegramBotService
 
         if (!$userWithToken) {
             Log::warning('Invalid auth token', ['token' => substr($token, 0, 15) . '...']);
+
+            // Используем новую клавиатуру с двумя кнопками
+            $keyboard = $this->createLoginKeyboard($userWithToken);
+
             return $this->sendMessage($chatId, 
                 "❌ Недействительный токен авторизации.\n\n" .
-                "Получите новый токен в личном кабинете."
+                "Получите новый токен в личном кабинете.",
+                $keyboard
             );
         }
 
         // Проверяем срок действия токена
         if (!$this->isTokenValid($userWithToken)) {
             Log::warning('Expired auth token', ['user_id' => $userWithToken->id, 'token' => substr($token, 0, 15) . '...']);
+            
+            // Используем новую клавиатуру с двумя кнопками
+            $keyboard = $this->createLoginKeyboard($userWithToken);
+
             return $this->sendMessage($chatId, 
                 "❌ Токен авторизации истёк.\n\n" .
-                "Получите новый токен в личном кабинете."
+                "Получите новый токен в личном кабинете.",
+                $keyboard
             );
         }
 
@@ -569,11 +579,6 @@ class TelegramBotService
         // Формируем сообщение в зависимости от того, были ли перенесены документы
         $messageText = "✅ <b>Авторизация через Telegram успешна!</b>\n\n" .
             "Добро пожаловать, {$finalUser->name}!\n\n";
-            
-        // Показываем количество перенесенных документов только в режиме разработки/тестирования
-        if ($documentsTransferred > 0 && (app()->environment(['local', 'testing']) || config('app.debug'))) {
-            $messageText .= "📄 Перенесено документов: {$documentsTransferred}\n\n";
-        }
         
         $messageText .= "Ваш аккаунт теперь связан с Telegram. Войдите в личный кабинет:";
 
@@ -652,6 +657,100 @@ class TelegramBotService
                     ]
                 ]
             ];
+        }
+    }
+
+    /**
+     * Автоматически создать аккаунт для нового пользователя Telegram
+     */
+    private function createAutoAccount(int $chatId, array $telegramUser): array
+    {
+        Log::info('Creating auto account for Telegram user', [
+            'chat_id' => $chatId,
+            'telegram_user' => $telegramUser
+        ]);
+
+        // Формируем имя пользователя из Telegram данных
+        $userName = $telegramUser['first_name'] . (($telegramUser['last_name'] ?? '') ? ' ' . $telegramUser['last_name'] : '');
+        
+        // Генерируем уникальный email для автосозданного пользователя
+        $email = 'telegram_' . $chatId . '@auto.user';
+        
+        // Проверяем, не существует ли уже пользователь с таким email (дополнительная защита)
+        $existingUser = User::where('email', $email)->first();
+        if ($existingUser) {
+            Log::warning('User with auto email already exists', [
+                'email' => $email,
+                'existing_user_id' => $existingUser->id
+            ]);
+            
+            // Если пользователь существует, но не связан с Telegram, связываем его
+            if (!$existingUser->telegram_id) {
+                $existingUser->update([
+                    'telegram_id' => $chatId,
+                    'telegram_username' => $telegramUser['username'] ?? null,
+                    'telegram_linked_at' => now(),
+                ]);
+                
+                return $this->sendLinkedUserMenu($chatId, $existingUser);
+            }
+            
+            // Если уже связан, просто показываем меню
+            return $this->sendLinkedUserMenu($chatId, $existingUser);
+        }
+
+        try {
+            // Создаем нового пользователя
+            $newUser = User::create([
+                'name' => $userName,
+                'email' => $email,
+                'password' => bcrypt(\Illuminate\Support\Str::random(32)), // Случайный пароль
+                'auth_token' => \Illuminate\Support\Str::random(32),
+                'role_id' => \App\Enums\UserRole::USER,
+                'status' => 1, // Активный статус
+                'balance_rub' => 0,
+                'telegram_id' => $chatId,
+                'telegram_username' => $telegramUser['username'] ?? null,
+                'telegram_linked_at' => now(),
+                'privacy_consent' => true,
+                'privacy_consent_at' => now(),
+            ]);
+
+            Log::info('Auto account created successfully', [
+                'user_id' => $newUser->id,
+                'telegram_id' => $chatId,
+                'email' => $email,
+                'name' => $userName
+            ]);
+
+            // Отправляем приветственное сообщение
+            $welcomeMessage = "🎉 <b>Добро пожаловать в GPT Пульт!</b>\n\n" .
+                "👋 Привет, {$userName}!\n\n" .
+                "✅ Ваш аккаунт автоматически создан и связан с Telegram\n" .
+                "💰 Стартовый баланс: 0 ₽\n\n" .
+                "🚀 Теперь вы можете:\n" .
+                "• Войти в личный кабинет\n" .
+                "• Создавать документы\n" .
+                "• Получать уведомления\n\n" .
+                "Выберите действие:";
+
+            $keyboard = $this->createLoginKeyboard($newUser);
+
+            return $this->sendMessage($chatId, $welcomeMessage, $keyboard);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to create auto account', [
+                'chat_id' => $chatId,
+                'telegram_user' => $telegramUser,
+                'error' => $e->getMessage()
+            ]);
+
+            // В случае ошибки отправляем сообщение с инструкциями по ручной связке
+            return $this->sendMessage($chatId, 
+                "❌ <b>Ошибка при создании аккаунта</b>\n\n" .
+                "Попробуйте позже или создайте аккаунт вручную через сайт и используйте кнопку связки.\n\n" .
+                "💬 Нужна помощь? Обратитесь в поддержку: @gptpult_help"
+            );
         }
     }
 
