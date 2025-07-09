@@ -2558,7 +2558,6 @@
                     <h5>Поддержка</h5>
                     <ul class="footer-links">
                         <li><a href="https://t.me/gptpult_help" target="_blank">Помощь</a></li>
-                        <li><a href="#contact">Контакты</a></li>
                         <li><a href="/lk" onclick="saveIntendedUrl('/lk')">Личный кабинет</a></li>
                     </ul>
                 </div>
@@ -2573,10 +2572,9 @@
             </div>
             
                 <div class="footer-column">
-                    <h5>Компания</h5>
+                    <h5>Мы</h5>
                     <ul class="footer-links">
                         <li><a href="#features">О сервисе</a></li>
-                        <li><a href="#stats">Статистика</a></li>
                         <li><a href="https://t.me/gptpult_help" target="_blank">Обратная связь</a></li>
                     </ul>
                 </div>
