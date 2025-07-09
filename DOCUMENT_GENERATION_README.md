@@ -110,6 +110,28 @@ tail -f storage/logs/laravel.log | grep "Word документ"
 grep -i "saxparse\|xml\|fastparser" storage/logs/laravel.log
 ```
 
+### Ошибка preg_replace() Compilation failed
+
+**Симптомы:**
+- Ошибка `preg_replace(): Compilation failed: disallowed Unicode code point`
+- Проблемы с Unicode обработкой
+
+**Причины:**
+- Некорректные Unicode диапазоны в регулярных выражениях
+- Проблемы с кодировкой в preg_replace
+
+**Исправление:**
+Система автоматически переключается на безопасную обработку:
+
+1. **Упрощенные регулярные выражения** - без проблемных Unicode диапазонов
+2. **Безопасная очистка** - через `safeSanitizeText()` для критических случаев
+3. **Множественные fallback методы** - несколько уровней защиты
+
+```php
+// Автоматическое переключение на safeSanitizeText() при ошибках
+$cleanText = $this->safeSanitizeText($problematicText);
+```
+
 ### Проблемы с кодировкой
 
 **Симптомы:**

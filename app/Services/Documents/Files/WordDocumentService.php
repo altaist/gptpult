@@ -619,23 +619,31 @@ class WordDocumentService
             return $text;
         }
         
-        // Если текст уже нормально отображается (содержит кириллицу), возвращаем как есть
-        if (preg_match('/[\x{0400}-\x{04FF}]/u', $text) && strpos($text, '\u') === false) {
+        // Если в тексте нет Unicode escape-последовательностей, просто очищаем и возвращаем
+        if (strpos($text, '\u') === false) {
             return $this->sanitizeForXml($text);
         }
         
-        // Основной метод декодирования Unicode escape-последовательностей
-        $decoded = preg_replace_callback('/\\\\u([0-9a-fA-F]{4})/', function ($matches) {
-            $codepoint = hexdec($matches[1]);
-            return mb_chr($codepoint, 'UTF-8');
-        }, $text);
+        $decoded = $text;
         
-        // Если декодирование не сработало, пробуем json_decode
-        if ($decoded === $text && strpos($text, '\u') !== false) {
-            $jsonDecoded = json_decode('"' . $text . '"', true);
+        // Пробуем декодировать через json_decode (самый надёжный способ)
+        if (strpos($text, '\u') !== false) {
+            $jsonDecoded = json_decode('"' . addslashes($text) . '"', true);
             if ($jsonDecoded !== null && $jsonDecoded !== $text) {
                 $decoded = $jsonDecoded;
             }
+        }
+        
+        // Если json_decode не сработал, пробуем простую замену
+        if ($decoded === $text && strpos($text, '\u') !== false) {
+            $decoded = preg_replace_callback('/\\\\u([0-9a-fA-F]{4})/', function ($matches) {
+                $codepoint = hexdec($matches[1]);
+                // Проверяем, что код символа корректный
+                if ($codepoint >= 0 && $codepoint <= 0x10FFFF) {
+                    return mb_chr($codepoint, 'UTF-8');
+                }
+                return ''; // Убираем некорректные символы
+            }, $text);
         }
         
         // Убираем лишние escape-символы
@@ -654,23 +662,36 @@ class WordDocumentService
             return $text;
         }
         
-        // Удаляем управляющие символы, кроме табуляции, переноса строки и возврата каретки
-        $text = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $text);
+        // Убираем проблемные управляющие символы (кроме табуляции \t, перевода строки \n и возврата каретки \r)
+        $text = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $text);
         
-        // Заменяем некорректные Unicode символы
-        $text = preg_replace('/[\x{FFFE}\x{FFFF}]/u', '', $text);
+        // Убираем только явно проблемные символы, не используя Unicode ranges
+        $text = str_replace(["\xEF\xBF\xBE", "\xEF\xBF\xBF"], '', $text); // FFFE и FFFF
         
-        // Удаляем символы, которые не поддерживаются в XML 1.0
-        $text = preg_replace('/[\x{D800}-\x{DFFF}]/u', '', $text);
+        // Заменяем основные XML символы на безопасные эквиваленты
+        $replacements = [
+            '&' => '&amp;',
+            '<' => '&lt;', 
+            '>' => '&gt;',
+            '"' => '&quot;',
+            "'" => '&apos;'
+        ];
         
-        // Заменяем специальные XML символы на безопасные эквиваленты
-        $text = str_replace(['&', '<', '>', '"', "'"], ['&amp;', '&lt;', '&gt;', '&quot;', '&apos;'], $text);
+        // Применяем замены только если символы не являются частью уже экранированных последовательностей
+        foreach ($replacements as $char => $replacement) {
+            if ($char === '&') {
+                // Для амперсанда проверяем, что он не является частью уже экранированной последовательности
+                $text = preg_replace('/&(?!(?:amp|lt|gt|quot|apos);)/', $replacement, $text);
+            } else {
+                $text = str_replace($char, $replacement, $text);
+            }
+        }
         
-        // Убираем двойные пробелы и лишние переносы строк
-        $text = preg_replace('/\s+/u', ' ', $text);
-        $text = trim($text);
+        // Убираем множественные пробелы, но сохраняем переносы строк
+        $text = preg_replace('/[ \t]+/', ' ', $text);
+        $text = preg_replace('/\n+/', "\n", $text);
         
-        return $text;
+        return trim($text);
     }
 
     /**
@@ -1235,66 +1256,87 @@ class WordDocumentService
             
             $section = $phpWord->addSection();
             
-            // Добавляем заголовок документа
-            $title = $this->sanitizeForXml($document->title);
-            $section->addText(
-                $title,
-                ['bold' => true, 'size' => 16, 'name' => 'Times New Roman'],
-                ['alignment' => Jc::CENTER, 'spaceAfter' => 300]
-            );
+            // Добавляем заголовок документа (максимально безопасно)
+            $title = $this->safeSanitizeText($document->title);
+            if (!empty($title)) {
+                $section->addText(
+                    $title,
+                    ['bold' => true, 'size' => 16, 'name' => 'Times New Roman'],
+                    ['alignment' => Jc::CENTER, 'spaceAfter' => 300]
+                );
+            }
             
             // Добавляем основной контент простым способом
             $contentData = $document->content['topics'] ?? [];
             
-            foreach ($contentData as $index => $topic) {
-                $chapterNumber = $index + 1;
-                $chapterTitle = $this->sanitizeForXml($topic['title'] ?? '');
-                
-                // Заголовок главы
-                $section->addText(
-                    "{$chapterNumber}. {$chapterTitle}",
-                    ['bold' => true, 'size' => 14, 'name' => 'Times New Roman'],
-                    'Normal'
-                );
-                $section->addTextBreak(1);
-                
-                // Подглавы
-                if (!empty($topic['subtopics'])) {
-                    foreach ($topic['subtopics'] as $subIndex => $subtopic) {
-                        $subNumber = $subIndex + 1;
-                        $subtopicTitle = $this->sanitizeForXml($subtopic['title'] ?? '');
-                        
+            if (!empty($contentData) && is_array($contentData)) {
+                foreach ($contentData as $index => $topic) {
+                    if (!is_array($topic)) continue;
+                    
+                    $chapterNumber = $index + 1;
+                    $chapterTitle = $this->safeSanitizeText($topic['title'] ?? '');
+                    
+                    // Заголовок главы
+                    if (!empty($chapterTitle)) {
                         $section->addText(
-                            "{$chapterNumber}.{$subNumber}. {$subtopicTitle}",
-                            ['bold' => true, 'size' => 12, 'name' => 'Times New Roman'],
+                            "{$chapterNumber}. {$chapterTitle}",
+                            ['bold' => true, 'size' => 14, 'name' => 'Times New Roman'],
                             'Normal'
                         );
                         $section->addTextBreak(1);
-                        
-                        // Содержимое подглавы
-                        if (isset($subtopic['content']) && !empty($subtopic['content'])) {
-                            $content = $this->sanitizeForXml($subtopic['content']);
+                    }
+                    
+                    // Подглавы
+                    if (!empty($topic['subtopics']) && is_array($topic['subtopics'])) {
+                        foreach ($topic['subtopics'] as $subIndex => $subtopic) {
+                            if (!is_array($subtopic)) continue;
                             
-                            // Простое разделение на абзацы
-                            $paragraphs = explode("\n", $content);
-                            foreach ($paragraphs as $paragraph) {
-                                $paragraph = trim($paragraph);
-                                if (!empty($paragraph)) {
-                                    $section->addText(
-                                        $paragraph,
-                                        ['size' => 12, 'name' => 'Times New Roman'],
-                                        'Normal'
-                                    );
-                                    $section->addTextBreak(1);
+                            $subNumber = $subIndex + 1;
+                            $subtopicTitle = $this->safeSanitizeText($subtopic['title'] ?? '');
+                            
+                            if (!empty($subtopicTitle)) {
+                                $section->addText(
+                                    "{$chapterNumber}.{$subNumber}. {$subtopicTitle}",
+                                    ['bold' => true, 'size' => 12, 'name' => 'Times New Roman'],
+                                    'Normal'
+                                );
+                                $section->addTextBreak(1);
+                            }
+                            
+                            // Содержимое подглавы
+                            if (isset($subtopic['content']) && !empty($subtopic['content'])) {
+                                $content = $this->safeSanitizeText($subtopic['content']);
+                                
+                                if (!empty($content)) {
+                                    // Простое разделение на абзацы (максимально безопасно)
+                                    $paragraphs = explode("\n", $content);
+                                    foreach ($paragraphs as $paragraph) {
+                                        $paragraph = trim($paragraph);
+                                        if (!empty($paragraph) && strlen($paragraph) > 3) {
+                                            $section->addText(
+                                                $paragraph,
+                                                ['size' => 12, 'name' => 'Times New Roman'],
+                                                'Normal'
+                                            );
+                                            $section->addTextBreak(1);
+                                        }
+                                    }
                                 }
                             }
+                            
+                            $section->addTextBreak(1);
                         }
-                        
-                        $section->addTextBreak(1);
                     }
+                    
+                    $section->addTextBreak(2);
                 }
-                
-                $section->addTextBreak(2);
+            } else {
+                // Если нет контента, добавляем заглушку
+                $section->addText(
+                    'Содержимое документа будет добавлено после завершения генерации.',
+                    ['size' => 12, 'italic' => true, 'name' => 'Times New Roman'],
+                    'Normal'
+                );
             }
             
             // Сохраняем упрощенный документ
@@ -1316,5 +1358,36 @@ class WordDocumentService
             
             throw new \Exception('Не удалось создать Word документ: ' . $e->getMessage());
         }
+    }
+    
+    /**
+     * Максимально безопасная очистка текста
+     */
+    private function safeSanitizeText(string $text): string
+    {
+        if (empty($text)) {
+            return '';
+        }
+        
+        // Простая очистка без сложных регулярных выражений
+        $text = trim($text);
+        
+        // Убираем явно проблемные символы
+        $text = str_replace(["\0", "\x01", "\x02", "\x03", "\x04", "\x05", "\x06", "\x07", "\x08"], '', $text);
+        $text = str_replace(["\x0B", "\x0C", "\x0E", "\x0F", "\x10", "\x11", "\x12", "\x13", "\x14"], '', $text);
+        $text = str_replace(["\x15", "\x16", "\x17", "\x18", "\x19", "\x1A", "\x1B", "\x1C", "\x1D"], '', $text);
+        $text = str_replace(["\x1E", "\x1F", "\x7F"], '', $text);
+        
+        // Заменяем XML символы
+        $text = str_replace('&', '&amp;', $text);
+        $text = str_replace('<', '&lt;', $text);
+        $text = str_replace('>', '&gt;', $text);
+        $text = str_replace('"', '&quot;', $text);
+        $text = str_replace("'", '&apos;', $text);
+        
+        // Убираем множественные пробелы
+        $text = preg_replace('/\s+/', ' ', $text);
+        
+        return trim($text);
     }
 } 
