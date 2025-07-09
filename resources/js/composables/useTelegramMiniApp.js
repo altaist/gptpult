@@ -121,7 +121,7 @@ export function useTelegramMiniApp() {
           if (isValid) {
             console.log('useTelegramMiniApp: Сохраненная сессия валидна')
             if (window.location.pathname === '/login') {
-              redirectToLk()
+              redirectToIntended()
             }
             return
           }
@@ -144,7 +144,7 @@ export function useTelegramMiniApp() {
         
         // Перенаправляем если на странице логина
         if (window.location.pathname === '/login') {
-          redirectToLk()
+          redirectToIntended()
         }
       } else {
         console.warn('useTelegramMiniApp: Аутентификация неуспешна:', authResult.error)
@@ -219,16 +219,35 @@ export function useTelegramMiniApp() {
     }
   }
 
-  // Редирект в ЛК
-  const redirectToLk = () => {
+  // Функция для получения intended URL
+  const getIntendedUrl = () => {
+    const intendedUrl = localStorage.getItem('intended_url')
+    if (intendedUrl) {
+      localStorage.removeItem('intended_url')
+      
+      // Список разрешенных маршрутов для безопасности
+      const allowedRoutes = ['/lk', '/new', '/documents', '/profile']
+      
+      // Проверяем, что URL начинается с / и входит в разрешенные
+      if (intendedUrl.startsWith('/') && allowedRoutes.some(route => intendedUrl.startsWith(route))) {
+        return intendedUrl
+      }
+    }
+    
+    return '/lk' // По умолчанию ЛК
+  }
+
+  // Редирект в ЛК или на intended URL
+  const redirectToIntended = () => {
     if (isRedirecting) return
     
-    console.log('useTelegramMiniApp: Перенаправляем в ЛК')
+    const intendedUrl = getIntendedUrl()
+    console.log('useTelegramMiniApp: Перенаправляем на intended URL:', intendedUrl)
     isRedirecting = true
     
     // Небольшая задержка для завершения всех операций
     setTimeout(() => {
-      window.location.href = '/lk'
+      window.location.href = intendedUrl
     }, 100)
   }
 

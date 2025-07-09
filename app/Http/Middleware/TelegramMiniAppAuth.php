@@ -164,15 +164,46 @@ class TelegramMiniAppAuth
      */
     private function handleLoginPageRedirect(Request $request, Closure $next): Response
     {
+        // Получаем intended URL из локального хранилища через заголовок или параметр
+        $intendedUrl = $request->header('X-Intended-Url') 
+                      ?? $request->query('intended_url') 
+                      ?? '/lk';
+        
+        // Список разрешенных маршрутов для безопасности
+        $allowedRoutes = ['/lk', '/new', '/documents', '/profile'];
+        
+        // Проверяем, что URL начинается с / и входит в разрешенные
+        if (!str_starts_with($intendedUrl, '/') || !$this->isAllowedRoute($intendedUrl, $allowedRoutes)) {
+            $intendedUrl = '/lk'; // По умолчанию в ЛК
+        }
+        
         if ($request->ajax() || $request->header('X-Inertia')) {
-            Log::info('TelegramMiniAppAuth: Отправляем заголовок перенаправления для AJAX');
+            Log::info('TelegramMiniAppAuth: Отправляем заголовок перенаправления для AJAX', [
+                'intended_url' => $intendedUrl
+            ]);
             $response = $next($request);
-            $response->headers->set('X-Telegram-Redirect', '/lk');
+            $response->headers->set('X-Telegram-Redirect', $intendedUrl);
             return $response;
         } else {
-            Log::info('TelegramMiniAppAuth: Перенаправляем пользователя в ЛК');
-            return redirect('/lk');
+            Log::info('TelegramMiniAppAuth: Перенаправляем пользователя на intended URL', [
+                'intended_url' => $intendedUrl
+            ]);
+            return redirect($intendedUrl);
         }
+    }
+
+    /**
+     * Проверить, разрешен ли маршрут для перенаправления
+     */
+    private function isAllowedRoute(string $route, array $allowedRoutes): bool
+    {
+        foreach ($allowedRoutes as $allowedRoute) {
+            if (str_starts_with($route, $allowedRoute)) {
+                return true;
+            }
+        }
+        
+        return false;
     }
 
     /**

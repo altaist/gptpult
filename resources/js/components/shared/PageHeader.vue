@@ -5,7 +5,7 @@
                 <!-- Левая часть - Логотип -->
                 <div class="logo-section">
                     <div class="logo-container" @click="onLogoClick">
-                        <img src="/gptpult.png" alt="GPT Пульт" class="logo-image">
+                        <img src="gptpult.svg" >
                     </div>
                 </div>
                 
@@ -148,6 +148,11 @@ const handleLogout = async () => {
     font-weight: normal;
     font-style: normal;
     font-display: swap;
+}
+
+img {
+    height: 32px;
+    width: auto;
 }
 
 .page-header {

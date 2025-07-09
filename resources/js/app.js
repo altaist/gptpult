@@ -32,30 +32,35 @@ window.redirect =  (path) => window.location = path;
 window.goBack =  () => history.back();
 
 // Функция для добавления Telegram заголовков
-const addTelegramHeaders = (headers = {}) => {
-    // Проверяем localStorage
-    const storedUserId = localStorage.getItem('telegram_auth_user_id')
-    const storedTimestamp = localStorage.getItem('telegram_auth_timestamp')
+function addTelegramHeaders(headers = {}) {
+    // Добавляем Telegram заголовки
+    const storedUserId = localStorage.getItem('telegram_auth_user_id');
+    const storedTimestamp = localStorage.getItem('telegram_auth_timestamp');
+    const intendedUrl = localStorage.getItem('intended_url');
     
-    if (storedUserId && storedTimestamp) {
-        headers['X-Telegram-Auth-User-Id'] = storedUserId
-        headers['X-Telegram-Auth-Timestamp'] = storedTimestamp
+    if (storedUserId) {
+        headers['X-Telegram-Auth-User-Id'] = storedUserId;
     }
     
-    // Проверяем куки Telegram
-    if (document.cookie) {
-        document.cookie.split(';').forEach(cookie => {
-            const trimmed = cookie.trim()
-            if (trimmed.startsWith('telegram_auth_user_')) {
-                const [name, value] = trimmed.split('=')
-                if (name && value) {
-                    headers['X-Telegram-Cookie-' + name] = value
-                }
-            }
-        })
+    if (storedTimestamp) {
+        headers['X-Telegram-Auth-Timestamp'] = storedTimestamp;
     }
     
-    return headers
+    if (intendedUrl) {
+        headers['X-Intended-Url'] = intendedUrl;
+    }
+    
+    // Добавляем куки Telegram в заголовки для совместимости
+    document.cookie.split(';').forEach(cookie => {
+        const trimmed = cookie.trim();
+        if (trimmed.startsWith('telegram_auth_user_')) {
+            const cookieName = trimmed.split('=')[0];
+            const cookieValue = trimmed.split('=')[1];
+            headers[`X-Telegram-Cookie-${cookieName}`] = cookieValue;
+        }
+    });
+    
+    return headers;
 }
 
 // Добавляем глобальный перехватчик для Telegram WebApp перенаправлений

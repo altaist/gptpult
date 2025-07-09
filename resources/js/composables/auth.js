@@ -11,6 +11,43 @@ let justLoggedOut = false;
 // Флаг для предотвращения множественных редиректов
 let isRedirectingAuth = false
 
+// Функция для сохранения intended URL
+const saveIntendedUrl = (url = null) => {
+    const intendedUrl = url || window.location.pathname + window.location.search;
+    
+    // Не сохраняем URL логина и некоторые служебные страницы
+    if (intendedUrl !== '/login' && !intendedUrl.startsWith('/auto-login/')) {
+        localStorage.setItem('intended_url', intendedUrl);
+        console.log('Saved intended URL:', intendedUrl);
+    }
+}
+
+// Функция для получения и очистки intended URL
+const getAndClearIntendedUrl = () => {
+    const intendedUrl = localStorage.getItem('intended_url');
+    if (intendedUrl) {
+        localStorage.removeItem('intended_url');
+        console.log('Retrieved intended URL:', intendedUrl);
+        return intendedUrl;
+    }
+    return '/lk'; // По умолчанию ЛК
+}
+
+// Функция для получения URL для редиректа после авторизации
+const getRedirectUrl = () => {
+    const intendedUrl = getAndClearIntendedUrl();
+    
+    // Список разрешенных маршрутов для безопасности
+    const allowedRoutes = ['/lk', '/new', '/documents', '/profile'];
+    
+    // Проверяем, что URL начинается с / и входит в разрешенные
+    if (intendedUrl.startsWith('/') && allowedRoutes.some(route => intendedUrl.startsWith(route))) {
+        return intendedUrl;
+    }
+    
+    return '/lk'; // По умолчанию ЛК
+}
+
 // Инициализация: загружаем пользователя из localStorage
 const initUser = () => {
     const storedUser = getStoredUser();
@@ -21,6 +58,11 @@ const initUser = () => {
     // Слушаем глобальное событие unauthorized
     window.addEventListener('auth:unauthorized', (event) => {
         console.log('Received auth:unauthorized event, clearing state', event.detail);
+        
+        // Сохраняем текущий URL перед редиректом на авторизацию
+        if (window.location.pathname !== '/login') {
+            saveIntendedUrl();
+        }
         
         // Проверяем, есть ли данные Telegram WebApp для создания нового аккаунта
         const hasTelegramData = window.Telegram?.WebApp?.initDataUnsafe?.user;
@@ -37,9 +79,10 @@ const initUser = () => {
                         // Пытаемся создать новый аккаунт через authLocalSaved
                         const authResult = await authLocalSaved(true);
                         if (authResult) {
-                            console.log('New Telegram account created after 401 error, redirecting to /lk');
+                            console.log('New Telegram account created after 401 error, redirecting to intended URL');
                             isRedirectingAuth = true;
-                            window.location.href = '/lk';
+                            const redirectUrl = getRedirectUrl();
+                            window.location.href = redirectUrl;
                             return;
                         }
                         
@@ -67,9 +110,10 @@ const initUser = () => {
                             if (response.ok) {
                                 const data = await response.json();
                                 if (data.success && data.user) {
-                                    console.log('Direct Telegram auth successful, redirecting to /lk');
+                                    console.log('Direct Telegram auth successful, redirecting to intended URL');
                                     isRedirectingAuth = true;
-                                    window.location.href = '/lk';
+                                    const redirectUrl = getRedirectUrl();
+                                    window.location.href = redirectUrl;
                                     return;
                                 }
                             }
@@ -468,9 +512,10 @@ export const checkAuth = async () => {
                         try {
                             const authResult = await authLocalSaved(true)
                             if (authResult) {
-                                console.log('checkAuth: Новый аккаунт создан, перенаправляем в ЛК')
+                                console.log('checkAuth: Новый аккаунт создан, перенаправляем на intended URL')
                                 isRedirectingAuth = true
-                                window.location.href = '/lk'
+                                const redirectUrl = getRedirectUrl();
+                                window.location.href = redirectUrl;
                                 return true
                             }
                         } catch (error) {
@@ -493,11 +538,17 @@ export const checkAuth = async () => {
             if (window.location.pathname === '/login' && !isRedirectingAuth) {
                 console.log('checkAuth: Пользователь на странице логина, но авторизован - перенаправляем')
                 isRedirectingAuth = true
-                window.location.href = '/lk'
+                const redirectUrl = getRedirectUrl();
+                window.location.href = redirectUrl;
                 return true
             }
             
             return true
+        }
+        
+        // Сохраняем текущий URL как intended, если пользователь не авторизован
+        if (window.location.pathname !== '/login') {
+            saveIntendedUrl();
         }
         
         // Только на странице логина пытаемся восстановить или автозарегистрироваться
@@ -513,7 +564,8 @@ export const checkAuth = async () => {
             if (authResult) {
                 console.log('checkAuth: Авторизация восстановлена/создана - перенаправляем')
                 isRedirectingAuth = true
-                window.location.href = '/lk'
+                const redirectUrl = getRedirectUrl();
+                window.location.href = redirectUrl;
                 return true
             }
         }

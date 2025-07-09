@@ -12,11 +12,11 @@
     
     <style>
         :root {
-            --primary-color: #1EA5FC;
-            --primary-hover: #8962F8;
-            --accent-color: #8962F8;
+            --primary-color: #5271ff;
+            --primary-hover: #5271ff;
+            --accent-color: #5271ff;
             --text-primary: #050038;
-            --text-secondary: #6366F1;
+            --text-secondary: #5271ff;
             --text-muted: #8B8B8B;
             --bg-primary: #ffffff;
             --bg-secondary: #f8fafc;
@@ -74,7 +74,7 @@
         }
 
         .header-logo img {
-            height: 28px;
+            height: 32px;
             width: auto;
         }
 
@@ -108,10 +108,10 @@
         }
 
         .nav-dropdown-btn:hover {
-            background: rgba(30, 165, 252, 0.1);
+            background: rgba(82, 113, 255, 0.1);
             color: var(--primary-color);
             transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(30, 165, 252, 0.2);
+            box-shadow: 0 4px 15px rgba(82, 113, 255, 0.2);
         }
 
         .nav-dropdown-btn i {
@@ -157,7 +157,7 @@
         }
 
         .nav-dropdown-item:hover {
-            background: rgba(30, 165, 252, 0.1);
+            background: rgba(82, 113, 255, 0.1);
             color: var(--primary-color);
             transform: translateX(4px);
         }
@@ -174,10 +174,10 @@
         }
 
         .nav-link:hover {
-            background: rgba(30, 165, 252, 0.1);
+            background: rgba(82, 113, 255, 0.1);
             color: var(--primary-color);
             transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(30, 165, 252, 0.2);
+            box-shadow: 0 4px 15px rgba(82, 113, 255, 0.2);
         }
 
         /* Header Actions */
@@ -213,7 +213,7 @@
             border-color: var(--primary-color);
             color: white;
             transform: translateY(-2px) scale(1.05);
-            box-shadow: 0 8px 20px rgba(30, 165, 252, 0.3);
+            box-shadow: 0 8px 20px rgba(82, 113, 255, 0.3);
             text-decoration: none;
         }
 
@@ -224,12 +224,12 @@
         }
 
         .btn-header-primary:hover {
-            background: #0284C7;
-            border-color: #0284C7;
+            background: #5271ff;
+            border-color: #5271ff;
             color: white;
             text-decoration: none;
             transform: translateY(-2px) scale(1.05);
-            box-shadow: 0 8px 25px rgba(30, 165, 252, 0.4);
+            box-shadow: 0 8px 25px rgba(82, 113, 255, 0.4);
         }
 
         /* Mobile menu */
@@ -299,7 +299,7 @@
         }
 
         .mobile-nav-item:hover {
-            background: rgba(30, 165, 252, 0.1);
+            background: rgba(82, 113, 255, 0.1);
             color: var(--primary-color);
             transform: translateX(8px);
         }
@@ -353,11 +353,11 @@
         }
 
         .hero-badge:hover {
-            background: rgba(30, 165, 252, 0.15);
+            background: rgba(82, 113, 255, 0.15);
             color: var(--primary-color);
             text-decoration: none;
             transform: translateY(-2px) scale(1.02);
-            box-shadow: 0 8px 20px rgba(30, 165, 252, 0.2);
+            box-shadow: 0 8px 20px rgba(82, 113, 255, 0.2);
             }
             
             .hero-title {
@@ -407,12 +407,12 @@
         }
 
         .btn-hero-primary:hover {
-            background: #0284C7;
-            border-color: #0284C7;
+            background: #5271ff;
+            border-color: #5271ff;
             color: white;
             text-decoration: none;
             transform: translateY(-3px) scale(1.02);
-            box-shadow: 0 12px 30px rgba(30, 165, 252, 0.4);
+            box-shadow: 0 12px 30px rgba(82, 113, 255, 0.4);
         }
 
         .btn-hero-secondary {
@@ -422,12 +422,12 @@
         }
 
         .btn-hero-secondary:hover {
-            background: rgba(30, 165, 252, 0.05);
+            background: rgba(82, 113, 255, 0.05);
             border-color: var(--primary-color);
             color: var(--primary-color);
             text-decoration: none;
             transform: translateY(-3px) scale(1.02);
-            box-shadow: 0 8px 20px rgba(30, 165, 252, 0.2);
+            box-shadow: 0 8px 20px rgba(82, 113, 255, 0.2);
         }
 
         /* Hero Stats - внизу hero секции */
@@ -488,7 +488,7 @@
         .hero-stat-number {
             font-size: 48px;
             font-weight: 900;
-            background: linear-gradient(135deg, var(--primary-color), #0284C7);
+            background: #5271ff;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -574,7 +574,7 @@
         }
 
         .work-type-item {
-            background: linear-gradient(135deg, var(--primary-color), #0284C7);
+            background: #5271ff;
             border: none;
             border-radius: 12px;
             padding: 20px 16px;
@@ -584,12 +584,12 @@
             font-size: 16px;
             cursor: pointer;
             transition: all 0.2s ease;
-            box-shadow: 0 4px 15px rgba(30, 165, 252, 0.3);
+            box-shadow: 0 4px 15px rgba(82, 113, 255, 0.3);
         }
 
         .work-type-item:hover {
             transform: translateY(-3px) scale(1.02);
-            box-shadow: 0 8px 25px rgba(30, 165, 252, 0.4);
+            box-shadow: 0 8px 25px rgba(82, 113, 255, 0.4);
         }
 
         .work-type-title {
@@ -648,7 +648,7 @@
 
         .visual-step {
             background: white;
-            border: 1px solid rgba(30, 165, 252, 0.15);
+            border: 1px solid rgba(82, 113, 255, 0.15);
             border-radius: 20px;
             padding: 32px 24px;
             text-align: left;
@@ -660,7 +660,7 @@
 
         .visual-step:hover {
             transform: translateY(-8px);
-            box-shadow: 0 20px 40px rgba(30, 165, 252, 0.15);
+            box-shadow: 0 20px 40px rgba(82, 113, 255, 0.15);
             border-color: var(--primary-color);
         }
 
@@ -671,7 +671,7 @@
         .step-icon {
             width: 56px;
             height: 56px;
-            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            background: #5271ff;
             border-radius: 16px;
             display: flex;
             align-items: center;
@@ -684,7 +684,7 @@
 
         .visual-step:hover .step-icon {
             transform: scale(1.1);
-            box-shadow: 0 8px 25px rgba(30, 165, 252, 0.4);
+            box-shadow: 0 8px 25px rgba(82, 113, 255, 0.4);
         }
 
         .step-title {
@@ -719,7 +719,7 @@
 
         .service-stat:hover {
             transform: translateY(-8px);
-            box-shadow: 0 20px 40px rgba(30, 165, 252, 0.15);
+            box-shadow: 0 20px 40px rgba(82, 113, 255, 0.15);
             border-color: var(--primary-color);
         }
 
@@ -739,13 +739,13 @@
 
         .service-stat:hover .stat-icon-circle {
             transform: scale(1.1);
-            box-shadow: 0 8px 25px rgba(30, 165, 252, 0.4);
+            box-shadow: 0 8px 25px rgba(82, 113, 255, 0.4);
         }
 
         .service-stat .stat-number {
             font-size: 36px;
             font-weight: 900;
-            background: linear-gradient(135deg, var(--primary-color), #0284C7);
+            background: #5271ff;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -813,7 +813,7 @@
 
         .feature-card:hover {
             transform: translateY(-12px) scale(1.02);
-            box-shadow: 0 25px 50px rgba(30, 165, 252, 0.15);
+            box-shadow: 0 25px 50px rgba(82, 113, 255, 0.15);
             border-color: var(--primary-color);
         }
 
@@ -856,7 +856,7 @@
         }
 
         .feature-link:hover {
-            color: #0284C7;
+            color: #5271ff;
             text-decoration: none;
             transform: translateX(8px) scale(1.05);
         }
@@ -864,7 +864,7 @@
         /* Telegram Bot Section */
         .telegram-bot-section {
             padding: 60px 0;
-            background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 50%, #A855F7 100%);
+            background: #5271ff;
             position: relative;
             overflow: hidden;
         }
@@ -914,7 +914,7 @@
             align-items: center;
             gap: 12px;
             background: white;
-            color: #6366F1;
+            color: #5271ff;
             padding: 18px 36px;
             border-radius: 12px;
             text-decoration: none;
@@ -927,7 +927,7 @@
 
         .bot-btn:hover {
             background: #f8fafc;
-            color: #6366F1;
+            color: #5271ff;
             text-decoration: none;
             transform: translateY(-3px) scale(1.05);
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
@@ -1170,19 +1170,19 @@
 
         .pricing-card:hover {
             transform: translateY(-8px) scale(1.02);
-            box-shadow: 0 20px 40px rgba(30, 165, 252, 0.2);
+            box-shadow: 0 20px 40px rgba(82, 113, 255, 0.2);
             border-color: var(--primary-color);
         }
 
         .pricing-card.featured {
             border: 3px solid var(--primary-color);
             transform: scale(1.02);
-            box-shadow: 0 8px 30px rgba(30, 165, 252, 0.2);
+            box-shadow: 0 8px 30px rgba(82, 113, 255, 0.2);
         }
 
         .pricing-card.featured:hover {
             transform: scale(1.02) translateY(-8px);
-            box-shadow: 0 25px 50px rgba(30, 165, 252, 0.3);
+            box-shadow: 0 25px 50px rgba(82, 113, 255, 0.3);
         }
 
         .pricing-badge {
@@ -1196,7 +1196,7 @@
             border-radius: 30px;
             font-size: 14px;
             font-weight: 700;
-            box-shadow: 0 4px 15px rgba(30, 165, 252, 0.4);
+            box-shadow: 0 4px 15px rgba(82, 113, 255, 0.4);
         }
 
         .pricing-card-header {
@@ -1331,7 +1331,7 @@
         }
 
         .footer-logo {
-            height: 32px;
+            height: 40px;
             width: auto;
         }
 
@@ -2036,8 +2036,8 @@
         }
 
         .footer-requisites {
-            background: rgba(30, 165, 252, 0.05);
-            border: 1px solid rgba(30, 165, 252, 0.1);
+            background: rgba(82, 113, 255, 0.05);
+            border: 1px solid rgba(82, 113, 255, 0.1);
             border-radius: 16px;
             padding: 32px;
             margin-bottom: 48px;
@@ -2045,8 +2045,8 @@
         }
 
         .footer-requisites:hover {
-            background: rgba(30, 165, 252, 0.08);
-            border-color: rgba(30, 165, 252, 0.2);
+            background: rgba(82, 113, 255, 0.08);
+            border-color: rgba(82, 113, 255, 0.2);
         }
 
         .requisites-title {
@@ -2109,8 +2109,7 @@
         <div class="header-container">
             <!-- Logo -->
             <a href="#" class="header-logo">
-                <img src="{{ asset('gptpult.png') }}" alt="GPT Пульт">
-                GPT Пульт
+                <img src="{{ asset('gptpult.svg') }}" alt="GPT Пульт">
             </a>
 
             <!-- Navigation -->
@@ -2147,15 +2146,15 @@
                 <a href="#contact" class="mobile-nav-item">Контакты</a>
             </nav>
             <div class="mobile-actions">
-                <a href="/lk" class="btn-header btn-header-outline">Личный кабинет</a>
-                <a href="/new" class="btn-header btn-header-primary">Создать работу</a>
+                <a href="/lk" class="btn-header btn-header-outline" onclick="saveIntendedUrl('/lk')">Личный кабинет</a>
+                <a href="/new" class="btn-header btn-header-primary" onclick="saveIntendedUrl('/new')">Создать работу</a>
                     </div>
                     </div>
     </header>
 
     <!-- Hero Section -->
     <section class="hero-section">
-        <div class="hero-container">
+        <div class="container">
             <div class="hero-content">
                 <a href="#" class="hero-badge">
                     Самый умный AI сервис для студентов и школьников
@@ -2172,9 +2171,9 @@
                 </p>
 
                 <div class="hero-cta">
-                    <a href="/new" class="btn-hero btn-hero-primary">
-                        <i class="fas fa-play"></i>
-                        Создать работу бесплатно
+                    <a href="/new" class="btn-hero btn-hero-primary" onclick="saveIntendedUrl('/new')">
+                        <span class="btn-text">Создать работу</span>
+                        <i class="fas fa-arrow-right btn-icon"></i>
                     </a>
                     <a href="#features" class="btn-hero btn-hero-secondary">
                         Узнать больше
@@ -2226,32 +2225,32 @@
                 <div class="service-types">
                     <h4 class="types-title">Типы работ</h4>
                     <div class="work-types-grid">
-                        <div class="work-type-item" onclick="window.location.href='/new'">
+                        <div class="work-type-item" onclick="saveIntendedUrlAndRedirect('/new')">
                             <div class="work-type-content">
                                 <span class="work-type-title">Отчет о практике</span>
                             </div>
                         </div>
-                        <div class="work-type-item" onclick="window.location.href='/new'">
+                        <div class="work-type-item" onclick="saveIntendedUrlAndRedirect('/new')">
                             <div class="work-type-content">
                                 <span class="work-type-title">Курсовая работа</span>
                             </div>
                         </div>
-                        <div class="work-type-item" onclick="window.location.href='/new'">
+                        <div class="work-type-item" onclick="saveIntendedUrlAndRedirect('/new')">
                             <div class="work-type-content">
                                 <span class="work-type-title">Доклад</span>
                             </div>
                         </div>
-                        <div class="work-type-item" onclick="window.location.href='/new'">
+                        <div class="work-type-item" onclick="saveIntendedUrlAndRedirect('/new')">
                             <div class="work-type-content">
                                 <span class="work-type-title">Эссе</span>
                             </div>
                         </div>
-                        <div class="work-type-item" onclick="window.location.href='/new'">
+                        <div class="work-type-item" onclick="saveIntendedUrlAndRedirect('/new')">
                             <div class="work-type-content">
                                 <span class="work-type-title">Реферат</span>
                             </div>
                         </div>
-                        <div class="work-type-item" onclick="window.location.href='/new'">
+                        <div class="work-type-item" onclick="saveIntendedUrlAndRedirect('/new')">
                             <div class="work-type-content">
                                 <span class="work-type-title">Научная статья</span>
                             </div>
@@ -2329,7 +2328,7 @@
                         Передовые модели ИИ создают уникальный контент по вашим требованиям. 
                         Автоматическое соблюдение ГОСТов и академических стандартов
                     </p>
-                    <a href="/new" class="feature-link">
+                    <a href="/new" class="feature-link" onclick="saveIntendedUrl('/new')">
                         Попробовать <i class="fas fa-arrow-right"></i>
                     </a>
             </div>
@@ -2343,7 +2342,7 @@
                         Напиши работу сам за 10 минут
                         Больше времени на изучение материала и подготовку к защите
                     </p>
-                    <a href="/new" class="feature-link">
+                    <a href="/new" class="feature-link" onclick="saveIntendedUrl('/new')">
                         Начать сейчас <i class="fas fa-arrow-right"></i>
                     </a>
                     </div>
@@ -2357,7 +2356,7 @@
                         90% уникальности текста, профессиональное оформление и соответствие 
                         всем требованиям
                     </p>
-                    <a href="/lk" class="feature-link">
+                    <a href="/lk" class="feature-link" onclick="saveIntendedUrl('/lk')">
                         Подробнее <i class="fas fa-arrow-right"></i>
                     </a>
                     </div>
@@ -2370,7 +2369,7 @@
                     <p class="feature-description">
                         Рефераты, курсовые, отчеты по практике, эссе, доклады и научные статьи
                     </p>
-                    <a href="/new" class="feature-link">
+                    <a href="/new" class="feature-link" onclick="saveIntendedUrl('/new')">
                         Выбрать тип <i class="fas fa-arrow-right"></i>
                     </a>
                 </div>
@@ -2444,7 +2443,7 @@
                         </div>
                             </div>
                     
-                    <a href="/new" class="btn-hero btn-hero-secondary pricing-cta">
+                    <a href="/new" class="btn-hero btn-hero-secondary pricing-cta" onclick="saveIntendedUrl('/new')">
                         Начать бесплатно
                     </a>
                 </div>
@@ -2480,7 +2479,7 @@
                             </div>
                         </div>
                     
-                    <a href="/lk" class="btn-hero btn-hero-primary pricing-cta">
+                    <a href="/lk" class="btn-hero btn-hero-primary pricing-cta" onclick="saveIntendedUrl('/lk')">
                         Купить абонемент
                     </a>
                 </div>
@@ -2524,7 +2523,7 @@
             <p class="cta-subtitle">
                 Присоединяйся к тысячам студентов, которые уже экономят время с GPT Пульт
             </p>
-            <a href="/new" class="btn-hero btn-hero-primary">
+            <a href="/new" class="btn-hero btn-hero-primary" onclick="saveIntendedUrl('/new')">
                 <i class="fas fa-rocket"></i>
                 Создать первую работу
             </a>
@@ -2537,8 +2536,7 @@
             <div class="footer-grid">
                 <div>
                     <div class="footer-brand">
-                        <img src="{{ asset('gptpult.png') }}" alt="GPT Пульт" class="footer-logo">
-                        <div class="footer-brand-name">GPT Пульт</div>
+                        <img src="{{ asset('gptpult.svg') }}" alt="GPT Пульт" class="footer-logo">
                     </div>
                     <p class="footer-description">
                         Современная платформа для создания учебных работ с помощью 
@@ -2551,7 +2549,7 @@
                     <ul class="footer-links">
                         <li><a href="#features">Возможности</a></li>
                         <li><a href="#pricing">Тарифы</a></li>
-                        <li><a href="/new">Создать работу</a></li>
+                        <li><a href="/new" onclick="saveIntendedUrl('/new')">Создать работу</a></li>
                         <li><a href="https://t.me/gptpult_bot" target="_blank">Telegram-бот</a></li>
                     </ul>
                 </div>
@@ -2561,7 +2559,7 @@
                     <ul class="footer-links">
                         <li><a href="https://t.me/gptpult_help" target="_blank">Помощь</a></li>
                         <li><a href="#contact">Контакты</a></li>
-                        <li><a href="/lk">Личный кабинет</a></li>
+                        <li><a href="/lk" onclick="saveIntendedUrl('/lk')">Личный кабинет</a></li>
                     </ul>
                 </div>
 
@@ -2698,6 +2696,18 @@
                 e.preventDefault();
             });
         });
+
+        // Функции для сохранения intended URL
+        function saveIntendedUrl(url) {
+            // Сохраняем URL для использования после авторизации
+            localStorage.setItem('intended_url', url);
+        }
+
+        function saveIntendedUrlAndRedirect(url) {
+            // Сохраняем URL и выполняем переход
+            saveIntendedUrl(url);
+            window.location.href = url;
+        }
     </script>
 </body>
 </html> 
