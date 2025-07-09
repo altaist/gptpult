@@ -5,7 +5,7 @@
                 <!-- Левая часть - Логотип -->
                 <div class="logo-section">
                     <div class="logo-container" @click="onLogoClick">
-                        <img src="/gptpult.svg" >
+                        <img src="/logo_mini.svg" >
                     </div>
                 </div>
                 
