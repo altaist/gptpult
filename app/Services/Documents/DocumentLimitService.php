@@ -18,7 +18,12 @@ class DocumentLimitService
     /**
      * Количество слотов за каждый полностью сгенерированный документ
      */
-    const SLOTS_PER_FULL_DOCUMENT = 4;
+    const SLOTS_PER_FULL_DOCUMENT = 2;
+
+    /**
+     * Количество документов за каждые 100 рублей на балансе
+     */
+    const DOCUMENTS_PER_100_RUB = 3;
 
     /**
      * Проверить, может ли пользователь создать новый документ
@@ -90,14 +95,22 @@ class DocumentLimitService
      */
     private function calculateAvailableSlots(User $user, bool $hasPayments): int
     {
-        if (!$hasPayments) {
-            return self::BASE_LIMIT;
+        $totalSlots = self::BASE_LIMIT;
+
+        if ($hasPayments) {
+            // Добавляем слоты за полностью сгенерированные документы
+            $fullyGeneratedCount = $this->getFullyGeneratedDocumentsCount($user);
+            $totalSlots += $fullyGeneratedCount * self::SLOTS_PER_FULL_DOCUMENT;
         }
 
-        $fullyGeneratedCount = $this->getFullyGeneratedDocumentsCount($user);
-        $additionalSlots = $fullyGeneratedCount * self::SLOTS_PER_FULL_DOCUMENT;
+        // Добавляем слоты за баланс (3 документа за каждые 100 рублей)
+        $balance = $user->balance_rub ?? 0;
+        if ($balance > 0) {
+            $balanceSlots = floor($balance / 100) * self::DOCUMENTS_PER_100_RUB;
+            $totalSlots += $balanceSlots;
+        }
 
-        return self::BASE_LIMIT + $additionalSlots;
+        return $totalSlots;
     }
 
     /**

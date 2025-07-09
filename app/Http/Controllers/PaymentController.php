@@ -273,53 +273,137 @@ class PaymentController extends Controller
     }
 
     /**
-     * Обработать завершение оплаты (возврат с ЮКасса)
+     * Обработать возврат с ЮКассы после оплаты
      *
      * @param Request $request
      * @param int $orderId
-     * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\JsonResponse
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function handlePaymentComplete(Request $request, int $orderId)
     {
         try {
-            $order = Order::with('document')->find($orderId);
+            $order = Order::with('document', 'user')->find($orderId);
 
             if (!$order) {
-                // Если это AJAX запрос для проверки статуса
-                if ($request->has('check_only') && $request->wantsJson()) {
-                    return response()->json([
-                        'success' => false,
-                        'status' => 'not_found'
-                    ], 404);
-                }
-                throw new Exception('Заказ не найден');
+                Log::error('Заказ не найден при возврате с ЮКассы', [
+                    'order_id' => $orderId,
+                    'request_params' => $request->all()
+                ]);
+                
+                return redirect()->route('dashboard')
+                    ->with('error', 'Заказ не найден');
             }
 
-            // Перенаправляем на страницу ожидания оплаты
-            return Inertia::render('payment/PaymentWaiting', [
-                'orderId' => $order->id,
-                'orderInfo' => [
-                    'id' => $order->id,
-                    'amount' => $order->amount
-                ],
-                'isDocument' => (bool) $order->document_id || (isset($order->order_data['source_document_id'])),
-                'documentId' => $order->document_id ?: ($order->order_data['source_document_id'] ?? null)
-            ]);
+            // Проверяем права доступа
+            if ($order->user_id !== Auth::id()) {
+                Log::warning('Попытка доступа к чужому заказу при возврате с ЮКассы', [
+                    'order_id' => $orderId,
+                    'order_user_id' => $order->user_id,
+                    'current_user_id' => Auth::id()
+                ]);
+                
+                return redirect()->route('dashboard')
+                    ->with('error', 'Нет доступа к этому заказу');
+            }
 
-        } catch (Exception $e) {
-            Log::error('Ошибка при обработке возврата с оплаты ЮКасса', [
+            Log::info('Возврат с ЮКассы', [
                 'order_id' => $orderId,
-                'error' => $e->getMessage(),
+                'user_id' => Auth::id(),
                 'request_params' => $request->all()
             ]);
 
-            // Определяем куда перенаправить в случае ошибки
-            $redirectRoute = $order && $order->document_id 
-                ? route('documents.show', $order->document_id)
-                : route('dashboard');
+            // Получаем последний платеж для этого заказа
+            $payment = $order->payments()
+                ->whereJsonContains('payment_data->payment_method', 'yookassa')
+                ->latest()
+                ->first();
 
-            return redirect($redirectRoute)
-                ->with('error', 'Ошибка при обработке платежа: ' . $e->getMessage());
+            if (!$payment) {
+                Log::warning('Платеж не найден при возврате с ЮКассы', [
+                    'order_id' => $orderId
+                ]);
+                
+                return redirect()->route('dashboard')
+                    ->with('error', 'Информация о платеже не найдена');
+            }
+
+            // Получаем ID платежа ЮКассы
+            $yookassaPaymentId = $payment->payment_data['yookassa_payment_id'] ?? null;
+            if (!$yookassaPaymentId) {
+                Log::error('ID платежа ЮКассы не найден', [
+                    'order_id' => $orderId,
+                    'payment_id' => $payment->id
+                ]);
+                
+                return redirect()->route('dashboard')
+                    ->with('error', 'Ошибка при обработке платежа');
+            }
+
+            // Принудительно проверяем статус платежа в ЮКассе
+            try {
+                $paymentInfo = $this->yookassaPaymentService->getPaymentInfo($yookassaPaymentId);
+                
+                Log::info('Информация о платеже получена из ЮКассы', [
+                    'order_id' => $orderId,
+                    'payment_id' => $yookassaPaymentId,
+                    'status' => $paymentInfo['status'],
+                    'amount' => $paymentInfo['amount']
+                ]);
+
+                // Если платеж успешен, обрабатываем его принудительно
+                if ($paymentInfo['status'] === 'succeeded') {
+                    $this->yookassaPaymentService->forceHandleSuccessfulPayment($order, $paymentInfo);
+                    
+                    $redirectRoute = $order->document_id 
+                        ? route('documents.show', $order->document_id)
+                        : route('dashboard');
+                        
+                    return redirect($redirectRoute)
+                        ->with('success', 'Платеж успешно обработан! Средства зачислены на баланс.');
+                }
+                
+                // Если платеж ожидает подтверждения
+                if ($paymentInfo['status'] === 'waiting_for_capture') {
+                    $redirectRoute = $order->document_id 
+                        ? route('documents.show', $order->document_id)
+                        : route('dashboard');
+                        
+                    return redirect($redirectRoute)
+                        ->with('info', 'Платеж обрабатывается. Средства будут зачислены в течение нескольких минут.');
+                }
+                
+                // Другие статусы
+                $redirectRoute = $order->document_id 
+                    ? route('documents.show', $order->document_id)
+                    : route('dashboard');
+                    
+                return redirect($redirectRoute)
+                    ->with('warning', 'Платеж находится в обработке. Статус: ' . $paymentInfo['status']);
+
+            } catch (Exception $e) {
+                Log::error('Ошибка при получении информации о платеже из ЮКассы', [
+                    'order_id' => $orderId,
+                    'payment_id' => $yookassaPaymentId,
+                    'error' => $e->getMessage()
+                ]);
+                
+                $redirectRoute = $order->document_id 
+                    ? route('documents.show', $order->document_id)
+                    : route('dashboard');
+                    
+                return redirect($redirectRoute)
+                    ->with('warning', 'Платеж обрабатывается. Проверьте статус через несколько минут.');
+            }
+
+        } catch (Exception $e) {
+            Log::error('Критическая ошибка при обработке возврата с ЮКассы', [
+                'order_id' => $orderId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return redirect()->route('dashboard')
+                ->with('error', 'Произошла ошибка при обработке платежа. Обратитесь в службу поддержки.');
         }
     }
 
@@ -382,97 +466,45 @@ class PaymentController extends Controller
     }
 
     /**
-     * Принудительно проверить статус платежа в ЮКасса и обработать успешную оплату
+     * Принудительно проверить статус платежа из ЮКассы
      *
      * @param Order $order
-     * @return string
+     * @return array|null
      */
-    protected function forceCheckPaymentStatusFromYookassa(Order $order): string
+    private function forceCheckPaymentStatusFromYookassa(Order $order): ?array
     {
         try {
-            // Находим последний платеж по этому заказу
+            // Получаем последний платеж ЮКассы для заказа
             $payment = $order->payments()
                 ->whereJsonContains('payment_data->payment_method', 'yookassa')
                 ->latest()
                 ->first();
 
             if (!$payment) {
-                Log::warning('Платеж не найден для заказа', ['order_id' => $order->id]);
-                return 'not_found';
+                return null;
             }
 
-            $paymentData = $payment->payment_data;
-            $yookassaPaymentId = $paymentData['yookassa_payment_id'] ?? null;
-
+            $yookassaPaymentId = $payment->payment_data['yookassa_payment_id'] ?? null;
             if (!$yookassaPaymentId) {
-                Log::warning('ID платежа ЮКасса не найден', ['order_id' => $order->id, 'payment_id' => $payment->id]);
-                return 'not_found';
+                return null;
             }
 
-            // Получаем актуальную информацию о платеже из ЮКасса
+            // Получаем актуальную информацию из ЮКассы
             $paymentInfo = $this->yookassaPaymentService->getPaymentInfo($yookassaPaymentId);
 
-            Log::info('Принудительная проверка статуса платежа ЮКасса', [
-                'order_id' => $order->id,
-                'payment_id' => $yookassaPaymentId,
-                'yookassa_status' => $paymentInfo['status'],
-                'local_status' => $payment->status
-            ]);
-
-            // Если платеж succeeded и локально еще не обработан
+            // Если статус изменился на succeeded, обрабатываем платеж
             if ($paymentInfo['status'] === 'succeeded' && $payment->status !== 'completed') {
-                
-                Log::info('Платеж succeeded в ЮКасса, но не обработан локально - принудительно обрабатываем', [
-                    'order_id' => $order->id,
-                    'payment_id' => $yookassaPaymentId
-                ]);
-
-                // Имитируем обработку webhook для этого платежа
-                $webhookPaymentData = [
-                    'id' => $yookassaPaymentId,
-                    'status' => 'succeeded',
-                    'amount' => [
-                        'value' => $paymentInfo['amount'],
-                        'currency' => $paymentInfo['currency'] ?? 'RUB'
-                    ],
-                    'metadata' => [
-                        'order_id' => $order->id
-                    ]
-                ];
-
-                // Вызываем обработку успешного платежа
-                $this->yookassaPaymentService->forceHandleSuccessfulPayment($order, $webhookPaymentData);
-
-                return 'completed';
+                $this->yookassaPaymentService->forceHandleSuccessfulPayment($order, $paymentInfo);
             }
 
-            // Обновляем локальную информацию о платеже в любом случае
-            $paymentData['yookassa_status'] = $paymentInfo['status'];
-            $payment->update([
-                'payment_data' => $paymentData
-            ]);
-
-            // Возвращаем статус
-            switch ($paymentInfo['status']) {
-                case 'succeeded':
-                    return 'completed';
-                case 'pending':
-                case 'waiting_for_capture':
-                    return 'pending';
-                case 'canceled':
-                    return 'failed';
-                default:
-                    return 'unknown';
-            }
+            return $paymentInfo;
 
         } catch (Exception $e) {
-            Log::error('Ошибка принудительной проверки статуса платежа', [
+            Log::error('Ошибка при принудительной проверке статуса платежа', [
                 'order_id' => $order->id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'error' => $e->getMessage()
             ]);
-
-            return 'error';
+            return null;
         }
     }
 

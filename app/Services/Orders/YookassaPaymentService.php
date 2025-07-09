@@ -147,55 +147,94 @@ class YookassaPaymentService
     public function handleWebhook(array $requestBody): bool
     {
         try {
-            // Получаем данные о платеже из уведомления
-            if (!isset($requestBody['object'])) {
-                throw new Exception('Отсутствует объект платежа в webhook');
+            Log::info('Получен webhook от ЮКасса', [
+                'event' => $requestBody['event'] ?? 'unknown',
+                'object_id' => $requestBody['object']['id'] ?? 'unknown',
+                'full_request' => $requestBody
+            ]);
+
+            // Проверяем структуру webhook
+            if (!isset($requestBody['event']) || !isset($requestBody['object'])) {
+                throw new Exception('Неверная структура webhook уведомления');
             }
 
-            $paymentData = $requestBody['object'];
-            $eventType = $requestBody['event'] ?? '';
+            $eventType = $requestBody['event'];
+            $paymentObject = $requestBody['object'];
 
-            Log::info('Получено webhook уведомление от ЮКасса', [
+            // Проверяем, что это уведомление о платеже
+            if (!isset($paymentObject['id']) || !isset($paymentObject['status'])) {
+                throw new Exception('Отсутствуют обязательные поля в объекте платежа');
+            }
+
+            Log::info('Обработка webhook события', [
                 'event' => $eventType,
-                'payment_id' => $paymentData['id'] ?? 'unknown',
-                'status' => $paymentData['status'] ?? 'unknown'
+                'payment_id' => $paymentObject['id'],
+                'status' => $paymentObject['status'],
+                'amount' => $paymentObject['amount']['value'] ?? 'unknown'
             ]);
 
             // Находим заказ по метаданным
-            $metadata = $paymentData['metadata'] ?? [];
+            $metadata = $paymentObject['metadata'] ?? [];
             if (!isset($metadata['order_id'])) {
+                Log::error('Order ID не найден в метаданных платежа', [
+                    'payment_id' => $paymentObject['id'],
+                    'metadata' => $metadata
+                ]);
                 throw new Exception('Order ID не найден в метаданных платежа');
             }
 
-            $order = Order::find($metadata['order_id']);
+            $order = Order::with('user')->find($metadata['order_id']);
             if (!$order) {
+                Log::error('Заказ не найден', [
+                    'order_id' => $metadata['order_id'],
+                    'payment_id' => $paymentObject['id']
+                ]);
                 throw new Exception('Заказ не найден: ' . $metadata['order_id']);
             }
 
-            // Обрабатываем уведомление в зависимости от события
+            // Обрабатываем различные типы событий
             switch ($eventType) {
                 case 'payment.succeeded':
-                    return $this->handleSuccessfulPayment($order, $paymentData);
+                    Log::info('Обработка успешного платежа', [
+                        'order_id' => $order->id,
+                        'payment_id' => $paymentObject['id']
+                    ]);
+                    return $this->handleSuccessfulPayment($order, $paymentObject);
 
                 case 'payment.waiting_for_capture':
-                    return $this->handlePaymentWaitingForCapture($order, $paymentData);
+                    Log::info('Платеж ожидает подтверждения', [
+                        'order_id' => $order->id,
+                        'payment_id' => $paymentObject['id']
+                    ]);
+                    return $this->handlePaymentWaitingForCapture($order, $paymentObject);
+
+                case 'payment.canceled':
+                    Log::info('Платеж отменен', [
+                        'order_id' => $order->id,
+                        'payment_id' => $paymentObject['id']
+                    ]);
+                    return $this->handleCanceledPayment($order, $paymentObject);
 
                 default:
                     Log::warning('Неизвестный тип webhook события', [
                         'event' => $eventType,
-                        'payment_id' => $paymentData['id'] ?? 'unknown'
+                        'payment_id' => $paymentObject['id'] ?? 'unknown',
+                        'order_id' => $order->id
                     ]);
-                    return true;
+                    return true; // Возвращаем true для неизвестных событий
             }
 
         } catch (Exception $e) {
-            Log::error('Ошибка обработки webhook ЮКасса', [
+            Log::error('Критическая ошибка в webhook ЮКасса', [
                 'error' => $e->getMessage(),
                 'request_body' => $requestBody,
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
             ]);
 
-            throw $e;
+            // Не выбрасываем исключение, чтобы ЮКасса не повторяла запрос
+            return false;
         }
     }
 
@@ -324,16 +363,18 @@ class YookassaPaymentService
     {
         try {
             // Для двухэтапных платежей - автоматически подтверждаем
-            $captureData = [
+            $captureData = array(
                 'amount' => $paymentData['amount']
-            ];
+            );
 
-            $response = $this->client->capturePayment($captureData, $paymentData['id'], uniqid('', true));
+            $idempotenceKey = uniqid('capture_', true);
+            $response = $this->client->capturePayment($captureData, $paymentData['id'], $idempotenceKey);
 
             Log::info('Платеж автоматически подтвержден', [
                 'order_id' => $order->id,
                 'payment_id' => $paymentData['id'],
-                'capture_status' => $response->getStatus()
+                'capture_status' => $response->getStatus(),
+                'idempotence_key' => $idempotenceKey
             ]);
 
             return true;
@@ -350,7 +391,34 @@ class YookassaPaymentService
     }
 
     /**
-     * Проверить подпись webhook
+     * Обработать отмененный платеж
+     *
+     * @param Order $order
+     * @param array $paymentData
+     * @return bool
+     */
+    protected function handleCanceledPayment(Order $order, array $paymentData): bool
+    {
+        try {
+            // Если платеж отменен, обновляем статус заказа
+            $order->update(['status' => OrderStatus::CANCELED]);
+            Log::info('Платеж отменен, статус заказа обновлен', [
+                'order_id' => $order->id,
+                'payment_id' => $paymentData['id']
+            ]);
+            return true;
+        } catch (Exception $e) {
+            Log::error('Ошибка при обработке отмененного платежа', [
+                'order_id' => $order->id,
+                'payment_id' => $paymentData['id'],
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Проверить подпись webhook согласно документации ЮКассы
      *
      * @param string $httpBody
      * @param string $signature
@@ -358,15 +426,53 @@ class YookassaPaymentService
      */
     public function verifyWebhookSignature(string $httpBody, string $signature): bool
     {
+        // Если webhook secret не настроен, пропускаем проверку в dev режиме
         $webhookSecret = config('services.yookassa.webhook_secret');
-        
         if (!$webhookSecret) {
-            Log::warning('Webhook secret не настроен для ЮКасса');
-            return true; // В dev режиме пропускаем проверку
+            if (app()->environment(['local', 'testing'])) {
+                Log::info('Webhook secret не настроен, пропускаем проверку в dev режиме');
+                return true;
+            } else {
+                Log::warning('Webhook secret не настроен для продакшена!');
+                return false;
+            }
         }
 
-        $calculatedSignature = hash_hmac('sha256', $httpBody, $webhookSecret);
+        // Убираем "Basic " из начала заголовка Authorization если есть
+        $cleanSignature = str_replace('Basic ', '', $signature);
         
-        return hash_equals($calculatedSignature, $signature);
+        // Декодируем base64
+        $decodedCredentials = base64_decode($cleanSignature);
+        if ($decodedCredentials === false) {
+            Log::warning('Не удалось декодировать подпись webhook', [
+                'signature' => $signature
+            ]);
+            return false;
+        }
+        
+        // Проверяем формат shopId:secretKey
+        $credentials = explode(':', $decodedCredentials, 2);
+        if (count($credentials) !== 2) {
+            Log::warning('Неверный формат подписи webhook', [
+                'credentials_count' => count($credentials)
+            ]);
+            return false;
+        }
+        
+        $shopId = config('services.yookassa.shop_id');
+        $secretKey = config('services.yookassa.secret_key');
+        
+        // Проверяем соответствие shop_id и secret_key
+        $isValid = hash_equals($credentials[0], $shopId) && hash_equals($credentials[1], $secretKey);
+        
+        if (!$isValid) {
+            Log::warning('Неверные данные авторизации в webhook', [
+                'expected_shop_id' => $shopId,
+                'received_shop_id' => $credentials[0],
+                'secret_key_match' => hash_equals($credentials[1], $secretKey)
+            ]);
+        }
+        
+        return $isValid;
     }
 } 

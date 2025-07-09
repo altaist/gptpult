@@ -8,4 +8,5 @@ enum OrderStatus: string
     case PAID = 'paid';
     case DECLINE = 'decline';
     case CLOSED = 'closed';
+    case CANCELED = 'canceled';
 } 
