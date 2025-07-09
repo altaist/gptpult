@@ -44,101 +44,169 @@ php artisan test:document-generation --user-id=1 --topic="Тема для тес
 
 ## Использование
 
-### Автоматическая генерация
+### Создание документа с автоматической генерацией
 
-При создании документа через API endpoint `/documents` (метод `quickCreate`):
-1. Документ создается в статусе `draft`
-2. Автоматически запускается Job `StartGenerateDocument`
-3. Статус документа меняется на `processing`
-4. После завершения - на `completed` или `failed`
+```php
+use App\Services\Documents\DocumentService;
+use App\Services\Documents\DocumentJobService;
 
-### Настройки GPT
+$documentService = app(DocumentService::class);
+$jobService = app(DocumentJobService::class);
 
-В поле `gpt_settings` документа можно указать:
-```json
-{
-    "service": "openai",
-    "model": "gpt-3.5-turbo",
-    "temperature": 0.7
-}
-```
-
-## Логирование
-
-Все операции логируются в файл `storage/logs/queue.log`:
-- Начало генерации документа
-- Отправка запроса к GPT
-- Успешное завершение с метриками
-- Ошибки с подробным описанием
-
-## События
-
-### GptRequestCompleted
-Генерируется при успешной генерации документа.
-
-### GptRequestFailed
-Генерируется при ошибке генерации с описанием ошибки.
-
-## Структура генерируемого документа
-
-GPT генерирует JSON со структурой:
-```json
-{
-    "objectives": [
-        "Цель 1",
-        "Цель 2",
-        "Цель 3"
-    ],
-    "contents": [
-        {
-            "title": "Название раздела",
-            "subtopics": [
-                {
-                    "title": "Подраздел",
-                    "content": "Содержание подраздела"
-                }
-            ]
-        }
+// Создаем документ
+$document = $documentService->create([
+    'user_id' => auth()->id(),
+    'document_type_id' => 1,
+    'title' => 'Тема исследования',
+    'structure' => ['topic' => 'Тема исследования'],
+    'gpt_settings' => [
+        'service' => 'openai',
+        'model' => 'gpt-4',
+        'temperature' => 0.7
     ]
-}
+]);
+
+// Запускаем генерацию
+$jobService->startBaseGeneration($document);
 ```
 
-## Мониторинг
+### Мониторинг статуса генерации
 
-### Проверка очереди:
+```php
+// Проверка статуса
+$status = $document->status; // draft, pre_generating, generated, failed
+
+// Проверка наличия контента
+$hasContent = !empty($document->content);
+$hasTopics = isset($document->content['topics']);
+```
+
+## Устранение ошибок
+
+### Ошибка XML парсинга (SAXParseException)
+
+**Симптомы:**
+- Ошибка `SAXParseException: [word/document.xml line 2]: EntityRef: expecting ';'`
+- Ошибка fastparser или WriterFilter
+
+**Причины:**
+- Некорректные Unicode символы в тексте
+- Неэкранированные XML символы (&, <, >, ", ')
+- Управляющие символы в тексте
+
+**Исправление:**
+Система автоматически обрабатывает такие ошибки:
+
+1. **Автоматическая очистка текста** - все тексты проходят через `sanitizeForXml()`
+2. **Fallback механизм** - при ошибке создается упрощенная версия документа
+3. **Подробное логирование** - все ошибки записываются в лог для диагностики
+
+**Проверка логов:**
 ```bash
-php artisan queue:work --queue=document_creates --once
+# Логи генерации документов
+tail -f storage/logs/laravel.log | grep "Word документ"
+
+# Поиск ошибок XML
+grep -i "saxparse\|xml\|fastparser" storage/logs/laravel.log
 ```
 
-### Просмотр логов:
+### Проблемы с кодировкой
+
+**Симптомы:**
+- Кракозябры в документе
+- Неправильное отображение русских символов
+
+**Исправление:**
+- Проверьте кодировку базы данных (должна быть utf8mb4)
+- Убедитесь, что в `gpt_settings` правильно настроена кодировка
+
+### Большие документы
+
+**Симптомы:**
+- Таймаут при генерации
+- Превышение лимитов памяти
+
+**Исправление:**
 ```bash
-tail -f storage/logs/queue.log
+# Увеличьте таймаут для очереди
+php artisan queue:work --queue=document_creates --timeout=600
+
+# В config/queue.php увеличьте timeout
+'timeout' => 600,
 ```
 
-### Статистика очереди:
+### Проблемы с правами доступа
+
+**Симптомы:**
+- Ошибка записи файла
+- Permission denied
+
+**Исправление:**
 ```bash
-php artisan queue:monitor document_creates
+# Проверьте права на папку storage
+chmod -R 775 storage/
+chown -R www-data:www-data storage/
+
+# Очистите кеш
+php artisan cache:clear
+php artisan config:clear
 ```
 
-## Требования
+### Отладка генерации
 
-- Настроенный OpenAI API ключ в `.env`:
-```env
-OPENAI_API_KEY=your_openai_api_key
-OPENAI_ORGANIZATION=your_organization_id (optional)
-OPENAI_DEFAULT_MODEL=gpt-3.5-turbo
+**Включение подробного логирования:**
+```php
+// В .env добавьте
+LOG_LEVEL=debug
+
+// В config/logging.php для канала queue
+'level' => 'debug',
 ```
 
-- Запущенный queue worker для обработки заданий
+**Тестирование генерации:**
+```bash
+# Создание тестового документа
+php artisan tinker
+>>> $doc = \App\Models\Document::factory()->create(['user_id' => 1]);
+>>> $service = app(\App\Services\Documents\Files\WordDocumentService::class);
+>>> $file = $service->generate($doc);
+```
 
-## Troubleshooting
+**Проверка структуры документа:**
+```bash
+# Просмотр содержимого документа
+php artisan tinker
+>>> $doc = \App\Models\Document::find(1);
+>>> dd($doc->content);
+>>> dd($doc->structure);
+```
 
-### Job не выполняется
-1. Проверьте, что запущен воркер очереди
-2. Убедитесь, что настроены ключи OpenAI
-3. Проверьте логи в `storage/logs/queue.log`
+## Конфигурация
 
-### Ошибки парсинга GPT ответа
-1. Проверьте качество промпта в методе `buildPrompt()`
-2. Убедитесь, что GPT возвращает валидный JSON
-3. Проверьте логи для анализа ответа GPT 
+### Настройка очереди для документов
+
+В `config/queue.php`:
+```php
+'connections' => [
+    'database' => [
+        'driver' => 'database',
+        'table' => 'jobs',
+        'queue' => 'document_creates',
+        'retry_after' => 300,
+        'after_commit' => false,
+    ],
+],
+```
+
+### Настройка логирования
+
+В `config/logging.php`:
+```php
+'channels' => [
+    'queue' => [
+        'driver' => 'daily',
+        'path' => storage_path('logs/queue.log'),
+        'level' => 'info',
+        'days' => 14,
+    ],
+], 

@@ -28,43 +28,72 @@ class WordDocumentService
      */
     public function generate(Document $document): \App\Models\File
     {
-        // Создаем новый экземпляр PhpWord для каждой генерации
-        $this->phpWord = new PhpWord();
-        
-        // Устанавливаем правильную кодировку и настройки для русского языка
-        $this->phpWord->getSettings()->setThemeFontLang(new \PhpOffice\PhpWord\Style\Language('ru-RU'));
-        
-        // Устанавливаем дополнительные настройки документа
-        $this->phpWord->getDocInfo()->setTitle($this->decodeUnicodeString($document->title));
-        $this->phpWord->getDocInfo()->setCreator($document->user->name);
-        $this->phpWord->getDocInfo()->setDescription('Документ сгенерирован системой GPTPult');
-        
-        // Настройка стилей
-        $this->setupStyles();
+        try {
+            // Логируем начало генерации
+            \Illuminate\Support\Facades\Log::info('Начало генерации Word документа', [
+                'document_id' => $document->id,
+                'document_title' => $document->title,
+                'has_content' => !empty($document->content),
+                'has_structure' => !empty($document->structure),
+                'content_topics_count' => isset($document->content['topics']) ? count($document->content['topics']) : 0
+            ]);
+            
+            // Создаем новый экземпляр PhpWord для каждой генерации
+            $this->phpWord = new PhpWord();
+            
+            // Устанавливаем правильную кодировку и настройки для русского языка
+            $this->phpWord->getSettings()->setThemeFontLang(new \PhpOffice\PhpWord\Style\Language('ru-RU'));
+            
+            // Устанавливаем дополнительные настройки документа
+            $this->phpWord->getDocInfo()->setTitle($this->decodeUnicodeString($document->title));
+            $this->phpWord->getDocInfo()->setCreator($document->user->name);
+            $this->phpWord->getDocInfo()->setDescription('Документ сгенерирован системой GPTPult');
+            
+            // Настройка стилей
+            $this->setupStyles();
 
-        // Создание титульного листа (главная страница)
-        $this->createTitlePage($document);
+            // Создание титульного листа (главная страница)
+            $this->createTitlePage($document);
 
-        // Создание страницы с содержанием
-        $this->createTableOfContents($document);
+            // Создание страницы с содержанием
+            $this->createTableOfContents($document);
 
-        // Создание основного содержимого с заголовками
-        $this->createMainContent($document);
+            // Создание основного содержимого с заголовками
+            $this->createMainContent($document);
 
-        // Создание списка источников
-        $this->createReferences($document);
+            // Создание списка источников
+            $this->createReferences($document);
 
-        // Сохранение документа
-        $filePath = $this->saveDocument($document);
+            // Сохранение документа
+            $filePath = $this->saveDocument($document);
 
-        // Создание записи о файле
-        return $this->filesService->createFileFromPath(
-            $filePath,
-            $document->user,
-            $document->title . '.docx',
-            $document->id,
-            'documents'
-        );
+            // Создание записи о файле
+            $file = $this->filesService->createFileFromPath(
+                $filePath,
+                $document->user,
+                $document->title . '.docx',
+                $document->id,
+                'documents'
+            );
+            
+            \Illuminate\Support\Facades\Log::info('Word документ успешно сгенерирован', [
+                'document_id' => $document->id,
+                'file_id' => $file->id,
+                'file_size' => file_exists($filePath) ? filesize($filePath) : 0
+            ]);
+            
+            return $file;
+            
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Ошибка при генерации Word документа', [
+                'document_id' => $document->id,
+                'error_message' => $e->getMessage(),
+                'error_type' => get_class($e),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            throw $e;
+        }
     }
 
     private function setupStyles(): void
@@ -592,7 +621,7 @@ class WordDocumentService
         
         // Если текст уже нормально отображается (содержит кириллицу), возвращаем как есть
         if (preg_match('/[\x{0400}-\x{04FF}]/u', $text) && strpos($text, '\u') === false) {
-            return $text;
+            return $this->sanitizeForXml($text);
         }
         
         // Основной метод декодирования Unicode escape-последовательностей
@@ -612,7 +641,36 @@ class WordDocumentService
         // Убираем лишние escape-символы
         $decoded = stripslashes($decoded);
         
-        return $decoded;
+        // Очищаем от символов, которые могут вызвать проблемы с XML
+        return $this->sanitizeForXml($decoded);
+    }
+
+    /**
+     * Очищает текст от символов, которые могут вызвать ошибки XML парсинга
+     */
+    private function sanitizeForXml(string $text): string
+    {
+        if (empty($text)) {
+            return $text;
+        }
+        
+        // Удаляем управляющие символы, кроме табуляции, переноса строки и возврата каретки
+        $text = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $text);
+        
+        // Заменяем некорректные Unicode символы
+        $text = preg_replace('/[\x{FFFE}\x{FFFF}]/u', '', $text);
+        
+        // Удаляем символы, которые не поддерживаются в XML 1.0
+        $text = preg_replace('/[\x{D800}-\x{DFFF}]/u', '', $text);
+        
+        // Заменяем специальные XML символы на безопасные эквиваленты
+        $text = str_replace(['&', '<', '>', '"', "'"], ['&amp;', '&lt;', '&gt;', '&quot;', '&apos;'], $text);
+        
+        // Убираем двойные пробелы и лишние переносы строк
+        $text = preg_replace('/\s+/u', ' ', $text);
+        $text = trim($text);
+        
+        return $text;
     }
 
     /**
@@ -1072,6 +1130,9 @@ class WordDocumentService
         // Убираем лишние пробелы и переносы
         $text = trim($text);
         
+        // Очищаем текст от проблемных символов
+        $text = $this->sanitizeForXml($text);
+        
         // Разбиваем по двойным переносам строк
         $paragraphs = preg_split('/\n\s*\n/', $text);
         
@@ -1088,7 +1149,7 @@ class WordDocumentService
                 
                 // Создаем новый абзац каждые 3-4 предложения или когда достигаем 400 символов
                 if ($sentenceCount >= 3 || strlen($currentParagraph) >= 400) {
-                    $paragraphs[] = trim($currentParagraph);
+                    $paragraphs[] = trim($this->sanitizeForXml($currentParagraph));
                     $currentParagraph = '';
                     $sentenceCount = 0;
                 }
@@ -1096,7 +1157,7 @@ class WordDocumentService
             
             // Добавляем остаток
             if (!empty(trim($currentParagraph))) {
-                $paragraphs[] = trim($currentParagraph);
+                $paragraphs[] = trim($this->sanitizeForXml($currentParagraph));
             }
         }
         
@@ -1115,12 +1176,145 @@ class WordDocumentService
         // Создаем директорию, если она не существует
         Storage::disk('public')->makeDirectory($baseDirectory);
         
-        // Сохраняем документ с правильными настройками
-        $objWriter = IOFactory::createWriter($this->phpWord, 'Word2007');
-
         $fullSavePath = storage_path('app/public/' . $fullPath);
-        $objWriter->save($fullSavePath);
+        
+        try {
+            // Сохраняем документ с правильными настройками
+            $objWriter = IOFactory::createWriter($this->phpWord, 'Word2007');
+            $objWriter->save($fullSavePath);
+            
+            \Illuminate\Support\Facades\Log::info('Word документ успешно сохранен', [
+                'document_id' => $document->id,
+                'file_path' => $fullSavePath,
+                'file_size' => file_exists($fullSavePath) ? filesize($fullSavePath) : 0
+            ]);
+            
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Ошибка при сохранении Word документа', [
+                'document_id' => $document->id,
+                'error_message' => $e->getMessage(),
+                'error_type' => get_class($e),
+                'file_path' => $fullSavePath,
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            // Если это ошибка XML парсинга, попробуем создать упрощенную версию
+            if (strpos($e->getMessage(), 'SAXParseException') !== false || 
+                strpos($e->getMessage(), 'fastparser') !== false ||
+                strpos($e->getMessage(), 'WriterFilter') !== false) {
+                
+                \Illuminate\Support\Facades\Log::warning('Обнаружена ошибка XML парсинга, создаем упрощенную версию документа', [
+                    'document_id' => $document->id
+                ]);
+                
+                return $this->createSimplifiedDocument($document, $fullSavePath);
+            }
+            
+            throw $e;
+        }
 
         return $fullSavePath;
+    }
+    
+    /**
+     * Создает упрощенную версию документа в случае ошибок XML парсинга
+     */
+    private function createSimplifiedDocument(Document $document, string $fullSavePath): string
+    {
+        try {
+            // Создаем новый простой документ
+            $phpWord = new PhpWord();
+            $phpWord->getSettings()->setThemeFontLang(new \PhpOffice\PhpWord\Style\Language('ru-RU'));
+            
+            // Базовые стили
+            $phpWord->addParagraphStyle('Normal', [
+                'spaceAfter' => 120,
+                'lineSpacing' => 1.5,
+                'alignment' => Jc::BOTH
+            ]);
+            
+            $section = $phpWord->addSection();
+            
+            // Добавляем заголовок документа
+            $title = $this->sanitizeForXml($document->title);
+            $section->addText(
+                $title,
+                ['bold' => true, 'size' => 16, 'name' => 'Times New Roman'],
+                ['alignment' => Jc::CENTER, 'spaceAfter' => 300]
+            );
+            
+            // Добавляем основной контент простым способом
+            $contentData = $document->content['topics'] ?? [];
+            
+            foreach ($contentData as $index => $topic) {
+                $chapterNumber = $index + 1;
+                $chapterTitle = $this->sanitizeForXml($topic['title'] ?? '');
+                
+                // Заголовок главы
+                $section->addText(
+                    "{$chapterNumber}. {$chapterTitle}",
+                    ['bold' => true, 'size' => 14, 'name' => 'Times New Roman'],
+                    'Normal'
+                );
+                $section->addTextBreak(1);
+                
+                // Подглавы
+                if (!empty($topic['subtopics'])) {
+                    foreach ($topic['subtopics'] as $subIndex => $subtopic) {
+                        $subNumber = $subIndex + 1;
+                        $subtopicTitle = $this->sanitizeForXml($subtopic['title'] ?? '');
+                        
+                        $section->addText(
+                            "{$chapterNumber}.{$subNumber}. {$subtopicTitle}",
+                            ['bold' => true, 'size' => 12, 'name' => 'Times New Roman'],
+                            'Normal'
+                        );
+                        $section->addTextBreak(1);
+                        
+                        // Содержимое подглавы
+                        if (isset($subtopic['content']) && !empty($subtopic['content'])) {
+                            $content = $this->sanitizeForXml($subtopic['content']);
+                            
+                            // Простое разделение на абзацы
+                            $paragraphs = explode("\n", $content);
+                            foreach ($paragraphs as $paragraph) {
+                                $paragraph = trim($paragraph);
+                                if (!empty($paragraph)) {
+                                    $section->addText(
+                                        $paragraph,
+                                        ['size' => 12, 'name' => 'Times New Roman'],
+                                        'Normal'
+                                    );
+                                    $section->addTextBreak(1);
+                                }
+                            }
+                        }
+                        
+                        $section->addTextBreak(1);
+                    }
+                }
+                
+                $section->addTextBreak(2);
+            }
+            
+            // Сохраняем упрощенный документ
+            $objWriter = IOFactory::createWriter($phpWord, 'Word2007');
+            $objWriter->save($fullSavePath);
+            
+            \Illuminate\Support\Facades\Log::info('Упрощенный Word документ успешно создан', [
+                'document_id' => $document->id,
+                'file_path' => $fullSavePath
+            ]);
+            
+            return $fullSavePath;
+            
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Ошибка при создании упрощенного документа', [
+                'document_id' => $document->id,
+                'error' => $e->getMessage()
+            ]);
+            
+            throw new \Exception('Не удалось создать Word документ: ' . $e->getMessage());
+        }
     }
 } 
