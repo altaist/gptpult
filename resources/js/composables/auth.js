@@ -432,160 +432,100 @@ export const checkAuth = async () => {
         return false
     }
 
-    // console.log('checkAuth: Starting authentication check...')  // Закомментировано для продакшена
+    console.log('checkAuth: Запуск проверки авторизации...', {
+        hasTelegramData: !!(window.Telegram?.WebApp?.initDataUnsafe?.user),
+        isAuthenticated: isAuthenticated.value,
+        currentPath: window.location.pathname
+    })
     
     try {
-        // ПРИОРИТЕТ 1: Если в Telegram WebApp и есть данные пользователя - обрабатываем их ПЕРВЫМИ
+        // Если есть Telegram WebApp данные, позволяем useTelegramMiniApp обработать их первым
         if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
-            console.log('checkAuth: Telegram WebApp detected with user data, processing priority authentication');
+            console.log('checkAuth: Обнаружены данные Telegram WebApp, ждем обработки TMA composable')
             
-            const initData = window.Telegram.WebApp.initData;
+            // Даем время для обработки TMA composable
+            await new Promise(resolve => setTimeout(resolve, 200))
             
-            if (initData) {
-                try {
-                    console.log('checkAuth: Sending Telegram data to server for priority processing');
-                    
-                    const headers = {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                        'X-Telegram-Init-Data': initData,
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json'
-                    };
-                    
-                    const response = await fetch('/telegram/auth', {
-                        method: 'POST',
-                        headers,
-                        credentials: 'include',
-                        body: JSON.stringify({
-                            init_data: initData
-                        })
-                    });
-                    
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (data.success && data.user) {
-                            console.log('checkAuth: Telegram WebApp authentication successful');
-                            setUser(data.user);
-                            
-                            // Сохраняем данные авторизации
-                            if (data.user.auth_token) {
-                                saveToLocalStorage('auto_auth_token', data.user.auth_token);
-                            }
-                            localStorage.setItem('telegram_auth_user_id', data.user.id);
-                            localStorage.setItem('telegram_auth_timestamp', Date.now());
-                            
-                            // Если на странице логина, перенаправляем в ЛК
-                            if (window.location.pathname === '/login' && !isRedirectingAuth) {
-                                console.log('checkAuth: Redirecting Telegram user from login to /lk');
-                                isRedirectingAuth = true;
-                                window.location.href = '/lk';
-                                return true;
-                            }
-                            
-                            return true;
-                        }
-                    }
-                    
-                    console.log('checkAuth: Telegram auth endpoint response not successful, continuing with other methods');
-                } catch (error) {
-                    console.warn('checkAuth: Telegram WebApp authentication failed:', error);
-                    // Продолжаем с другими методами авторизации
-                }
+            // Проверяем, была ли аутентификация уже обработана
+            if (isRedirectingAuth) {
+                console.log('checkAuth: TMA composable уже обрабатывает редирект')
+                return false
             }
         }
         
-        // ПРИОРИТЕТ 2: Проверяем есть ли уже пользователь через Inertia
+        // Проверяем Inertia props
         if (isAuthenticated.value) {
-            // Дополнительная проверка активности сессии
-            const inertiaValid = checkInertiaAuth();
+            const inertiaValid = checkInertiaAuth()
             
             if (!inertiaValid) {
-                // Если Inertia props пусты, проверяем сессию через API
-                try {
-                    const sessionValid = await checkSessionStatus();
+                // Проверяем сессию через API
+                const sessionValid = await checkSessionStatus()
+                
+                if (sessionValid === false) {
+                    console.log('checkAuth: Сессия неактивна, пытаемся создать новый аккаунт')
                     
-                    if (sessionValid === false) {
-                        // Сессия точно неактивна - пытаемся создать новый аккаунт
-                        console.log('Session is inactive, trying to create new account');
-                        
-                        // Если на странице логина, пытаемся автозарегистрироваться
-                        if (window.location.pathname === '/login') {
-                            try {
-                                const authResult = await authLocalSaved(true);
-                                if (authResult) {
-                                    console.log('New account created successfully, redirecting to /lk');
-                                    isRedirectingAuth = true;
-                                    window.location.href = '/lk';
-                                    return true;
-                                }
-                            } catch (error) {
-                                console.warn('Failed to create new account:', error);
+                    if (window.location.pathname === '/login') {
+                        try {
+                            const authResult = await authLocalSaved(true)
+                            if (authResult) {
+                                console.log('checkAuth: Новый аккаунт создан, перенаправляем в ЛК')
+                                isRedirectingAuth = true
+                                window.location.href = '/lk'
+                                return true
                             }
+                        } catch (error) {
+                            console.warn('checkAuth: Ошибка создания нового аккаунта:', error)
                         }
-                        
-                        return false;
                     }
                     
-                    if (sessionValid === null) {
-                        // Неопределенное состояние (ошибка сети и т.д.)
-                        // Остаемся на текущей странице
-                        console.log('Session status unclear, staying on current page');
-                        return false;
-                    }
-                } catch (error) {
-                    // При ошибке API не делаем редирект
-                    console.warn('Session check failed:', error);
-                    // Не очищаем состояние если есть данные Telegram
-                    if (!window.Telegram?.WebApp?.initDataUnsafe?.user) {
-                        clearAuthState();
-                    }
-                    return false;
+                    return false
+                }
+                
+                if (sessionValid === null) {
+                    console.log('checkAuth: Неопределенное состояние сессии')
+                    return false
                 }
             }
             
-            // console.log('checkAuth: User already authenticated via Inertia')  // Закомментировано для продакшена
+            console.log('checkAuth: Пользователь уже авторизован через Inertia')
             
-            // Если пользователь на странице входа, но уже авторизован - редиректим
+            // Если на странице логина, но уже авторизован - редиректим
             if (window.location.pathname === '/login' && !isRedirectingAuth) {
-                // console.log('checkAuth: User is on login page but authenticated, redirecting to /lk')  // Закомментировано для продакшена
+                console.log('checkAuth: Пользователь на странице логина, но авторизован - перенаправляем')
                 isRedirectingAuth = true
-                window.location.href = '/lk';
-                return true;
+                window.location.href = '/lk'
+                return true
             }
             
-            return true;
+            return true
         }
         
-        // ПРИОРИТЕТ 3: Пытаемся восстановить авторизацию из localStorage или автозарегистрироваться только на странице логина
+        // Только на странице логина пытаемся восстановить или автозарегистрироваться
         if (window.location.pathname === '/login' && !isRedirectingAuth) {
-            const authResult = await authLocalSaved(true);
+            // Если есть Telegram данные, не мешаем TMA composable
+            if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
+                console.log('checkAuth: Есть Telegram данные, позволяем TMA composable обработать аутентификацию')
+                return false
+            }
+            
+            console.log('checkAuth: Пытаемся восстановить авторизацию или автозарегистрироваться')
+            const authResult = await authLocalSaved(true)
             if (authResult) {
-                // console.log('checkAuth: User authenticated via localStorage or auto-registered')  // Закомментировано для продакшена
-                
-                // Редиректим в ЛК
-                // console.log('checkAuth: Redirecting restored user from login page')  // Закомментировано для продакшена
+                console.log('checkAuth: Авторизация восстановлена/создана - перенаправляем')
                 isRedirectingAuth = true
-                window.location.href = '/lk';
-                return true;
+                window.location.href = '/lk'
+                return true
             }
         }
         
-        const result = isAuthenticated.value;
-        // console.log('checkAuth: Authentication result:', !!result)  // Закомментировано для продакшена
+        const result = isAuthenticated.value
+        console.log('checkAuth: Результат проверки авторизации:', !!result)
         
-        // Если пользователь авторизован и на странице логина
-        if (result && window.location.pathname === '/login' && !isRedirectingAuth) {
-            // console.log('checkAuth: Final check - redirecting authenticated user from login page')  // Закомментировано для продакшена
-            isRedirectingAuth = true
-            window.location.href = '/lk';
-        }
-        
-        return !!result;
+        return !!result
     } catch (error) {
-        errorMessage.value = error.response?.data?.message || 'Ошибка входа';
-        // console.error('Login error:', error);  // Закомментировано для продакшена
-        throw error;
+        console.error('checkAuth: Ошибка проверки авторизации:', error)
+        errorMessage.value = error.response?.data?.message || 'Ошибка проверки авторизации'
+        return false
     }
 }
 

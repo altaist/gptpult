@@ -13,6 +13,11 @@ import '@quasar/extras/material-icons/material-icons.css'
 import '@quasar/extras/fontawesome-v6/fontawesome-v6.css'
 import 'quasar/src/css/index.sass';
 
+// Подключаем TMA debug helper в режиме разработки
+if (import.meta.env.MODE !== 'production' && import.meta.env.VITE_APP_ENV !== 'production') {
+    import('./debug/tma-debug.js');
+}
+
 const appName = import.meta.env.VITE_APP_NAME || 'GPT Пульт';
 window.TWA = window.Telegram ? window.Telegram.WebApp : null;
 

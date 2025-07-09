@@ -17,212 +17,186 @@ class TelegramMiniAppAuth
 {
     /**
      * Handle an incoming request.
-     *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $isTelegram = $request->userAgent() && str_contains($request->userAgent(), 'Telegram');
+        $isTelegram = $this->isTelegramRequest($request);
         
-        // Логируем все заголовки для диагностики
-        Log::info('TelegramMiniAppAuth: Processing request', [
+        // Логируем запрос для диагностики
+        Log::info('TelegramMiniAppAuth: Обработка запроса', [
             'url' => $request->url(),
             'path' => $request->path(),
-            'user_agent' => $request->userAgent(),
-            'is_authenticated' => Auth::check(),
-            'is_ajax' => $request->ajax(),
-            'is_inertia' => $request->header('X-Inertia'),
             'method' => $request->method(),
-            'accepts_html' => $request->accepts('text/html'),
-            'is_login_path' => $request->is('login'),
+            'user_agent' => $request->userAgent(),
             'is_telegram' => $isTelegram,
+            'is_authenticated' => Auth::check(),
             'session_id' => $request->session()->getId(),
-            'has_telegram_cookies' => $this->hasTelegramCookies($request)
         ]);
 
-        // НОВАЯ ЛОГИКА: Для Telegram WebApp сначала пытаемся восстановить по связанному telegram_id
-        if ($isTelegram && $request->is('login')) {
-            // Пытаемся найти пользователя по telegram_id в cookie
-            $telegramUser = $this->findUserByTelegramCookies($request);
-            
-            if ($telegramUser) {
-                Log::info('TelegramMiniAppAuth: Found linked Telegram user, logging in', [
-                    'user_id' => $telegramUser->id,
-                    'telegram_id' => $telegramUser->telegram_id
-                ]);
-                
-                // Принудительно настраиваем сессию для Telegram
-                $this->setupTelegramSession($request, $telegramUser);
-                
-                // Перенаправляем в ЛК
-                if ($request->ajax() || $request->header('X-Inertia')) {
-                    $response = $next($request);
-                    $response->headers->set('X-Telegram-Redirect', '/lk');
-                    return $response;
-                } else {
-                    return redirect('/lk');
-                }
-            }
+        // Только для Telegram WebApp
+        if (!$isTelegram) {
+            return $next($request);
         }
 
-        // Для Telegram пытаемся восстановить авторизацию из специальных куки
-        if ($isTelegram) {
-            $user = $this->restoreUserFromTelegramCookies($request);
+        // Шаг 1: Попытка восстановления из localStorage данных
+        if ($this->tryRestoreFromLocalStorage($request)) {
+            Log::info('TelegramMiniAppAuth: Пользователь восстановлен из localStorage');
             
-            if ($user) {
-                Log::info('TelegramMiniAppAuth: Restoring user from Telegram cookie', [
-                    'user_id' => $user->id,
-                    'session_id_before' => $request->session()->getId()
-                ]);
-                
-                // Принудительно настраиваем сессию для Telegram
-                $this->setupTelegramSession($request, $user);
-                
-                Log::info('TelegramMiniAppAuth: User restored from cookie', [
-                    'user_id' => $user->id,
-                    'auth_check' => Auth::check(),
-                    'session_id_after' => $request->session()->getId()
-                ]);
-                
-                // Если это страница логина, перенаправляем
-                if ($request->is('login')) {
-                    if ($request->ajax() || $request->header('X-Inertia')) {
-                        Log::info('TelegramMiniAppAuth: Sending redirect header for restored AJAX user');
-                        $response = $next($request);
-                        $response->headers->set('X-Telegram-Redirect', '/lk');
-                        return $response;
-                    } else {
-                        Log::info('TelegramMiniAppAuth: Redirecting restored user from login page');
-                        return redirect('/lk');
-                    }
-                }
-                
-                return $next($request);
+            if ($request->is('login')) {
+                return $this->handleLoginPageRedirect($request, $next);
             }
+            
+            return $next($request);
         }
 
-        // Проверяем специальные заголовки с данными из localStorage
-        $telegramUserId = $request->header('X-Telegram-Auth-User-Id');
-        $telegramTimestamp = $request->header('X-Telegram-Auth-Timestamp');
-        
-        if ($telegramUserId && $telegramTimestamp && $isTelegram) {
-            // Проверяем, что данные не слишком старые (не более 24 часов)
-            $timestampDiff = time() - ($telegramTimestamp / 1000);
+        // Шаг 2: Попытка восстановления из Telegram cookies  
+        if ($this->tryRestoreFromTelegramCookies($request)) {
+            Log::info('TelegramMiniAppAuth: Пользователь восстановлен из Telegram cookies');
             
-            if ($timestampDiff < 86400) { // 24 часа
-                $user = User::find($telegramUserId);
-                
-                if ($user && $user->telegram_id) {
-                    Log::info('TelegramMiniAppAuth: Restoring user from localStorage data', [
-                        'user_id' => $user->id,
-                        'timestamp_diff' => $timestampDiff
-                    ]);
-                    
-                    // Принудительно настраиваем сессию для Telegram
-                    $this->setupTelegramSession($request, $user);
-                    
-                    // Если это страница логина, перенаправляем
-                    if ($request->is('login')) {
-                        if ($request->ajax() || $request->header('X-Inertia')) {
-                            $response = $next($request);
-                            $response->headers->set('X-Telegram-Redirect', '/lk');
-                            return $response;
-                        } else {
-                            return redirect('/lk');
-                        }
-                    }
-                    
-                    return $next($request);
-                }
-            } else {
-                Log::info('TelegramMiniAppAuth: localStorage data too old', ['timestamp_diff' => $timestampDiff]);
+            if ($request->is('login')) {
+                return $this->handleLoginPageRedirect($request, $next);
             }
+            
+            return $next($request);
         }
 
-        // Проверяем, пришли ли данные от Telegram Mini App
+        // Шаг 3: Попытка аутентификации через Telegram данные
         $telegramData = $this->extractTelegramData($request);
         
         if ($telegramData && $this->validateTelegramData($telegramData)) {
-            Log::info('Telegram Mini App data received', ['telegram_data' => $telegramData]);
+            Log::info('TelegramMiniAppAuth: Получены данные Telegram WebApp', [
+                'telegram_id' => $telegramData['id'],
+                'username' => $telegramData['username'] ?? 'N/A'
+            ]);
             
-            // Ищем пользователя по telegram_id
-            $user = User::where('telegram_id', $telegramData['id'])->first();
+            $user = $this->findOrCreateTelegramUser($telegramData, $request);
             
             if ($user) {
-                Log::info('Auto-login via Telegram Mini App', [
-                    'user_id' => $user->id, 
-                    'telegram_id' => $telegramData['id'],
-                    'user_name' => $user->name
-                ]);
-                
-                // Принудительно настраиваем сессию для Telegram
                 $this->setupTelegramSession($request, $user);
                 
-                // Логируем успешную авторизацию
-                Log::info('TelegramMiniAppAuth: User logged in successfully', [
+                Log::info('TelegramMiniAppAuth: Пользователь аутентифицирован', [
                     'user_id' => $user->id,
-                    'auth_check' => Auth::check(),
-                    'current_url' => $request->url(),
-                    'current_path' => $request->path(),
-                    'is_login_path' => $request->is('login'),
-                    'is_ajax' => $request->ajax(),
-                    'is_inertia' => $request->header('X-Inertia')
+                    'telegram_id' => $telegramData['id']
                 ]);
                 
-                // Если это страница логина, перенаправляем
                 if ($request->is('login')) {
-                    if ($request->ajax() || $request->header('X-Inertia')) {
-                        Log::info('TelegramMiniAppAuth: Sending redirect header for newly authenticated AJAX user');
-                        $response = $next($request);
-                        $response->headers->set('X-Telegram-Redirect', '/lk');
-                        return $response;
-                    } else {
-                        Log::info('TelegramMiniAppAuth: Redirecting newly authenticated user from login page');
-                        return redirect('/lk');
-                    }
-                }
-            } else {
-                Log::info('User not found for Telegram ID, creating new account', ['telegram_id' => $telegramData['id']]);
-                
-                // Автоматически создаем новый аккаунт и связываем с Telegram
-                $user = $this->createAndLinkTelegramUser($telegramData, $request);
-                
-                if ($user) {
-                    Log::info('Auto-created and linked Telegram user', [
-                        'user_id' => $user->id, 
-                        'telegram_id' => $telegramData['id'],
-                        'user_name' => $user->name
-                    ]);
-                    
-                    // Принудительно настраиваем сессию для Telegram
-                    $this->setupTelegramSession($request, $user);
-                    
-                    // Если это страница логина, перенаправляем
-                    if ($request->is('login')) {
-                        if ($request->ajax() || $request->header('X-Inertia')) {
-                            Log::info('TelegramMiniAppAuth: Sending redirect header for newly created AJAX user');
-                            $response = $next($request);
-                            $response->headers->set('X-Telegram-Redirect', '/lk');
-                            return $response;
-                        } else {
-                            Log::info('TelegramMiniAppAuth: Redirecting newly created user from login page');
-                            return redirect('/lk');
-                        }
-                    }
-                } else {
-                    Log::error('Failed to create and link Telegram user', ['telegram_data' => $telegramData]);
+                    return $this->handleLoginPageRedirect($request, $next);
                 }
             }
-        } else {
-            Log::info('TelegramMiniAppAuth: No valid Telegram data found', [
-                'has_telegram_data' => !is_null($telegramData),
-                'telegram_data' => $telegramData,
-                'is_telegram' => $isTelegram,
-                'user_agent' => $request->userAgent()
-            ]);
         }
 
         return $next($request);
+    }
+
+    /**
+     * Проверяем, является ли запрос от Telegram
+     */
+    private function isTelegramRequest(Request $request): bool
+    {
+        $userAgent = $request->userAgent();
+        
+        return $userAgent && (
+            str_contains($userAgent, 'Telegram') ||
+            $request->hasHeader('X-Telegram-Init-Data') ||
+            $request->hasHeader('X-Telegram-Auth-User-Id') ||
+            $this->hasTelegramCookies($request)
+        );
+    }
+
+    /**
+     * Попытка восстановления из localStorage данных
+     */
+    private function tryRestoreFromLocalStorage(Request $request): bool
+    {
+        $telegramUserId = $request->header('X-Telegram-Auth-User-Id');
+        $telegramTimestamp = $request->header('X-Telegram-Auth-Timestamp');
+        
+        if (!$telegramUserId || !$telegramTimestamp) {
+            return false;
+        }
+
+        // Проверяем, что данные не старше 24 часов
+        $timestampDiff = time() - ($telegramTimestamp / 1000);
+        
+        if ($timestampDiff >= 86400) { // 24 часа
+            Log::info('TelegramMiniAppAuth: localStorage данные слишком старые', [
+                'timestamp_diff' => $timestampDiff
+            ]);
+            return false;
+        }
+
+        $user = User::find($telegramUserId);
+        
+        if ($user && $user->telegram_id) {
+            Log::info('TelegramMiniAppAuth: Восстанавливаем пользователя из localStorage', [
+                'user_id' => $user->id,
+                'timestamp_diff' => $timestampDiff
+            ]);
+            
+            $this->setupTelegramSession($request, $user);
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Попытка восстановления из Telegram cookies
+     */
+    private function tryRestoreFromTelegramCookies(Request $request): bool
+    {
+        $user = $this->restoreUserFromTelegramCookies($request);
+        
+        if ($user) {
+            Log::info('TelegramMiniAppAuth: Восстанавливаем пользователя из Telegram cookies', [
+                'user_id' => $user->id
+            ]);
+            
+            $this->setupTelegramSession($request, $user);
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Обработка перенаправления со страницы логина
+     */
+    private function handleLoginPageRedirect(Request $request, Closure $next): Response
+    {
+        if ($request->ajax() || $request->header('X-Inertia')) {
+            Log::info('TelegramMiniAppAuth: Отправляем заголовок перенаправления для AJAX');
+            $response = $next($request);
+            $response->headers->set('X-Telegram-Redirect', '/lk');
+            return $response;
+        } else {
+            Log::info('TelegramMiniAppAuth: Перенаправляем пользователя в ЛК');
+            return redirect('/lk');
+        }
+    }
+
+    /**
+     * Найти или создать пользователя Telegram
+     */
+    private function findOrCreateTelegramUser(array $telegramData, Request $request): ?User
+    {
+        // Ищем существующего пользователя
+        $user = User::where('telegram_id', $telegramData['id'])->first();
+        
+        if ($user) {
+            Log::info('TelegramMiniAppAuth: Найден существующий пользователь', [
+                'user_id' => $user->id,
+                'telegram_id' => $telegramData['id']
+            ]);
+            return $user;
+        }
+
+        // Создаем нового пользователя
+        Log::info('TelegramMiniAppAuth: Создаем нового пользователя', [
+            'telegram_id' => $telegramData['id']
+        ]);
+        
+        return $this->createAndLinkTelegramUser($telegramData, $request);
     }
 
     /**
@@ -230,18 +204,15 @@ class TelegramMiniAppAuth
      */
     private function setupTelegramSession(Request $request, User $user): void
     {
-        // Принудительно авторизуем пользователя
+        // Авторизуем пользователя
         Auth::login($user, true); // remember = true
         
-        // Принудительно сохраняем сессию
+        // Сохраняем сессию
         $request->session()->save();
         
         // Создаем специальные куки для Telegram WebApp
         $cookieName = 'telegram_auth_user_' . $user->id;
         $cookieValue = $user->id;
-        $cookieLifetime = config('session.lifetime', 1440); // Используем увеличенное время или 24 часа по умолчанию
-        
-        // Для Telegram устанавливаем еще больший срок - 7 дней
         $telegramCookieLifetime = 7 * 24 * 60; // 7 дней в минутах
         
         // Создаем куки с правильными параметрами для Telegram WebApp
@@ -257,27 +228,12 @@ class TelegramMiniAppAuth
             'none' // sameSite - none для работы в iframe Telegram
         );
         
-        // Добавляем куки к ответу
         cookie()->queue($cookie);
         
-        // Также устанавливаем через заголовки
-        $cookieHeader = sprintf(
-            '%s=%s; Max-Age=%d; Path=/; Secure; SameSite=None',
-            $cookieName,
-            $cookieValue,
-            $telegramCookieLifetime * 60 // конвертируем в секунды
-        );
-        
-        // Принудительно сохраняем в response headers
-        if (app()->bound('response')) {
-            app('response')->headers->set('Set-Cookie', $cookieHeader, false);
-        }
-        
-        Log::info('TelegramMiniAppAuth: Telegram session setup completed', [
+        Log::info('TelegramMiniAppAuth: Сессия Telegram настроена', [
             'user_id' => $user->id,
             'session_id' => $request->session()->getId(),
             'cookie_name' => $cookieName,
-            'cookie_lifetime_minutes' => $telegramCookieLifetime,
             'auth_check' => Auth::check()
         ]);
     }
@@ -296,11 +252,7 @@ class TelegramMiniAppAuth
             $userId = $telegramCookies->first();
             $user = User::find($userId);
             
-            if ($user) {
-                Log::info('TelegramMiniAppAuth: Found user in Telegram cookies', [
-                    'user_id' => $user->id,
-                    'cookies_found' => $telegramCookies->keys()->toArray()
-                ]);
+            if ($user && $user->telegram_id) {
                 return $user;
             }
         }
@@ -313,59 +265,31 @@ class TelegramMiniAppAuth
      */
     private function extractTelegramData(Request $request): ?array
     {
-        // Проверяем различные источники данных Telegram WebApp
+        // Проверяем различные источники данных
         $telegramInitData = $request->header('X-Telegram-Init-Data') 
             ?? $request->query('tgWebAppData') 
             ?? $request->input('tgWebAppData')
             ?? $request->input('init_data')
             ?? $request->input('telegram_init_data');
 
-        Log::info('TelegramMiniAppAuth: Extracting Telegram data', [
-            'header_data' => $request->header('X-Telegram-Init-Data'),
-            'query_data' => $request->query('tgWebAppData'),
-            'input_data' => $request->input('tgWebAppData'),
-            'init_data_input' => $request->input('init_data'),
-            'telegram_init_data_input' => $request->input('telegram_init_data'),
-            'final_data' => $telegramInitData ? 'present' : 'null',
-            'method' => $request->method(),
-            'content_type' => $request->header('Content-Type'),
-            'all_headers' => $request->headers->all()
-        ]);
-
-        if (!$telegramInitData) {
-            // Пытаемся извлечь из raw input если это POST запрос
-            if ($request->isMethod('POST') && $request->getContent()) {
-                $rawContent = $request->getContent();
-                
-                try {
-                    $jsonData = json_decode($rawContent, true);
-                    if ($jsonData && isset($jsonData['init_data'])) {
-                        $telegramInitData = $jsonData['init_data'];
-                        Log::info('TelegramMiniAppAuth: Found init_data in JSON body', [
-                            'init_data' => $telegramInitData ? 'present' : 'null'
-                        ]);
-                    } elseif ($jsonData && isset($jsonData['tgWebAppData'])) {
-                        $telegramInitData = $jsonData['tgWebAppData'];
-                        Log::info('TelegramMiniAppAuth: Found tgWebAppData in JSON body', [
-                            'tgWebAppData' => $telegramInitData ? 'present' : 'null'
-                        ]);
-                    } elseif ($jsonData && isset($jsonData['telegram_init_data'])) {
-                        $telegramInitData = $jsonData['telegram_init_data'];
-                        Log::info('TelegramMiniAppAuth: Found telegram_init_data in JSON body', [
-                            'telegram_init_data' => $telegramInitData ? 'present' : 'null'
-                        ]);
-                    }
-                } catch (\Exception $e) {
-                    Log::warning('TelegramMiniAppAuth: Failed to parse JSON body', [
-                        'error' => $e->getMessage(),
-                        'raw_content' => substr($rawContent, 0, 200) // Первые 200 символов для отладки
-                    ]);
+        // Если это POST запрос, проверяем raw content
+        if (!$telegramInitData && $request->isMethod('POST') && $request->getContent()) {
+            try {
+                $jsonData = json_decode($request->getContent(), true);
+                if ($jsonData) {
+                    $telegramInitData = $jsonData['init_data'] 
+                        ?? $jsonData['tgWebAppData'] 
+                        ?? $jsonData['telegram_init_data'] 
+                        ?? null;
                 }
+            } catch (\Exception $e) {
+                Log::warning('TelegramMiniAppAuth: Ошибка парсинга JSON', [
+                    'error' => $e->getMessage()
+                ]);
             }
         }
 
         if (!$telegramInitData) {
-            Log::info('TelegramMiniAppAuth: No Telegram init data found in any source');
             return null;
         }
 
@@ -373,28 +297,16 @@ class TelegramMiniAppAuth
             // Парсим данные
             parse_str($telegramInitData, $data);
             
-            Log::info('TelegramMiniAppAuth: Parsed Telegram init data', [
-                'parsed_data_keys' => array_keys($data),
-                'has_user' => isset($data['user']),
-                'has_auth_date' => isset($data['auth_date']),
-                'has_hash' => isset($data['hash'])
-            ]);
-            
             if (isset($data['user'])) {
                 $userData = json_decode($data['user'], true);
-                Log::info('TelegramMiniAppAuth: Decoded user data', [
-                    'user_data' => $userData,
-                    'user_id' => $userData['id'] ?? 'missing'
-                ]);
                 
                 if ($userData && isset($userData['id'])) {
                     return $userData;
                 }
             }
         } catch (\Exception $e) {
-            Log::warning('TelegramMiniAppAuth: Failed to parse Telegram init data', [
-                'error' => $e->getMessage(),
-                'raw_data' => substr($telegramInitData, 0, 200) // Первые 200 символов для отладки
+            Log::warning('TelegramMiniAppAuth: Ошибка парсинга Telegram данных', [
+                'error' => $e->getMessage()
             ]);
         }
 
@@ -406,24 +318,33 @@ class TelegramMiniAppAuth
      */
     private function validateTelegramData(array $telegramData): bool
     {
-        // Базовая проверка наличия обязательных полей
-        $isValid = isset($telegramData['id']) && isset($telegramData['first_name']) && is_numeric($telegramData['id']);
-        
-        Log::info('TelegramMiniAppAuth: Validating Telegram data', [
-            'data' => $telegramData,
-            'is_valid' => $isValid
-        ]);
-
-        return $isValid;
+        return isset($telegramData['id']) 
+            && isset($telegramData['first_name']) 
+            && is_numeric($telegramData['id']);
     }
 
     /**
      * Автоматически создать новый аккаунт и связать с Telegram
      */
-    private function createAndLinkTelegramUser(array $telegramData, Request $request = null): ?User
+    private function createAndLinkTelegramUser(array $telegramData, Request $request): ?User
     {
         try {
-            // Формируем имя пользователя из Telegram данных
+            // Проверяем перенос документов от временного пользователя
+            $autoAuthToken = $this->extractAutoAuthToken($request);
+            $tempUser = null;
+            
+            if ($autoAuthToken) {
+                $tempUser = User::where('auth_token', $autoAuthToken)->first();
+                
+                if ($tempUser && (str_ends_with($tempUser->email, '@auto.user'))) {
+                    Log::info('TelegramMiniAppAuth: Найден временный пользователь для переноса', [
+                        'temp_user_id' => $tempUser->id,
+                        'documents_count' => $tempUser->documents()->count()
+                    ]);
+                }
+            }
+
+            // Формируем данные пользователя
             $firstName = $telegramData['first_name'] ?? 'Пользователь';
             $lastName = $telegramData['last_name'] ?? '';
             $userName = trim($firstName . ' ' . $lastName);
@@ -431,11 +352,11 @@ class TelegramMiniAppAuth
             // Создаем нового пользователя
             $user = User::create([
                 'name' => $userName,
-                'email' => Str::random(10) . '@auto.user', // Автогенерированный email
-                'password' => Hash::make(Str::random(16)), // Случайный пароль
-                'auth_token' => Str::random(32), // Токен для автовхода
-                'role_id' => UserRole::USER, // Обычный пользователь
-                'status' => 1, // Активный статус
+                'email' => Str::random(10) . '@auto.user',
+                'password' => Hash::make(Str::random(16)),
+                'auth_token' => Str::random(32),
+                'role_id' => UserRole::USER,
+                'status' => 1,
                 'telegram_id' => $telegramData['id'],
                 'telegram_username' => $telegramData['username'] ?? null,
                 'telegram_linked_at' => now(),
@@ -447,32 +368,38 @@ class TelegramMiniAppAuth
                         'last_name' => $lastName,
                         'language_code' => $telegramData['language_code'] ?? null,
                         'is_premium' => $telegramData['is_premium'] ?? false,
-                        'auto_created' => true, // Флаг автоматического создания
+                        'auto_created' => true,
                         'created_at' => now()->toISOString(),
                     ]
                 ],
                 'settings' => [],
                 'statistics' => []
             ]);
-            
-            Log::info('Successfully created new Telegram user', [
+
+            // Переносим документы от временного пользователя
+            if ($tempUser && $user) {
+                $transferService = new DocumentTransferService();
+                $transferResult = $transferService->transferDocuments($tempUser, $user);
+                
+                Log::info('TelegramMiniAppAuth: Перенос документов завершен', [
+                    'from_user_id' => $tempUser->id,
+                    'to_user_id' => $user->id,
+                    'transfer_result' => $transferResult
+                ]);
+            }
+
+            Log::info('TelegramMiniAppAuth: Создан новый пользователь Telegram', [
                 'user_id' => $user->id,
                 'telegram_id' => $telegramData['id'],
-                'name' => $userName,
-                'email' => $user->email,
-                'telegram_username' => $telegramData['username'] ?? null
+                'has_transferred_docs' => !is_null($tempUser)
             ]);
-            
-            // Проверяем наличие предыдущего временного пользователя для переноса документов
-            $this->transferDocumentsFromTempUser($user, $request);
-            
+
             return $user;
             
         } catch (\Exception $e) {
-            Log::error('Failed to create Telegram user', [
-                'telegram_data' => $telegramData,
+            Log::error('TelegramMiniAppAuth: Ошибка создания пользователя', [
                 'error' => $e->getMessage(),
-                'stack' => $e->getTraceAsString()
+                'telegram_data' => $telegramData
             ]);
             
             return null;
@@ -480,113 +407,32 @@ class TelegramMiniAppAuth
     }
 
     /**
-     * Перенести документы от временного пользователя к новому авторизованному
+     * Извлечение токена временного пользователя
      */
-    private function transferDocumentsFromTempUser(User $newUser, Request $request = null): void
+    private function extractAutoAuthToken(Request $request): ?string
     {
-        if (!$request) {
-            Log::info('Запрос не передан, пропускаем перенос документов');
-            return;
-        }
-
-        try {
-            $transferService = new DocumentTransferService();
-            
-            // Проверяем разные источники для получения токена предыдущего пользователя
-            $tempAuthToken = $this->getTempUserToken($request);
-            
-            if (!$tempAuthToken) {
-                Log::info('Токен временного пользователя не найден');
-                return;
-            }
-            
-            // Ищем временного пользователя по токену
-            $tempUser = $transferService->findTempUserByAuthToken($tempAuthToken);
-            
-            if (!$tempUser) {
-                Log::info('Временный пользователь не найден по токену', [
-                    'token' => substr($tempAuthToken, 0, 8) . '...' // Логируем только часть токена
-                ]);
-                return;
-            }
-            
-            Log::info('Найден временный пользователь для переноса документов', [
-                'temp_user_id' => $tempUser->id,
-                'temp_user_email' => $tempUser->email,
-                'new_user_id' => $newUser->id,
-                'new_user_email' => $newUser->email
-            ]);
-            
-            // Переносим документы
-            $result = $transferService->transferDocuments($tempUser, $newUser);
-            
-            if ($result['success'] && $result['transferred_count'] > 0) {
-                Log::info('Документы успешно перенесены от временного пользователя', [
-                    'temp_user_id' => $tempUser->id,
-                    'new_user_id' => $newUser->id,
-                    'transferred_count' => $result['transferred_count']
-                ]);
-                
-                // Опционально удаляем временного пользователя (осторожно!)
-                // $transferService->deleteTempUser($tempUser);
-            } else {
-                Log::info('Перенос документов не потребовался', [
-                    'temp_user_id' => $tempUser->id,
-                    'new_user_id' => $newUser->id,
-                    'result' => $result
-                ]);
-            }
-            
-        } catch (\Exception $e) {
-            Log::error('Ошибка при переносе документов от временного пользователя', [
-                'new_user_id' => $newUser->id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-        }
-    }
-
-    /**
-     * Получить токен временного пользователя из различных источников
-     */
-    private function getTempUserToken(Request $request): ?string
-    {
-        // 1. Проверяем заголовок X-Auth-Token
-        $token = $request->header('X-Auth-Token');
+        // Проверяем заголовки
+        $token = $request->header('X-Auth-Token') 
+            ?? $request->header('X-Auto-Auth-Token')
+            ?? $request->cookie('auth_token');
+        
         if ($token) {
-            Log::info('Найден токен в заголовке X-Auth-Token');
             return $token;
         }
         
-        // 2. Проверяем заголовок X-Auto-Auth-Token  
-        $token = $request->header('X-Auto-Auth-Token');
-        if ($token) {
-            Log::info('Найден токен в заголовке X-Auto-Auth-Token');
-            return $token;
-        }
-        
-        // 3. Проверяем куки auth_token
-        $token = $request->cookie('auth_token');
-        if ($token) {
-            Log::info('Найден токен в куки auth_token');
-            return $token;
-        }
-        
-        // 4. Проверяем сессию (если есть текущий авторизованный пользователь)
+        // Проверяем текущего авторизованного пользователя
         if (Auth::check()) {
             $currentUser = Auth::user();
-            if ($currentUser && $currentUser->auth_token && (str_ends_with($currentUser->email, '@auto.user') || str_ends_with($currentUser->email, '@linked.user'))) {
-                Log::info('Найден токен текущего временного пользователя в сессии');
+            if ($currentUser && $currentUser->auth_token && str_ends_with($currentUser->email, '@auto.user')) {
                 return $currentUser->auth_token;
             }
         }
         
-        Log::info('Токен временного пользователя не найден ни в одном источнике');
         return null;
     }
 
     /**
-     * Проверяем наличие пользователя в Telegram cookies
+     * Проверяем наличие Telegram cookies
      */
     private function hasTelegramCookies(Request $request): bool
     {
@@ -596,32 +442,5 @@ class TelegramMiniAppAuth
             });
         
         return $telegramCookies->isNotEmpty();
-    }
-
-    /**
-     * Найти пользователя по telegram_id в Telegram cookies
-     */
-    private function findUserByTelegramCookies(Request $request): ?User
-    {
-        $telegramCookies = collect($request->cookies->all())
-            ->filter(function ($value, $key) {
-                return str_starts_with($key, 'telegram_auth_user_');
-            });
-        
-        if ($telegramCookies->isNotEmpty()) {
-            $userId = $telegramCookies->first();
-            $user = User::find($userId);
-            
-            if ($user && $user->telegram_id) {
-                Log::info('TelegramMiniAppAuth: Found user in Telegram cookies', [
-                    'user_id' => $user->id,
-                    'telegram_id' => $user->telegram_id,
-                    'cookies_found' => $telegramCookies->keys()->toArray()
-                ]);
-                return $user;
-            }
-        }
-        
-        return null;
     }
 }
