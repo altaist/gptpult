@@ -388,10 +388,10 @@ class PaymentController extends Controller
                 ]);
                 
                 $redirectRoute = $order->document_id 
-                    ? route('documents.show', $order->document_id)
-                    : route('dashboard');
-                    
-                return redirect($redirectRoute)
+                ? route('documents.show', $order->document_id)
+                : route('dashboard');
+
+            return redirect($redirectRoute)
                     ->with('warning', 'Платеж обрабатывается. Проверьте статус через несколько минут.');
             }
 
