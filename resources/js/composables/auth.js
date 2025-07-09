@@ -311,6 +311,7 @@ export const getTwaUser = () => {
 
 // Определить, нужно ли показывать кнопку выхода (с дополнительными данными)
 export const shouldShowLogoutButtonWithData = (documentsCount = 0, balance = 0) => {
+    return true;
     if (!isAuthenticated.value) {
         return false;
     }
