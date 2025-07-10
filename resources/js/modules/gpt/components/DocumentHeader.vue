@@ -805,7 +805,7 @@ const getDocumentDisplayTitle = () => {
     
     .edit-dialog-actions {
         padding: 20px 24px;
-        flex-direction: column;
+        flex-direction: column-reverse;
     }
     
     .cancel-btn,

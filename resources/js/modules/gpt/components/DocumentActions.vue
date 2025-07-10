@@ -127,24 +127,20 @@
             </div>
         </div>
 
-        <!-- Кнопка запуска полной генерации -->
-        <div v-if="canStartFullGeneration && !canPay" class="action-card">            
-            <div class="action-item">
-                <div class="action-info">
-                    <h4 class="action-name">Завершить создание</h4>
-                    <p class="action-description">Создать полное содержание документа с деталями</p>
-                </div>
-                <q-btn
-                    label="Создать"
-                    color="primary"
-                    size="lg"
-                    :loading="isStartingFullGeneration"
-                    @click="$emit('start-full-generation')"
-                    class="action-btn primary-btn"
-                    unelevated
-                    no-caps
-                />
-            </div>
+        <!-- Кнопка запуска полной генерации в стиле "Действия с документом" -->
+        <div v-if="canStartFullGeneration && !canPay" class="generation-action-container">            
+            <q-btn 
+                class="generate-btn action-generate-btn"
+                unelevated
+                rounded
+                size="lg"
+                no-caps
+                :loading="isStartingFullGeneration"
+                @click="$emit('start-full-generation')"
+            >
+                <q-icon name="auto_awesome" class="btn-icon" />
+                <span>Сгенерировать</span>
+            </q-btn>
 
             <!-- Компактная информация о стоимости -->
             <div class="cost-info">
@@ -894,6 +890,21 @@ const getGenerationsText = () => {
         font-size: 15px;
         border-radius: 14px;
     }
+
+    .generate-btn {
+        font-size: 12px;
+        padding: 6px 10px;
+        border-radius: 8px;
+    }
+
+    .generate-btn .btn-icon {
+        font-size: 12px;
+        margin-right: 4px;
+    }
+
+    .generation-action-container {
+        gap: 12px;
+    }
 }
 
 /* Стили для уведомления о территориальных ограничениях */
@@ -1137,5 +1148,40 @@ const getGenerationsText = () => {
 .last-generation {
     color: #ef4444;
     font-weight: 600;
+}
+
+/* Контейнер для кнопки генерации */
+.generation-action-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Стили кнопки в стиле "Действия с документом" */
+.generate-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 10px;
+    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+    transition: all 0.3s ease;
+    width: 100%;
+    padding: 8px 12px;
+}
+
+.generate-btn:hover {
+    background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    transform: translateY(-2px);
+}
+
+.generate-btn .btn-icon {
+    margin-right: 6px;
+    font-size: 14px;
+}
+
+.action-generate-btn {
+    justify-content: flex-start;
 }
 </style> 

@@ -173,8 +173,8 @@
                     />
                 </div>
 
-                <!-- Кнопка для мобильных -->
-                <div class="mobile-button-container mobile-only">
+                <!-- Кнопка для мобильных (только при необходимости оплаты) -->
+                <div v-if="canPay" class="mobile-button-container mobile-only">
                     <q-btn 
                         class="generate-btn mobile-btn"
                         unelevated
@@ -184,8 +184,26 @@
                         @click="showActionsModal = true"
                     >
                         <q-icon name="auto_awesome" class="btn-icon" />
-                        <span>Действия с документом</span>
+                        <span>Сгенерировать</span>
                     </q-btn>
+                </div>
+
+                <!-- Блок действий для мобильных (когда оплата не нужна) -->
+                <div v-else class="mobile-actions-container mobile-only">
+                    <DocumentActions 
+                        :document="currentDocument"
+                        :balance="balance"
+                        :order-price="orderPrice"
+                        :can-start-full-generation="getCanStartFullGeneration()"
+                        :is-full-generation-complete="getIsFullGenerationComplete()"
+                        :is-generating="getIsGenerating()"
+                        :is-starting-full-generation="isStartingFullGeneration"
+                        :is-downloading="isDownloading"
+                        :user="user"
+                        @start-full-generation="startFullGeneration"
+                        @download-word="downloadWord"
+                        @retry-generation="retryGeneration"
+                    />
                 </div>
 
                 <!-- Основной контент -->
@@ -208,8 +226,8 @@
                         </div>
                     </div>
 
-                    <!-- Правая колонка с кнопкой действий (только на десктопе) -->
-                    <div class="actions-column desktop-only">
+                    <!-- Правая колонка с кнопкой действий (только на десктопе, только при необходимости оплаты) -->
+                    <div v-if="canPay" class="actions-column desktop-only">
                         <q-btn 
                             class="generate-btn desktop-btn"
                             unelevated
@@ -219,8 +237,26 @@
                             @click="showActionsModal = true"
                         >
                             <q-icon name="auto_awesome" class="btn-icon" />
-                            <span>Действия с документом</span>
+                            <span>Сгенерировать</span>
                         </q-btn>
+                    </div>
+
+                    <!-- Правая колонка с блоком действий (только на десктопе, когда оплата не нужна) -->
+                    <div v-else class="actions-column desktop-only">
+                        <DocumentActions 
+                            :document="currentDocument"
+                            :balance="balance"
+                            :order-price="orderPrice"
+                            :can-start-full-generation="getCanStartFullGeneration()"
+                            :is-full-generation-complete="getIsFullGenerationComplete()"
+                            :is-generating="getIsGenerating()"
+                            :is-starting-full-generation="isStartingFullGeneration"
+                            :is-downloading="isDownloading"
+                            :user="user"
+                            @start-full-generation="startFullGeneration"
+                            @download-word="downloadWord"
+                            @retry-generation="retryGeneration"
+                        />
                     </div>
                 </div>
             </template>
@@ -231,7 +267,7 @@
     <q-dialog v-model="showActionsModal">
         <q-card class="actions-modal-card">
             <q-card-section class="modal-header">
-                <div class="modal-title">Действия с документом</div>
+                <div class="modal-title">Сгенерировать</div>
                 <q-btn 
                     flat 
                     round 
@@ -1771,7 +1807,7 @@ const showActionsModal = ref(false);
 /* Основной контент */
 .main-content {
     display: grid;
-    grid-template-columns: 1fr 300px;
+    grid-template-columns: 3fr 2fr;
     gap: 32px;
     align-items: start;
 }
@@ -2012,7 +2048,7 @@ const showActionsModal = ref(false);
 /* Адаптивность */
 @media (max-width: 1200px) {
     .main-content {
-        grid-template-columns: 1fr 280px;
+        grid-template-columns: 3fr 2fr;
         gap: 24px;
     }
     
@@ -2031,6 +2067,13 @@ const showActionsModal = ref(false);
     
     .dashboard-btn .q-icon {
         font-size: 16px;
+    }
+}
+
+@media (max-width: 1100px) {
+    .main-content {
+        grid-template-columns: 3fr 2fr;
+        gap: 20px;
     }
 }
 
@@ -2102,6 +2145,11 @@ const showActionsModal = ref(false);
     
     .mobile-btn .btn-icon {
         font-size: 18px;
+    }
+    
+    .mobile-actions-container {
+        padding: 16px;
+        border-radius: 16px;
     }
     
     /* Адаптация секции заголовка */
@@ -2246,6 +2294,11 @@ const showActionsModal = ref(false);
         margin-bottom: 20px;
     }
     
+    .mobile-actions-container {
+        padding: 14px;
+        border-radius: 14px;
+    }
+    
     .dashboard-btn {
         padding: 8px 12px;
         font-size: 11px;
@@ -2311,6 +2364,11 @@ const showActionsModal = ref(false);
     
     .modern-container {
         padding: 16px 8px;
+    }
+    
+    .mobile-actions-container {
+        padding: 12px;
+        border-radius: 12px;
     }
     
     /* Кнопка возврата на мобильных */
@@ -2907,6 +2965,17 @@ const showActionsModal = ref(false);
 .mobile-button-container {
     margin-top: 10px;
     margin-bottom: 10px;
+}
+
+/* Контейнер для мобильных действий */
+.mobile-actions-container {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid #f1f5f9;
 }
 
 /* Правая колонка с действиями */

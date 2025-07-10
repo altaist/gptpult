@@ -799,7 +799,7 @@ const authTelegram = async () => {
                         <div class="balance-content">
                             <div class="balance-info">
                                 <div class="balance-amount">
-                                    {{ balance?.toLocaleString('ru-RU') || '0' }} ₽
+                                    {{ Math.floor(balance || 0).toLocaleString('ru-RU') }} ₽
                                 </div>
                                 <div class="generations-info">
                                     {{ remainingGenerations }} {{ remainingGenerations === 1 ? 'генерация' : remainingGenerations >= 2 && remainingGenerations <= 4 ? 'генерации' : 'генераций' }}
@@ -906,14 +906,14 @@ const authTelegram = async () => {
                         <div class="card-header">
                             <div class="card-title">
                                 <q-icon name="description" class="card-icon" />
-                                Мои документы
+                                Мои работы
                             </div>
                         </div>
 
                         <div v-if="sortedDocuments.length === 0" class="empty-state">
                             <q-icon name="description" class="empty-icon" />
-                            <div class="empty-title">Нет документов</div>
-                            <div class="empty-subtitle">Создайте свой первый документ</div>
+                            <div class="empty-title">Нет работ</div>
+                            <div class="empty-subtitle">Создай свою первую работу</div>
                         </div>
 
                         <div v-else class="documents-list">

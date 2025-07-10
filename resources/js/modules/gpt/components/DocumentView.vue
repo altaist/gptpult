@@ -879,7 +879,7 @@ function handleReferencesUpdated(newReferences) {
     
     .edit-dialog-actions {
         padding: 16px 20px;
-        flex-direction: column;
+        flex-direction: column-reverse;
     }
     
     .cancel-btn,
