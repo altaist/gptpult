@@ -173,6 +173,21 @@
                     />
                 </div>
 
+                <!-- Кнопка для мобильных -->
+                <div class="mobile-button-container mobile-only">
+                    <q-btn 
+                        class="generate-btn mobile-btn"
+                        unelevated
+                        rounded
+                        size="lg"
+                        no-caps
+                        @click="showActionsModal = true"
+                    >
+                        <q-icon name="auto_awesome" class="btn-icon" />
+                        <span>Действия с документом</span>
+                    </q-btn>
+                </div>
+
                 <!-- Основной контент -->
                 <div class="main-content">
                     <!-- Левая колонка с документом -->
@@ -193,25 +208,58 @@
                         </div>
                     </div>
 
-                    <!-- Правая колонка с действиями -->
-                    <DocumentActions
-                        :document="currentDocument"
-                        :balance="balance"
-                        :order-price="orderPrice"
-                        :can-start-full-generation="getCanStartFullGeneration()"
-                        :is-full-generation-complete="getIsFullGenerationComplete()"
-                        :is-generating="getIsGenerating()"
-                        :is-starting-full-generation="isStartingFullGeneration"
-                        :is-downloading="isDownloading"
-                        :user="user"
-                        @start-full-generation="startFullGeneration"
-                        @download-word="downloadWord"
-                        @retry-generation="retryGeneration"
-                    />
+                    <!-- Правая колонка с кнопкой действий (только на десктопе) -->
+                    <div class="actions-column desktop-only">
+                        <q-btn 
+                            class="generate-btn desktop-btn"
+                            unelevated
+                            rounded
+                            size="lg"
+                            no-caps
+                            @click="showActionsModal = true"
+                        >
+                            <q-icon name="auto_awesome" class="btn-icon" />
+                            <span>Действия с документом</span>
+                        </q-btn>
+                    </div>
                 </div>
             </template>
         </div>
     </page-layout>
+
+    <!-- Модальное окно с блоком действий -->
+    <q-dialog v-model="showActionsModal">
+        <q-card class="actions-modal-card">
+            <q-card-section class="modal-header">
+                <div class="modal-title">Действия с документом</div>
+                <q-btn 
+                    flat 
+                    round 
+                    dense 
+                    icon="close" 
+                    @click="showActionsModal = false"
+                    class="modal-close-btn"
+                />
+            </q-card-section>
+            
+            <q-card-section class="modal-content">
+                <DocumentActions 
+                    :document="currentDocument"
+                    :balance="balance"
+                    :order-price="orderPrice"
+                    :can-start-full-generation="getCanStartFullGeneration()"
+                    :is-full-generation-complete="getIsFullGenerationComplete()"
+                    :is-generating="getIsGenerating()"
+                    :is-starting-full-generation="isStartingFullGeneration"
+                    :is-downloading="isDownloading"
+                    :user="user"
+                    @start-full-generation="startFullGeneration"
+                    @download-word="downloadWord"
+                    @retry-generation="retryGeneration"
+                />
+            </q-card-section>
+        </q-card>
+    </q-dialog>
 </template>
 
 <script setup>
@@ -1213,6 +1261,8 @@ const getEstimatedTime = () => {
 const goToDashboard = () => {
     router.visit('/lk');
 };
+
+const showActionsModal = ref(false);
 </script>
 
 <style scoped>
@@ -1221,7 +1271,7 @@ const goToDashboard = () => {
     display: flex;
     flex-direction: column;
     gap: 16px;
-    margin-bottom: 32px;
+    margin-bottom: 0px;
 }
 
 .back-to-dashboard {
@@ -1721,7 +1771,7 @@ const goToDashboard = () => {
 /* Основной контент */
 .main-content {
     display: grid;
-    grid-template-columns: 1fr 400px;
+    grid-template-columns: 1fr 300px;
     gap: 32px;
     align-items: start;
 }
@@ -1962,7 +2012,7 @@ const goToDashboard = () => {
 /* Адаптивность */
 @media (max-width: 1200px) {
     .main-content {
-        grid-template-columns: 1fr 350px;
+        grid-template-columns: 1fr 280px;
         gap: 24px;
     }
     
@@ -1986,13 +2036,9 @@ const goToDashboard = () => {
 
 @media (max-width: 1024px) {
     .main-content {
-        grid-template-columns: 1fr;
-        gap: 24px;
-    }
-    
-    .actions-column {
-        position: static;
-        order: -1;
+        display: flex;
+        flex-direction: column;
+        gap: 0px;
     }
     
     .document-header {
@@ -2025,7 +2071,7 @@ const goToDashboard = () => {
     
     .header-section {
         gap: 14px;
-        margin-bottom: 28px;
+        margin-bottom: 0px;
     }
     
     .dashboard-btn {
@@ -2037,6 +2083,10 @@ const goToDashboard = () => {
     .dashboard-btn .q-icon {
         font-size: 16px;
     }
+    
+    .actions-modal-card {
+        max-width: 95vw;
+    }
 }
 
 @media (max-width: 768px) {
@@ -2044,10 +2094,20 @@ const goToDashboard = () => {
         padding: 20px 16px;
     }
     
+    .mobile-btn {
+        width: 100%;
+        font-size: 15px;
+        padding: 10px 20px;
+    }
+    
+    .mobile-btn .btn-icon {
+        font-size: 18px;
+    }
+    
     /* Адаптация секции заголовка */
     .header-section {
         gap: 12px;
-        margin-bottom: 24px;
+        margin-bottom: 0px;
     }
     
     .back-to-dashboard {
@@ -2256,7 +2316,7 @@ const goToDashboard = () => {
     /* Кнопка возврата на мобильных */
     .header-section {
         gap: 8px;
-        margin-bottom: 16px;
+        margin-bottom: 0px;
     }
     
     .dashboard-btn {
@@ -2390,7 +2450,7 @@ const goToDashboard = () => {
     
     .header-section {
         gap: 6px;
-        margin-bottom: 12px;
+        margin-bottom: 0px;
     }
     
     .dashboard-btn {
@@ -2822,5 +2882,129 @@ const goToDashboard = () => {
 .hint-icon {
     font-size: 18px;
     color: #f59e0b;
+}
+
+/* Адаптивная видимость */
+.desktop-only {
+    display: block;
+}
+
+.mobile-only {
+    display: none;
+}
+
+@media (max-width: 1024px) {
+    .desktop-only {
+        display: none !important;
+    }
+    
+    .mobile-only {
+        display: block !important;
+    }
+}
+
+/* Контейнер для мобильной кнопки */
+.mobile-button-container {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+/* Правая колонка с действиями */
+.actions-column {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    position: sticky;
+    top: 100px;
+}
+
+/* Общие стили кнопки */
+.generate-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+    transition: all 0.3s ease;
+}
+
+.generate-btn:hover {
+    background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    transform: translateY(-2px);
+}
+
+.generate-btn .btn-icon {
+    margin-right: 8px;
+    font-size: 20px;
+}
+
+/* Стили для мобильной кнопки */
+.mobile-btn {
+    padding: 12px 24px;
+    width: 100%;
+}
+
+/* Стили для десктопной кнопки */
+.desktop-btn {
+    padding: 14px 18px;
+    width: 100%;
+    justify-content: flex-start;
+}
+
+/* Модальное окно */
+.actions-modal-card {
+    width: 600px;
+    max-width: 90vw;
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+}
+
+.modal-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.modal-close-btn {
+    color: white;
+    background: rgba(255, 255, 255, 0.1);
+    transition: all 0.2s ease;
+}
+
+.modal-close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.modal-content {
+    padding: 0;
+    background: #f8fafc;
+}
+
+@media (max-width: 1024px) {
+    /* Равные отступы сверху и снизу от кнопки */
+    .document-header {
+        margin-bottom: 10px;
+    }
+    
+    .mobile-button-container {
+        margin-top: 0;
+        margin-bottom: 10px;
+    }
+    
+    /* Отступ между кнопкой и контентом */
+    .main-content {
+        gap: 10px;
+    }
 }
 </style> 

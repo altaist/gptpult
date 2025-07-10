@@ -226,7 +226,7 @@ const error = ref('');
 const form = ref({
     document_type_id: null,
     topic: '',
-    pages_num: 4
+    pages_num: 6
 });
 
 const showMobileHint = ref(false);

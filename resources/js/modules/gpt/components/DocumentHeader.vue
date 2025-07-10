@@ -19,31 +19,54 @@
                 
                 <!-- Информация о документе -->
                 <div class="document-details">
-                    <div class="detail-item">
-                        <q-icon name="description" class="detail-icon" />
-                        <span class="detail-value">{{ document?.document_type?.name || 'Не указан' }}</span>
-                    </div>
-                    
-                    <div v-if="document?.pages_num" class="detail-item">
-                        <q-icon name="article" class="detail-icon" />
-                        <span class="detail-value">{{ document.pages_num }} страниц</span>
+                    <!-- Десктопная версия: все в одном ряду -->
+                    <div class="desktop-details">
+                        <div class="detail-item">
+                            <q-icon name="description" class="detail-icon" />
+                            <span class="detail-value">{{ document?.document_type?.name || 'Не указан' }}</span>
+                        </div>
+                        
+                        <div v-if="document?.pages_num" class="detail-item">
+                            <q-icon name="article" class="detail-icon" />
+                            <span class="detail-value">{{ document.pages_num }} страниц</span>
+                        </div>
+
+                        <div class="detail-item">
+                            <q-icon name="schedule" class="detail-icon" />
+                            <span class="detail-value">{{ formatCreatedDate() }}</span>
+                        </div>
+
+                        <div :class="['detail-item', 'status-item', getStatusClass()]">
+                            <span class="detail-value status-text-inline">{{ getDisplayStatusText() }}</span>
+                        </div>
                     </div>
 
-                    <div class="detail-item">
-                        <q-icon name="schedule" class="detail-icon" />
-                        <span class="detail-value">{{ formatCreatedDate() }}</span>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Современный статус блок -->
-            <div class="status-section">
-                <div class="status-card">
-                    <div class="status-header">
-                        <span class="status-label">Статус</span>
-                    </div>
-                    <div class="status-content">
-                        <span class="status-text">{{ getDisplayStatusText() }}</span>
+                    <!-- Мобильная версия: два ряда -->
+                    <div class="mobile-details">
+                        <!-- Первый ряд: тип и объем -->
+                        <div class="details-row">
+                            <div class="detail-item">
+                                <q-icon name="description" class="detail-icon" />
+                                <span class="detail-value">{{ document?.document_type?.name || 'Не указан' }}</span>
+                            </div>
+                            
+                            <div v-if="document?.pages_num" class="detail-item">
+                                <q-icon name="article" class="detail-icon" />
+                                <span class="detail-value">{{ document.pages_num }} страниц</span>
+                            </div>
+                        </div>
+
+                        <!-- Второй ряд: время создания и статус -->
+                        <div class="details-row">
+                            <div class="detail-item">
+                                <q-icon name="schedule" class="detail-icon" />
+                                <span class="detail-value">{{ formatCreatedDate() }}</span>
+                            </div>
+
+                            <div :class="['detail-item', 'status-item', getStatusClass()]">
+                                <span class="detail-value status-text-inline">{{ getDisplayStatusText() }}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -366,6 +389,32 @@ const getDocumentDisplayTitle = () => {
     flex-wrap: wrap;
     gap: 16px;
     align-items: center;
+    justify-content: flex-start;
+}
+
+.desktop-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.mobile-details {
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+    width: 100%;
+}
+
+.details-row {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+    flex-wrap: wrap;
 }
 
 .detail-item {
@@ -374,10 +423,23 @@ const getDocumentDisplayTitle = () => {
     gap: 8px;
     font-size: 15px;
     background: rgba(255, 255, 255, 0.1);
-    padding: 8px 16px;
+    padding: 10px 15px;
     border-radius: 12px;
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.2);
+    width: 240px;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.status-item {
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.status-text-inline {
+    color: white;
+    font-weight: 600;
 }
 
 .detail-icon {
@@ -390,83 +452,31 @@ const getDocumentDisplayTitle = () => {
     font-weight: 700;
 }
 
-/* Современный статус блок */
-.status-section {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
+
+
+/* Цвета границ статусов */
+.status-item.status-generating {
+    border-color: #60a5fa !important;
+    box-shadow: 0 0 15px rgba(96, 165, 250, 0.4);
 }
 
-.status-card {
-    background: #ffffff;
-    border-radius: 20px;
-    padding: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    transition: all 0.3s ease;
-    min-width: 200px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+.status-item.status-pre-complete {
+    border-color: #34d399 !important;
+    box-shadow: 0 0 15px rgba(52, 211, 153, 0.4);
 }
 
-.status-card:hover {
-    background: #ffffff;
-    transform: translateY(-2px);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+.status-item.status-complete {
+    border-color: #10b981 !important;
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
 }
 
-.status-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 8px;
+.status-item.status-failed {
+    border-color: #f87171 !important;
+    box-shadow: 0 0 15px rgba(248, 113, 113, 0.4);
 }
 
-.status-main-icon {
-    font-size: 24px;
-    flex-shrink: 0;
-}
-
-.status-label {
-    font-size: 12px;
-    font-weight: 500;
-    color: #6b7280;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.status-content {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.status-text {
-    font-size: 16px;
-    font-weight: 600;
-    color: #1e293b;
-    line-height: 1.3;
-}
-
-/* Цвета статусов */
-.status-generating {
-    color: #60a5fa !important;
-    animation: spin 2s linear infinite;
-}
-
-.status-pre-complete {
-    color: #34d399 !important;
-}
-
-.status-complete {
-    color: #10b981 !important;
-}
-
-.status-failed {
-    color: #f87171 !important;
-}
-
-.status-default {
-    color: rgba(255, 255, 255, 0.8) !important;
+.status-item.status-default {
+    border-color: rgba(255, 255, 255, 0.4) !important;
 }
 
 @keyframes spin {
@@ -508,12 +518,13 @@ const getDocumentDisplayTitle = () => {
 
 @media (max-width: 768px) {
     .document-header {
-        padding: 20px 24px;
+        padding: 16px 20px;
         border-radius: 20px;
+        margin-bottom: 20px;
     }
     
     .document-main-title {
-        font-size: 24px;
+        font-size: 26px;
         margin-bottom: 16px;
         flex-wrap: wrap;
         justify-content: center;
@@ -530,62 +541,67 @@ const getDocumentDisplayTitle = () => {
         margin-top: 4px;
     }
     
+    .desktop-details {
+        display: none;
+    }
+    
+    .mobile-details {
+        display: flex;
+    }
+    
     .document-details {
-        flex-direction: column;
-        gap: 12px;
-        width: 100%;
-        align-items: stretch;
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+    
+    .details-row {
+        gap: 8px;
+        justify-content: flex-start;
+        flex-wrap: wrap;
     }
     
     .detail-item {
-        width: 100%;
-        min-height: 48px;
+        min-height: 44px;
         justify-content: center;
-        padding: 12px 16px;
-        font-size: 14px;
+        padding: 8px 15px;
+        font-size: 12px;
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 6px;
         flex-shrink: 0;
         box-sizing: border-box;
+        border-radius: 10px;
+        width: 180px;
     }
     
     .detail-icon {
-        font-size: 18px;
-        min-width: 18px;
+        font-size: 16px;
+        min-width: 16px;
         flex-shrink: 0;
     }
     
     .detail-value {
         text-align: center;
-        flex: 1;
         word-break: break-word;
-        line-height: 1.3;
+        line-height: 1.2;
+        font-weight: 600;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
     
-    .status-card {
-        width: 100%;
-        min-width: auto;
-        text-align: center;
-        min-height: 80px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-    }
-    
-    .status-header {
-        justify-content: center;
-    }
+
 }
 
 @media (max-width: 480px) {
     .document-header {
-        padding: 16px 20px;
+        padding: 14px 16px;
         border-radius: 16px;
+        margin-bottom: 16px;
     }
     
     .document-main-title {
-        font-size: 20px;
+        font-size: 24px;
         margin-bottom: 12px;
         max-width: 100%;
         line-height: 1.2;
@@ -604,59 +620,24 @@ const getDocumentDisplayTitle = () => {
     }
     
     .document-details {
-        gap: 10px;
-    }
-    
-    .detail-item {
-        min-height: 44px;
-        padding: 10px 14px;
-        font-size: 13px;
         gap: 8px;
-        border-radius: 10px;
+        margin-bottom: 12px;
     }
     
-    .detail-icon {
-        font-size: 16px;
-        min-width: 16px;
-    }
-    
-    .detail-value {
-        font-size: 13px;
-        font-weight: 600;
-    }
-    
-    .status-card {
-        min-height: 70px;
-        padding: 14px 16px;
-        border-radius: 16px;
-    }
-    
-    .status-main-icon {
-        font-size: 20px;
-    }
-    
-    .status-text {
-        font-size: 14px;
-        line-height: 1.2;
-    }
-    
-    .status-label {
-        font-size: 11px;
-    }
-}
-
-/* Дополнительные стили для очень маленьких экранов */
-@media (max-width: 360px) {
-    .document-main-title {
-        font-size: 18px;
-        -webkit-line-clamp: 2;
-        line-height: 1.1;
+    .details-row {
+        gap: 6px;
+        justify-content: flex-start;
+        flex-wrap: wrap;
     }
     
     .detail-item {
         min-height: 40px;
-        padding: 8px 12px;
-        font-size: 12px;
+        padding: 6px 12px;
+        font-size: 11px;
+        gap: 4px;
+        border-radius: 8px;
+        width: 150px;
+        flex-shrink: 0;
     }
     
     .detail-icon {
@@ -665,17 +646,62 @@ const getDocumentDisplayTitle = () => {
     }
     
     .detail-value {
-        font-size: 12px;
+        font-size: 11px;
+        font-weight: 600;
     }
     
-    .status-card {
-        min-height: 60px;
+
+    
+    .status-label {
+        font-size: 11px;
+    }
+}
+
+/* Дополнительные стили для очень маленьких экранов */
+@media (max-width: 360px) {
+    .document-header {
         padding: 12px 14px;
+        margin-bottom: 14px;
     }
     
-    .status-text {
-        font-size: 13px;
+    .document-main-title {
+        font-size: 22px;
+        -webkit-line-clamp: 2;
+        line-height: 1.1;
+        margin-bottom: 10px;
     }
+    
+    .document-details {
+        gap: 6px;
+        margin-bottom: 10px;
+    }
+    
+    .details-row {
+        gap: 4px;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+    
+    .detail-item {
+        min-height: 36px;
+        padding: 5px 10px;
+        font-size: 10px;
+        gap: 3px;
+        border-radius: 6px;
+        width: 135px;
+        flex-shrink: 0;
+    }
+    
+    .detail-icon {
+        font-size: 12px;
+        min-width: 12px;
+    }
+    
+    .detail-value {
+        font-size: 10px;
+    }
+    
+
 }
 
 /* Стили для диалога редактирования заголовка */

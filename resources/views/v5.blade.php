@@ -2565,9 +2565,9 @@
                 <div class="footer-column">
                     <h5>Документы</h5>
                     <ul class="footer-links">
-                        <li><a href="{{ asset('docs/Политика персональных данных.docx') }}" target="_blank">Политика конфиденциальности</a></li>
-                        <li><a href="{{ asset('docs/Публичная оферта.docx') }}" target="_blank">Оферта</a></li>
-                        <li><a href="{{ asset('docs/Реквизиты.docx') }}" target="_blank">Реквизиты</a></li>
+                        <li><a href="{{ asset('docs/Политика персональных данных.docx') }}?v={{ time() }}" class="footer-doc-link" target="_blank">Политика конфиденциальности</a></li>
+                        <li><a href="{{ asset('docs/Публичная оферта.docx') }}?v={{ time() }}" class="footer-doc-link" target="_blank">Публичная оферта</a></li>
+                        <li><a href="{{ asset('docs/Реквизиты.docx') }}?v={{ time() }}" class="footer-doc-link" target="_blank">Реквизиты</a></li>
                     </ul>
             </div>
             
