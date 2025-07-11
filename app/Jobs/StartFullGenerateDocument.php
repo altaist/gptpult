@@ -154,8 +154,36 @@ class StartFullGenerateDocument implements ShouldQueue
                     // Используем существующий thread
                     $prompt = $this->buildSubtopicPrompt($subtopic);
                     
-                    // Безопасно добавляем сообщение в существующий thread с проверкой активных run
-                    $gptService->safeAddMessageToThread($threadId, $prompt);
+                    try {
+                        // Безопасно добавляем сообщение в существующий thread с проверкой активных run
+                        $gptService->safeAddMessageToThread($threadId, $prompt);
+                    } catch (\Exception $e) {
+                        // Если thread безнадежно зависает, создаем новый
+                        if (strpos($e->getMessage(), 'принудительной очистки') !== false) {
+                            Log::warning('Thread безнадежно зависает, создаем новый', [
+                                'document_id' => $this->document->id,
+                                'old_thread_id' => $threadId,
+                                'subtopic_title' => $subtopic['title']
+                            ]);
+                            
+                            // Создаем новый thread
+                            $newThread = $gptService->createThread();
+                            $threadId = $newThread['id'];
+                            
+                            // Обновляем документ с новым thread_id
+                            $this->document->update(['thread_id' => $threadId]);
+                            
+                            Log::info('Создан новый thread для продолжения генерации', [
+                                'document_id' => $this->document->id,
+                                'new_thread_id' => $threadId
+                            ]);
+                            
+                            // Добавляем сообщение в новый thread
+                            $gptService->safeAddMessageToThread($threadId, $prompt);
+                        } else {
+                            throw $e;
+                        }
+                    }
                     
                     // Безопасно запускаем run с ассистентом с проверкой активных run
                     $run = $gptService->safeCreateRun($threadId, $assistantId);

@@ -315,14 +315,63 @@ class OpenAiService implements GptServiceInterface
         while ($attempts < $maxRetries) {
             try {
                 // Проверяем активные run в thread
-                if ($this->hasActiveRuns($threadId)) {
-                    Log::info('Thread имеет активные run, ожидаем...', [
+                $activeRuns = $this->getActiveRuns($threadId);
+                
+                if (!empty($activeRuns)) {
+                    Log::info('Thread имеет активные run, анализируем ситуацию...', [
                         'thread_id' => $threadId,
-                        'attempt' => $attempts + 1
+                        'attempt' => $attempts + 1,
+                        'active_runs_count' => count($activeRuns)
                     ]);
                     
-                    // Ждем перед повторной попыткой
-                    sleep(2);
+                    // Проверяем, есть ли зависшие run (более 5 минут)
+                    $now = time();
+                    $hasStuckRuns = false;
+                    
+                    foreach ($activeRuns as $run) {
+                        $createdAt = strtotime($run['created_at']);
+                        $runDuration = $now - $createdAt;
+                        
+                        if ($runDuration > 300) { // 5 минут
+                            Log::warning('Обнаружен зависший run', [
+                                'thread_id' => $threadId,
+                                'run_id' => $run['id'],
+                                'status' => $run['status'],
+                                'duration_seconds' => $runDuration
+                            ]);
+                            
+                            // Пытаемся отменить зависший run
+                            try {
+                                $this->cancelRun($threadId, $run['id']);
+                                Log::info('Зависший run отменен', [
+                                    'thread_id' => $threadId,
+                                    'run_id' => $run['id']
+                                ]);
+                                $hasStuckRuns = true;
+                            } catch (\Exception $e) {
+                                Log::warning('Не удалось отменить зависший run', [
+                                    'thread_id' => $threadId,
+                                    'run_id' => $run['id'],
+                                    'error' => $e->getMessage()
+                                ]);
+                            }
+                        }
+                    }
+                    
+                    // Если отменили зависшие run, даем немного времени и пробуем снова
+                    if ($hasStuckRuns) {
+                        sleep(3);
+                        continue;
+                    }
+                    
+                    // Иначе ждем перед повторной попыткой
+                    $delay = min(10, 3 + $attempts * 2);
+                    Log::info('Ожидаем завершения активных run', [
+                        'thread_id' => $threadId,
+                        'delay_seconds' => $delay,
+                        'attempt' => $attempts + 1
+                    ]);
+                    sleep($delay);
                     $attempts++;
                     continue;
                 }
@@ -339,7 +388,7 @@ class OpenAiService implements GptServiceInterface
                     ]);
                     
                     // Ждем дольше при повторных попытках
-                    sleep(min(5, 2 + $attempts));
+                    sleep(min(15, 5 + $attempts * 3));
                     $attempts++;
                     continue;
                 }
@@ -349,7 +398,23 @@ class OpenAiService implements GptServiceInterface
             }
         }
         
-        throw new \Exception("Не удалось добавить сообщение в thread после {$maxRetries} попыток. Thread может иметь активные run.");
+        // После всех попыток пытаемся принудительно очистить thread
+        Log::warning('Все попытки добавления сообщения исчерпаны, пытаемся очистить thread', [
+            'thread_id' => $threadId,
+            'max_retries' => $maxRetries
+        ]);
+        
+        try {
+            $this->forceCleanThread($threadId);
+            // Последняя попытка после очистки
+            return $this->addMessageToThread($threadId, $content);
+        } catch (\Exception $e) {
+            Log::error('Не удалось добавить сообщение даже после очистки thread', [
+                'thread_id' => $threadId,
+                'error' => $e->getMessage()
+            ]);
+            throw new \Exception("Не удалось добавить сообщение в thread после {$maxRetries} попыток и принудительной очистки. Thread постоянно имеет активные run.");
+        }
     }
 
     /**
@@ -359,6 +424,18 @@ class OpenAiService implements GptServiceInterface
      * @return bool
      */
     public function hasActiveRuns(string $threadId): bool
+    {
+        $activeRuns = $this->getActiveRuns($threadId);
+        return !empty($activeRuns);
+    }
+
+    /**
+     * Получить список активных run в thread
+     *
+     * @param string $threadId
+     * @return array
+     */
+    public function getActiveRuns(string $threadId): array
     {
         try {
             $response = $this->getHttpClient([
@@ -370,33 +447,113 @@ class OpenAiService implements GptServiceInterface
                     'thread_id' => $threadId,
                     'status' => $response->status()
                 ]);
-                return false;
+                return [];
             }
 
             $runs = $response->json();
+            $activeRuns = [];
             
-            // Проверяем есть ли активные run
+            // Собираем активные run с подробной информацией
             foreach ($runs['data'] ?? [] as $run) {
                 if (in_array($run['status'], ['queued', 'in_progress', 'requires_action'])) {
-                    Log::info('Найден активный run в thread', [
-                        'thread_id' => $threadId,
-                        'run_id' => $run['id'],
-                        'status' => $run['status']
-                    ]);
-                    return true;
+                    $activeRuns[] = $run;
                 }
             }
             
-            return false;
+            return $activeRuns;
             
         } catch (\Exception $e) {
-            Log::error('Ошибка при проверке активных run в thread', [
+            Log::error('Ошибка при получении списка run в thread', [
                 'thread_id' => $threadId,
                 'error' => $e->getMessage()
             ]);
             
-            // В случае ошибки предполагаем, что активных run нет
+            return [];
+        }
+    }
+
+    /**
+     * Отменить run
+     *
+     * @param string $threadId
+     * @param string $runId
+     * @return bool
+     */
+    public function cancelRun(string $threadId, string $runId): bool
+    {
+        try {
+            $response = $this->getHttpClient([
+                'OpenAI-Beta' => 'assistants=v2',
+            ])->post("https://api.openai.com/v1/threads/{$threadId}/runs/{$runId}/cancel");
+
+            if (!$response->successful()) {
+                Log::error('Не удалось отменить run', [
+                    'thread_id' => $threadId,
+                    'run_id' => $runId,
+                    'status' => $response->status(),
+                    'body' => $response->body()
+                ]);
+                return false;
+            }
+
+            Log::info('Run успешно отменен', [
+                'thread_id' => $threadId,
+                'run_id' => $runId
+            ]);
+            
+            return true;
+            
+        } catch (\Exception $e) {
+            Log::error('Ошибка при отмене run', [
+                'thread_id' => $threadId,
+                'run_id' => $runId,
+                'error' => $e->getMessage()
+            ]);
+            
             return false;
+        }
+    }
+
+    /**
+     * Принудительно очистить thread от зависших run
+     *
+     * @param string $threadId
+     * @return void
+     */
+    public function forceCleanThread(string $threadId): void
+    {
+        try {
+            $activeRuns = $this->getActiveRuns($threadId);
+            
+            Log::info('Принудительная очистка thread', [
+                'thread_id' => $threadId,
+                'active_runs_count' => count($activeRuns)
+            ]);
+            
+            foreach ($activeRuns as $run) {
+                try {
+                    $this->cancelRun($threadId, $run['id']);
+                    Log::info('Run отменен при очистке thread', [
+                        'thread_id' => $threadId,
+                        'run_id' => $run['id']
+                    ]);
+                } catch (\Exception $e) {
+                    Log::warning('Не удалось отменить run при очистке', [
+                        'thread_id' => $threadId,
+                        'run_id' => $run['id'],
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+            
+            // Даем время на обработку отмены
+            sleep(5);
+            
+        } catch (\Exception $e) {
+            Log::error('Ошибка при принудительной очистке thread', [
+                'thread_id' => $threadId,
+                'error' => $e->getMessage()
+            ]);
         }
     }
 
