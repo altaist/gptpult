@@ -210,8 +210,8 @@
                             />
                         </div>
                         
-                        <!-- Кнопка генерации внизу документа (когда нужна оплата) -->
-                        <div v-if="canPay" class="bottom-generate-section">
+                        <!-- Кнопка генерации внизу документа (только на мобильных, когда нужна оплата) -->
+                        <div v-if="canPay" class="bottom-generate-section mobile-only">
                             <div class="bottom-generate-header">
                                 <h3 class="bottom-generate-title">Структура документа готова! Теперь можно сгенерировать работу</h3>
                             </div>
@@ -231,8 +231,23 @@
                         </div>
                     </div>
 
+                    <!-- Правая колонка с кнопкой действий (только на десктопе, только при необходимости оплаты) -->
+                    <div v-if="canPay" class="actions-column desktop-only">
+                        <q-btn 
+                            class="generate-btn desktop-btn"
+                            unelevated
+                            rounded
+                            size="lg"
+                            no-caps
+                            @click="showActionsModal = true"
+                        >
+                            <q-icon name="auto_awesome" class="btn-icon" />
+                            <span>Сгенерировать</span>
+                        </q-btn>
+                    </div>
+
                     <!-- Правая колонка с блоком действий (только на десктопе, когда оплата не нужна) -->
-                    <div v-if="!canPay" class="actions-column desktop-only">
+                    <div v-else class="actions-column desktop-only">
                         <DocumentActions 
                             :document="currentDocument"
                             :balance="balance"
@@ -1797,11 +1812,13 @@ const showActionsModal = ref(false);
     align-items: start;
 }
 
-/* Одноколоночная раскладка когда нужна оплата */
-.main-content.single-column {
-    grid-template-columns: 1fr;
-    max-width: 900px;
-    margin: 0 auto;
+/* Одноколоночная раскладка когда нужна оплата (только на мобильных) */
+@media (max-width: 1024px) {
+    .main-content.single-column {
+        grid-template-columns: 1fr;
+        max-width: 900px;
+        margin: 0 auto;
+    }
 }
 
 /* Колонка с документом */
@@ -2070,7 +2087,13 @@ const showActionsModal = ref(false);
 }
 
 @media (max-width: 1024px) {
-    .main-content,
+    .main-content {
+        display: flex;
+        flex-direction: column;
+        gap: 0px;
+        max-width: 100%;
+    }
+    
     .main-content.single-column {
         display: flex;
         flex-direction: column;
