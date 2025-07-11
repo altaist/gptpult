@@ -269,16 +269,27 @@ class StartFullGenerateDocument implements ShouldQueue
             */
 
         } catch (\Exception $e) {
-            Log::channel('queue')->error('Ошибка при полной генерации документа (попытка ' . $this->attempts() . ')', [
+            Log::channel('queue')->error('Ошибка при полной генерации документа', [
                 'document_id' => $this->document->id,
                 'error' => $e->getMessage(),
-                'attempt' => $this->attempts(),
-                'max_tries' => $this->tries,
                 'trace' => $e->getTraceAsString()
             ]);
 
-            // НЕ меняем статус документа при промежуточных ошибках
-            // Статус изменится только в методе failed() после исчерпания всех попыток
+            $this->document->update([
+                'status' => DocumentStatus::FULL_GENERATION_FAILED
+            ]);
+
+            // ВРЕМЕННО ОТКЛЮЧЕНО: Создаем фиктивный GptRequest для события ошибки
+            /*
+            $gptRequest = new \App\Models\GptRequest([
+                'document_id' => $this->document->id,
+                'status' => 'failed',
+                'error_message' => $e->getMessage(),
+            ]);
+            $gptRequest->document = $this->document;
+
+            event(new GptRequestFailed($gptRequest, $e->getMessage()));
+            */
 
             throw $e;
         }

@@ -82,17 +82,7 @@ class AsyncGenerateDocument implements ShouldQueue
             ]);
 
         } catch (\Exception $e) {
-            Log::channel('queue')->error('❌ Ошибка генерации документа (попытка ' . $this->attempts() . ')', [
-                'document_id' => $this->document->id,
-                'error' => $e->getMessage(),
-                'attempt' => $this->attempts(),
-                'max_tries' => $this->tries
-            ]);
-
-            // НЕ меняем статус документа при промежуточных ошибках
-            // Статус изменится только в методе failed() после исчерпания всех попыток
-            
-            throw $e;
+            $this->handleError($e);
         } finally {
             // Снимаем блокировку
             $this->unlockDocument();
@@ -267,14 +257,30 @@ class AsyncGenerateDocument implements ShouldQueue
     }
 
     /**
-     * УСТАРЕВШИЙ МЕТОД - больше не используется
-     * Обработка ошибок теперь происходит только в failed() после исчерпания всех попыток
+     * Обработка ошибок
      */
     private function handleError(\Exception $e): void
     {
-        // Этот метод больше не используется
-        // Логирование ошибок перенесено в catch блок handle() метода
-        // Установка финального статуса перенесена в failed() метод
+        Log::channel('queue')->error('❌ Ошибка генерации документа', [
+            'document_id' => $this->document->id,
+            'error' => $e->getMessage(),
+            'attempt' => $this->attempts()
+        ]);
+
+        $this->document->update([
+            'status' => DocumentStatus::PRE_GENERATION_FAILED,
+            'error_message' => $e->getMessage()
+        ]);
+
+        // Создаем фиктивный GptRequest для события ошибки
+        $gptRequest = new GptRequest([
+            'document_id' => $this->document->id,
+            'status' => 'failed',
+            'error_message' => $e->getMessage(),
+        ]);
+        $gptRequest->document = $this->document;
+
+        event(new GptRequestFailed($gptRequest, $e->getMessage()));
     }
 
     /**
@@ -289,21 +295,5 @@ class AsyncGenerateDocument implements ShouldQueue
             'error' => $exception->getMessage(),
             'attempts' => $this->attempts()
         ]);
-
-        // Устанавливаем финальный статус ошибки только после исчерпания всех попыток
-        $this->document->update([
-            'status' => DocumentStatus::PRE_GENERATION_FAILED,
-            'error_message' => $exception->getMessage()
-        ]);
-
-        // Создаем фиктивный GptRequest для события ошибки
-        $gptRequest = new GptRequest([
-            'document_id' => $this->document->id,
-            'status' => 'failed',
-            'error_message' => $exception->getMessage(),
-        ]);
-        $gptRequest->document = $this->document;
-
-        event(new GptRequestFailed($gptRequest, $exception->getMessage()));
     }
 } 

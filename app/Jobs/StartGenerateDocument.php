@@ -194,16 +194,25 @@ class StartGenerateDocument implements ShouldQueue
             event(new GptRequestCompleted($gptRequest));
 
         } catch (\Exception $e) {
-            Log::channel('queue')->error('Ошибка при генерации документа (попытка ' . $this->attempts() . ')', [
+            Log::channel('queue')->error('Ошибка при генерации документа', [
                 'document_id' => $this->document->id,
                 'error' => $e->getMessage(),
-                'attempt' => $this->attempts(),
-                'max_tries' => $this->tries,
                 'trace' => $e->getTraceAsString()
             ]);
 
-            // НЕ меняем статус документа при промежуточных ошибках
-            // Статус изменится только в методе failed() после исчерпания всех попыток
+            $this->document->update([
+                'status' => DocumentStatus::PRE_GENERATION_FAILED
+            ]);
+
+            // Создаем фиктивный GptRequest для события ошибки
+            $gptRequest = new \App\Models\GptRequest([
+                'document_id' => $this->document->id,
+                'status' => 'failed',
+                'error_message' => $e->getMessage(),
+            ]);
+            $gptRequest->document = $this->document;
+
+            event(new GptRequestFailed($gptRequest, $e->getMessage()));
 
             throw $e;
         }
