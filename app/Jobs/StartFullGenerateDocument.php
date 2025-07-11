@@ -154,8 +154,8 @@ class StartFullGenerateDocument implements ShouldQueue
                     // Используем существующий thread
                     $prompt = $this->buildSubtopicPrompt($subtopic);
                     
-                    // Добавляем сообщение в существующий thread
-                    $gptService->addMessageToThread($threadId, $prompt);
+                    // Безопасно добавляем сообщение в существующий thread с проверкой активных run
+                    $gptService->safeAddMessageToThread($threadId, $prompt);
                     
                     // Запускаем run с ассистентом
                     $run = $gptService->createRun($threadId, $assistantId);
@@ -214,8 +214,8 @@ class StartFullGenerateDocument implements ShouldQueue
                         'usage' => $completedRun['usage'] ?? null
                     ]);
 
-                    // Небольшая пауза между запросами
-                    sleep(1);
+                    // Увеличенная пауза между запросами для стабилизации thread
+                    sleep(2);
                 }
 
                 // Добавляем готовый topic в результат (только один раз!)

@@ -124,9 +124,9 @@ class AsyncGenerateDocument implements ShouldQueue
         $thread = $gptService->createThread();
         $this->document->update(['thread_id' => $thread['id']]);
 
-        // Добавляем сообщение
+        // Безопасно добавляем сообщение
         $prompt = $this->buildPrompt();
-        $gptService->addMessageToThread($thread['id'], $prompt);
+        $gptService->safeAddMessageToThread($thread['id'], $prompt);
 
         // Создаем run
         $run = $gptService->createRun($thread['id'], $assistantId);

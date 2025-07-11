@@ -44,6 +44,16 @@ interface GptServiceInterface
     public function addMessageToThread(string $threadId, string $content): array;
 
     /**
+     * Безопасно добавить сообщение в thread с проверкой активных run
+     *
+     * @param string $threadId
+     * @param string $content
+     * @param int $maxRetries
+     * @return array
+     */
+    public function safeAddMessageToThread(string $threadId, string $content, int $maxRetries = 5): array;
+
+    /**
      * Создать run с ассистентом
      *
      * @param string $threadId

@@ -293,12 +293,110 @@ class OpenAiService implements GptServiceInterface
             ]);
         }
         
-        Log::info('OpenAI web search response received', [
-            'finish_reason' => $result['choices'][0]['finish_reason'] ?? 'unknown',
-            'has_annotations' => isset($result['choices'][0]['message']['annotations']),
-            'usage' => $result['usage'] ?? []
-        ]);
+        return [
+            'content' => $result['choices'][0]['message']['content'],
+            'tokens_used' => $result['usage']['total_tokens'] ?? 0,
+            'model' => $model,
+        ];
+    }
 
-        return $result;
+    /**
+     * Безопасно добавить сообщение в thread с проверкой активных run
+     *
+     * @param string $threadId
+     * @param string $content
+     * @param int $maxRetries
+     * @return array
+     */
+    public function safeAddMessageToThread(string $threadId, string $content, int $maxRetries = 5): array
+    {
+        $attempts = 0;
+        
+        while ($attempts < $maxRetries) {
+            try {
+                // Проверяем активные run в thread
+                if ($this->hasActiveRuns($threadId)) {
+                    Log::info('Thread имеет активные run, ожидаем...', [
+                        'thread_id' => $threadId,
+                        'attempt' => $attempts + 1
+                    ]);
+                    
+                    // Ждем перед повторной попыткой
+                    sleep(2);
+                    $attempts++;
+                    continue;
+                }
+                
+                // Пытаемся добавить сообщение
+                return $this->addMessageToThread($threadId, $content);
+                
+            } catch (\Exception $e) {
+                if (strpos($e->getMessage(), 'while a run') !== false && strpos($e->getMessage(), 'is active') !== false) {
+                    Log::warning('Попытка добавить сообщение в thread с активным run', [
+                        'thread_id' => $threadId,
+                        'attempt' => $attempts + 1,
+                        'error' => $e->getMessage()
+                    ]);
+                    
+                    // Ждем дольше при повторных попытках
+                    sleep(min(5, 2 + $attempts));
+                    $attempts++;
+                    continue;
+                }
+                
+                // Если это другая ошибка, пробрасываем её
+                throw $e;
+            }
+        }
+        
+        throw new \Exception("Не удалось добавить сообщение в thread после {$maxRetries} попыток. Thread может иметь активные run.");
+    }
+
+    /**
+     * Проверить наличие активных run в thread
+     *
+     * @param string $threadId
+     * @return bool
+     */
+    public function hasActiveRuns(string $threadId): bool
+    {
+        try {
+            $response = $this->getHttpClient([
+                'OpenAI-Beta' => 'assistants=v2',
+            ])->get("https://api.openai.com/v1/threads/{$threadId}/runs");
+
+            if (!$response->successful()) {
+                Log::warning('Не удалось получить список run для thread', [
+                    'thread_id' => $threadId,
+                    'status' => $response->status()
+                ]);
+                return false;
+            }
+
+            $runs = $response->json();
+            
+            // Проверяем есть ли активные run
+            foreach ($runs['data'] ?? [] as $run) {
+                if (in_array($run['status'], ['queued', 'in_progress', 'requires_action'])) {
+                    Log::info('Найден активный run в thread', [
+                        'thread_id' => $threadId,
+                        'run_id' => $run['id'],
+                        'status' => $run['status']
+                    ]);
+                    return true;
+                }
+            }
+            
+            return false;
+            
+        } catch (\Exception $e) {
+            Log::error('Ошибка при проверке активных run в thread', [
+                'thread_id' => $threadId,
+                'error' => $e->getMessage()
+            ]);
+            
+            // В случае ошибки предполагаем, что активных run нет
+            return false;
+        }
     }
 } 
