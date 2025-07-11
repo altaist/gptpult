@@ -1807,7 +1807,7 @@ const showActionsModal = ref(false);
 /* Основной контент */
 .main-content {
     display: grid;
-    grid-template-columns: 3fr 2fr;
+    grid-template-columns: 3fr 1.18fr;
     gap: 32px;
     align-items: start;
 }
@@ -2057,7 +2057,7 @@ const showActionsModal = ref(false);
 /* Адаптивность */
 @media (max-width: 1200px) {
     .main-content {
-        grid-template-columns: 3fr 2fr;
+        grid-template-columns: 3fr 1.18fr;
         gap: 24px;
     }
     
@@ -2081,7 +2081,7 @@ const showActionsModal = ref(false);
 
 @media (max-width: 1100px) {
     .main-content {
-        grid-template-columns: 3fr 2fr;
+        grid-template-columns: 3fr 1.18fr;
         gap: 20px;
     }
 }
