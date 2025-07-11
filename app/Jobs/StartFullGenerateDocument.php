@@ -188,8 +188,47 @@ class StartFullGenerateDocument implements ShouldQueue
                     // Безопасно запускаем run с ассистентом с проверкой активных run
                     $run = $gptService->safeCreateRun($threadId, $assistantId);
                     
-                    // Ждем завершения run
-                    $completedRun = $gptService->waitForRunCompletion($threadId, $run['id']);
+                    // Ждем завершения run с обработкой отмененных run
+                    $maxRetries = 3;
+                    $retryCount = 0;
+                    $completedRun = null;
+                    
+                    while ($retryCount < $maxRetries) {
+                        try {
+                            $completedRun = $gptService->waitForRunCompletion($threadId, $run['id']);
+                            break; // Успешно завершился
+                        } catch (\Exception $e) {
+                            if (strpos($e->getMessage(), 'cancelled') !== false) {
+                                Log::warning('Run был отменен, перезапускаем', [
+                                    'document_id' => $this->document->id,
+                                    'thread_id' => $threadId,
+                                    'cancelled_run_id' => $run['id'],
+                                    'subtopic_title' => $subtopic['title'],
+                                    'retry_count' => $retryCount + 1
+                                ]);
+                                
+                                // Создаем новый run
+                                $run = $gptService->safeCreateRun($threadId, $assistantId);
+                                $retryCount++;
+                                
+                                Log::info('Создан новый run после отмены', [
+                                    'document_id' => $this->document->id,
+                                    'thread_id' => $threadId,
+                                    'new_run_id' => $run['id'],
+                                    'retry_count' => $retryCount
+                                ]);
+                                
+                                continue;
+                            } else {
+                                // Если это другая ошибка, пробрасываем её
+                                throw $e;
+                            }
+                        }
+                    }
+                    
+                    if (!$completedRun) {
+                        throw new \Exception("Не удалось завершить run после {$maxRetries} попыток перезапуска для подраздела: " . $subtopic['title']);
+                    }
                     
                     // Логируем информацию о завершении run с токенами для подраздела
                     Log::channel('queue')->info('Run для подраздела завершен', [

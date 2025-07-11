@@ -324,7 +324,7 @@ class OpenAiService implements GptServiceInterface
                         'active_runs_count' => count($activeRuns)
                     ]);
                     
-                    // Проверяем, есть ли зависшие run (более 5 минут)
+                    // Проверяем, есть ли зависшие run (более 10 минут)
                     $now = time();
                     $hasStuckRuns = false;
                     
@@ -332,7 +332,7 @@ class OpenAiService implements GptServiceInterface
                         $createdAt = strtotime($run['created_at']);
                         $runDuration = $now - $createdAt;
                         
-                        if ($runDuration > 300) { // 5 минут
+                        if ($runDuration > 600) { // 10 минут
                             Log::warning('Обнаружен зависший run', [
                                 'thread_id' => $threadId,
                                 'run_id' => $run['id'],
@@ -571,16 +571,19 @@ class OpenAiService implements GptServiceInterface
         
         while ($attempts < $maxRetries) {
             try {
-                // Проверяем активные run в thread
-                if ($this->hasActiveRuns($threadId)) {
-                    Log::info('Thread имеет активные run перед созданием нового, ожидаем...', [
+                // Проверяем активные run в thread только визуально, не отменяем их
+                $activeRuns = $this->getActiveRuns($threadId);
+                
+                if (!empty($activeRuns)) {
+                    Log::info('Thread имеет активные run перед созданием нового, ожидаем естественного завершения...', [
                         'thread_id' => $threadId,
                         'assistant_id' => $assistantId,
-                        'attempt' => $attempts + 1
+                        'attempt' => $attempts + 1,
+                        'active_runs_count' => count($activeRuns)
                     ]);
                     
-                    // Ждем перед повторной попыткой
-                    sleep(3);
+                    // Ждем дольше, не мешаем работающим run
+                    sleep(min(15, 5 + $attempts * 3));
                     $attempts++;
                     continue;
                 }
@@ -597,8 +600,8 @@ class OpenAiService implements GptServiceInterface
                         'error' => $e->getMessage()
                     ]);
                     
-                    // Ждем дольше при повторных попытках
-                    sleep(min(10, 3 + $attempts * 2));
+                    // Ждем еще дольше при повторных попытках
+                    sleep(min(20, 5 + $attempts * 4));
                     $attempts++;
                     continue;
                 }
