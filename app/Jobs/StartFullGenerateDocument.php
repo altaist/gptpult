@@ -154,81 +154,14 @@ class StartFullGenerateDocument implements ShouldQueue
                     // Используем существующий thread
                     $prompt = $this->buildSubtopicPrompt($subtopic);
                     
-                    try {
-                        // Безопасно добавляем сообщение в существующий thread с проверкой активных run
-                        $gptService->safeAddMessageToThread($threadId, $prompt);
-                    } catch (\Exception $e) {
-                        // Если thread безнадежно зависает, создаем новый
-                        if (strpos($e->getMessage(), 'принудительной очистки') !== false) {
-                            Log::warning('Thread безнадежно зависает, создаем новый', [
-                                'document_id' => $this->document->id,
-                                'old_thread_id' => $threadId,
-                                'subtopic_title' => $subtopic['title']
-                            ]);
-                            
-                            // Создаем новый thread
-                            $newThread = $gptService->createThread();
-                            $threadId = $newThread['id'];
-                            
-                            // Обновляем документ с новым thread_id
-                            $this->document->update(['thread_id' => $threadId]);
-                            
-                            Log::info('Создан новый thread для продолжения генерации', [
-                                'document_id' => $this->document->id,
-                                'new_thread_id' => $threadId
-                            ]);
-                            
-                            // Добавляем сообщение в новый thread
-                            $gptService->safeAddMessageToThread($threadId, $prompt);
-                        } else {
-                            throw $e;
-                        }
-                    }
+                    // Безопасно добавляем сообщение в существующий thread с проверкой активных run
+                    $gptService->safeAddMessageToThread($threadId, $prompt);
                     
-                    // Безопасно запускаем run с ассистентом с проверкой активных run
-                    $run = $gptService->safeCreateRun($threadId, $assistantId);
+                    // Запускаем run с ассистентом
+                    $run = $gptService->createRun($threadId, $assistantId);
                     
-                    // Ждем завершения run с обработкой отмененных run
-                    $maxRetries = 3;
-                    $retryCount = 0;
-                    $completedRun = null;
-                    
-                    while ($retryCount < $maxRetries) {
-                        try {
-                            $completedRun = $gptService->waitForRunCompletion($threadId, $run['id']);
-                            break; // Успешно завершился
-                        } catch (\Exception $e) {
-                            if (strpos($e->getMessage(), 'cancelled') !== false) {
-                                Log::warning('Run был отменен, перезапускаем', [
-                                    'document_id' => $this->document->id,
-                                    'thread_id' => $threadId,
-                                    'cancelled_run_id' => $run['id'],
-                                    'subtopic_title' => $subtopic['title'],
-                                    'retry_count' => $retryCount + 1
-                                ]);
-                                
-                                // Создаем новый run
-                                $run = $gptService->safeCreateRun($threadId, $assistantId);
-                                $retryCount++;
-                                
-                                Log::info('Создан новый run после отмены', [
-                                    'document_id' => $this->document->id,
-                                    'thread_id' => $threadId,
-                                    'new_run_id' => $run['id'],
-                                    'retry_count' => $retryCount
-                                ]);
-                                
-                                continue;
-                            } else {
-                                // Если это другая ошибка, пробрасываем её
-                                throw $e;
-                            }
-                        }
-                    }
-                    
-                    if (!$completedRun) {
-                        throw new \Exception("Не удалось завершить run после {$maxRetries} попыток перезапуска для подраздела: " . $subtopic['title']);
-                    }
+                    // Ждем завершения run
+                    $completedRun = $gptService->waitForRunCompletion($threadId, $run['id']);
                     
                     // Логируем информацию о завершении run с токенами для подраздела
                     Log::channel('queue')->info('Run для подраздела завершен', [
@@ -336,27 +269,16 @@ class StartFullGenerateDocument implements ShouldQueue
             */
 
         } catch (\Exception $e) {
-            Log::channel('queue')->error('Ошибка при полной генерации документа', [
+            Log::channel('queue')->error('Ошибка при полной генерации документа (попытка ' . $this->attempts() . ')', [
                 'document_id' => $this->document->id,
                 'error' => $e->getMessage(),
+                'attempt' => $this->attempts(),
+                'max_tries' => $this->tries,
                 'trace' => $e->getTraceAsString()
             ]);
 
-            $this->document->update([
-                'status' => DocumentStatus::FULL_GENERATION_FAILED
-            ]);
-
-            // ВРЕМЕННО ОТКЛЮЧЕНО: Создаем фиктивный GptRequest для события ошибки
-            /*
-            $gptRequest = new \App\Models\GptRequest([
-                'document_id' => $this->document->id,
-                'status' => 'failed',
-                'error_message' => $e->getMessage(),
-            ]);
-            $gptRequest->document = $this->document;
-
-            event(new GptRequestFailed($gptRequest, $e->getMessage()));
-            */
+            // НЕ меняем статус документа при промежуточных ошибках
+            // Статус изменится только в методе failed() после исчерпания всех попыток
 
             throw $e;
         }

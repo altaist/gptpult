@@ -101,8 +101,8 @@ class StartGenerateDocument implements ShouldQueue
             // Безопасно добавляем сообщение в thread
             $gptService->safeAddMessageToThread($thread['id'], $prompt);
             
-            // Безопасно запускаем run с ассистентом
-            $run = $gptService->safeCreateRun($thread['id'], $assistantId);
+            // Запускаем run с ассистентом
+            $run = $gptService->createRun($thread['id'], $assistantId);
             
             // Ждем завершения run
             $completedRun = $gptService->waitForRunCompletion($thread['id'], $run['id']);
@@ -194,25 +194,16 @@ class StartGenerateDocument implements ShouldQueue
             event(new GptRequestCompleted($gptRequest));
 
         } catch (\Exception $e) {
-            Log::channel('queue')->error('Ошибка при генерации документа', [
+            Log::channel('queue')->error('Ошибка при генерации документа (попытка ' . $this->attempts() . ')', [
                 'document_id' => $this->document->id,
                 'error' => $e->getMessage(),
+                'attempt' => $this->attempts(),
+                'max_tries' => $this->tries,
                 'trace' => $e->getTraceAsString()
             ]);
 
-            $this->document->update([
-                'status' => DocumentStatus::PRE_GENERATION_FAILED
-            ]);
-
-            // Создаем фиктивный GptRequest для события ошибки
-            $gptRequest = new \App\Models\GptRequest([
-                'document_id' => $this->document->id,
-                'status' => 'failed',
-                'error_message' => $e->getMessage(),
-            ]);
-            $gptRequest->document = $this->document;
-
-            event(new GptRequestFailed($gptRequest, $e->getMessage()));
+            // НЕ меняем статус документа при промежуточных ошибках
+            // Статус изменится только в методе failed() после исчерпания всех попыток
 
             throw $e;
         }

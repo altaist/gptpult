@@ -95,11 +95,6 @@ class AnthropicService implements GptServiceInterface
         throw new \Exception('Assistants API не поддерживается для Anthropic');
     }
 
-    public function safeCreateRun(string $threadId, string $assistantId, int $maxRetries = 5): array
-    {
-        throw new \Exception('Assistants API не поддерживается для Anthropic');
-    }
-
     public function waitForRunCompletion(string $threadId, string $runId): array
     {
         throw new \Exception('Assistants API не поддерживается для Anthropic');

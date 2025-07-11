@@ -63,16 +63,6 @@ interface GptServiceInterface
     public function createRun(string $threadId, string $assistantId): array;
 
     /**
-     * Безопасно создать run с проверкой активности других run
-     *
-     * @param string $threadId
-     * @param string $assistantId
-     * @param int $maxRetries
-     * @return array
-     */
-    public function safeCreateRun(string $threadId, string $assistantId, int $maxRetries = 5): array;
-
-    /**
      * Ждать завершения run
      *
      * @param string $threadId
