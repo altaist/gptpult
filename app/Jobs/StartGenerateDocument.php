@@ -387,11 +387,11 @@ class StartGenerateDocument implements ShouldQueue
                 ]
             ]);
 
-            if (!$response || !isset($response['choices'][0]['message']['content'])) {
+            if (!$response || !isset($response['content'])) {
                 throw new \Exception('Не получен ответ от GPT сервиса для генерации ссылок');
             }
 
-            $content = $response['choices'][0]['message']['content'];
+            $content = $response['content'];
             $referencesData = json_decode($content, true);
 
             if (json_last_error() !== JSON_ERROR_NONE) {
@@ -417,7 +417,7 @@ class StartGenerateDocument implements ShouldQueue
             Log::channel('queue')->info('Ссылки успешно сгенерированы', [
                 'document_id' => $this->document->id,
                 'references_count' => count($validReferences),
-                'tokens_used' => $response['usage']['total_tokens'] ?? 0
+                'tokens_used' => $response['tokens_used'] ?? 0
             ]);
 
         } catch (\Exception $e) {
