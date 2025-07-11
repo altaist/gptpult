@@ -350,8 +350,10 @@ const props = defineProps({
 const canPay = computed(() => {
     // Показываем панель оплаты только если:
     // 1. Баланса недостаточно И
-    // 2. Статус документа pre_generated
-    return props.balance < props.orderPrice && currentDocument.value?.status === 'pre_generated';
+    // 2. Статус документа pre_generated (но НЕ full_generation_failed)
+    const status = currentDocument.value?.status;
+    return props.balance < props.orderPrice && 
+           status === 'pre_generated';
 });
 
 // Реактивная ссылка на документ для обновления
