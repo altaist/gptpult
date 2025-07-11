@@ -186,6 +186,13 @@ class OpenAiService implements GptServiceInterface
                     ]);
                 }
                 
+                // Дополнительная пауза после завершения run для стабилизации thread
+                Log::info('Run завершен, ожидаем стабилизации thread', [
+                    'thread_id' => $threadId,
+                    'run_id' => $runId
+                ]);
+                sleep(2);
+                
                 return $run;
             }
             
@@ -308,48 +315,125 @@ class OpenAiService implements GptServiceInterface
      * @param int $maxRetries
      * @return array
      */
-    public function safeAddMessageToThread(string $threadId, string $content, int $maxRetries = 5): array
+    public function safeAddMessageToThread(string $threadId, string $content, int $maxRetries = 10): array
     {
         $attempts = 0;
+        $initialDelay = 3; // Начальная задержка увеличена
         
         while ($attempts < $maxRetries) {
             try {
                 // Проверяем активные run в thread
-                if ($this->hasActiveRuns($threadId)) {
-                    Log::info('Thread имеет активные run, ожидаем...', [
+                $activeRuns = $this->getDetailedActiveRuns($threadId);
+                if (!empty($activeRuns)) {
+                    Log::warning('Thread имеет активные run, ожидаем завершения...', [
                         'thread_id' => $threadId,
-                        'attempt' => $attempts + 1
+                        'attempt' => $attempts + 1,
+                        'max_attempts' => $maxRetries,
+                        'active_runs' => $activeRuns
                     ]);
                     
-                    // Ждем перед повторной попыткой
-                    sleep(2);
+                    // Увеличенная экспоненциальная задержка
+                    $delay = min(15, $initialDelay * pow(1.5, $attempts));
+                    sleep($delay);
                     $attempts++;
                     continue;
                 }
+                
+                Log::info('Thread свободен, пытаемся добавить сообщение', [
+                    'thread_id' => $threadId,
+                    'attempt' => $attempts + 1
+                ]);
                 
                 // Пытаемся добавить сообщение
                 return $this->addMessageToThread($threadId, $content);
                 
             } catch (\Exception $e) {
-                if (strpos($e->getMessage(), 'while a run') !== false && strpos($e->getMessage(), 'is active') !== false) {
-                    Log::warning('Попытка добавить сообщение в thread с активным run', [
+                $errorMessage = $e->getMessage();
+                
+                if (strpos($errorMessage, 'while a run') !== false && strpos($errorMessage, 'is active') !== false) {
+                    Log::warning('Попытка добавить сообщение в thread с активным run (по ошибке API)', [
                         'thread_id' => $threadId,
                         'attempt' => $attempts + 1,
-                        'error' => $e->getMessage()
+                        'max_attempts' => $maxRetries,
+                        'error' => $errorMessage
                     ]);
                     
-                    // Ждем дольше при повторных попытках
-                    sleep(min(5, 2 + $attempts));
+                    // Еще более агрессивная задержка при получении ошибки от API
+                    $delay = min(20, ($initialDelay + 2) * pow(1.8, $attempts));
+                    sleep($delay);
                     $attempts++;
                     continue;
                 }
                 
                 // Если это другая ошибка, пробрасываем её
+                Log::error('Неожиданная ошибка при добавлении сообщения в thread', [
+                    'thread_id' => $threadId,
+                    'attempt' => $attempts + 1,
+                    'error' => $errorMessage
+                ]);
                 throw $e;
             }
         }
         
-        throw new \Exception("Не удалось добавить сообщение в thread после {$maxRetries} попыток. Thread может иметь активные run.");
+        throw new \Exception("Не удалось добавить сообщение в thread после {$maxRetries} попыток. Thread постоянно имеет активные run.");
+    }
+
+    /**
+     * Получить подробную информацию об активных run в thread
+     *
+     * @param string $threadId
+     * @return array
+     */
+    private function getDetailedActiveRuns(string $threadId): array
+    {
+        try {
+            $response = $this->getHttpClient([
+                'OpenAI-Beta' => 'assistants=v2',
+            ])->get("https://api.openai.com/v1/threads/{$threadId}/runs");
+
+            if (!$response->successful()) {
+                Log::warning('Не удалось получить список run для thread', [
+                    'thread_id' => $threadId,
+                    'status' => $response->status(),
+                    'response_body' => $response->body()
+                ]);
+                return [];
+            }
+
+            $runs = $response->json();
+            $activeRuns = [];
+            
+            // Собираем подробную информацию об активных run
+            foreach ($runs['data'] ?? [] as $run) {
+                if (in_array($run['status'], ['queued', 'in_progress', 'requires_action'])) {
+                    $activeRuns[] = [
+                        'id' => $run['id'],
+                        'status' => $run['status'],
+                        'created_at' => $run['created_at'] ?? null,
+                        'assistant_id' => $run['assistant_id'] ?? null
+                    ];
+                }
+            }
+            
+            if (!empty($activeRuns)) {
+                Log::info('Найдены активные run в thread', [
+                    'thread_id' => $threadId,
+                    'active_runs_count' => count($activeRuns),
+                    'active_runs' => $activeRuns
+                ]);
+            }
+            
+            return $activeRuns;
+            
+        } catch (\Exception $e) {
+            Log::error('Ошибка при получении подробной информации об активных run', [
+                'thread_id' => $threadId,
+                'error' => $e->getMessage()
+            ]);
+            
+            // В случае ошибки предполагаем, что активных run нет
+            return [];
+        }
     }
 
     /**
@@ -360,43 +444,6 @@ class OpenAiService implements GptServiceInterface
      */
     public function hasActiveRuns(string $threadId): bool
     {
-        try {
-            $response = $this->getHttpClient([
-                'OpenAI-Beta' => 'assistants=v2',
-            ])->get("https://api.openai.com/v1/threads/{$threadId}/runs");
-
-            if (!$response->successful()) {
-                Log::warning('Не удалось получить список run для thread', [
-                    'thread_id' => $threadId,
-                    'status' => $response->status()
-                ]);
-                return false;
-            }
-
-            $runs = $response->json();
-            
-            // Проверяем есть ли активные run
-            foreach ($runs['data'] ?? [] as $run) {
-                if (in_array($run['status'], ['queued', 'in_progress', 'requires_action'])) {
-                    Log::info('Найден активный run в thread', [
-                        'thread_id' => $threadId,
-                        'run_id' => $run['id'],
-                        'status' => $run['status']
-                    ]);
-                    return true;
-                }
-            }
-            
-            return false;
-            
-        } catch (\Exception $e) {
-            Log::error('Ошибка при проверке активных run в thread', [
-                'thread_id' => $threadId,
-                'error' => $e->getMessage()
-            ]);
-            
-            // В случае ошибки предполагаем, что активных run нет
-            return false;
-        }
+        return !empty($this->getDetailedActiveRuns($threadId));
     }
 } 
