@@ -173,23 +173,8 @@
                     />
                 </div>
 
-                <!-- Кнопка для мобильных (только при необходимости оплаты) -->
-                <div v-if="canPay" class="mobile-button-container mobile-only">
-                    <q-btn 
-                        class="generate-btn mobile-btn"
-                        unelevated
-                        rounded
-                        size="lg"
-                        no-caps
-                        @click="showActionsModal = true"
-                    >
-                        <q-icon name="auto_awesome" class="btn-icon" />
-                        <span>Сгенерировать</span>
-                    </q-btn>
-                </div>
-
                 <!-- Блок действий для мобильных (когда оплата не нужна) -->
-                <div v-else class="mobile-actions-container mobile-only">
+                <div v-if="!canPay" class="mobile-actions-container mobile-only">
                     <DocumentActions 
                         :document="currentDocument"
                         :balance="balance"
@@ -207,7 +192,7 @@
                 </div>
 
                 <!-- Основной контент -->
-                <div class="main-content">
+                <div class="main-content" :class="{ 'single-column': canPay }">
                     <!-- Левая колонка с документом -->
                     <div class="document-column">
                         <div class="document-card">
@@ -224,25 +209,30 @@
                                 @updated="handleDocumentUpdate"
                             />
                         </div>
-                    </div>
-
-                    <!-- Правая колонка с кнопкой действий (только на десктопе, только при необходимости оплаты) -->
-                    <div v-if="canPay" class="actions-column desktop-only">
-                        <q-btn 
-                            class="generate-btn desktop-btn"
-                            unelevated
-                            rounded
-                            size="lg"
-                            no-caps
-                            @click="showActionsModal = true"
-                        >
-                            <q-icon name="auto_awesome" class="btn-icon" />
-                            <span>Сгенерировать</span>
-                        </q-btn>
+                        
+                        <!-- Кнопка генерации внизу документа (когда нужна оплата) -->
+                        <div v-if="canPay" class="bottom-generate-section">
+                            <div class="bottom-generate-header">
+                                <h3 class="bottom-generate-title">Структура документа готова! Теперь можно сгенерировать работу</h3>
+                            </div>
+                            <div class="bottom-generate-container">
+                                <q-btn 
+                                    class="generate-btn bottom-btn"
+                                    unelevated
+                                    rounded
+                                    size="lg"
+                                    no-caps
+                                    @click="showActionsModal = true"
+                                >
+                                    <q-icon name="auto_awesome" class="btn-icon" />
+                                    <span>Сгенерировать</span>
+                                </q-btn>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Правая колонка с блоком действий (только на десктопе, когда оплата не нужна) -->
-                    <div v-else class="actions-column desktop-only">
+                    <div v-if="!canPay" class="actions-column desktop-only">
                         <DocumentActions 
                             :document="currentDocument"
                             :balance="balance"
@@ -386,12 +376,7 @@ const {
     {
         autoStart: shouldAutoload, // Включаем автозапуск только при наличии параметра autoload=1
         onComplete: (status) => {
-            showModernNotification({
-                type: 'positive',
-                title: 'Готово!',
-                message: 'Базовая генерация документа завершена!',
-                icon: 'task_alt'
-            });
+            // Уведомление убрано по запросу
         },
         onFullComplete: (status) => {
             showModernNotification({
@@ -1812,6 +1797,13 @@ const showActionsModal = ref(false);
     align-items: start;
 }
 
+/* Одноколоночная раскладка когда нужна оплата */
+.main-content.single-column {
+    grid-template-columns: 1fr;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
 /* Колонка с документом */
 .document-column {
     min-height: 600px;
@@ -2078,10 +2070,12 @@ const showActionsModal = ref(false);
 }
 
 @media (max-width: 1024px) {
-    .main-content {
+    .main-content,
+    .main-content.single-column {
         display: flex;
         flex-direction: column;
         gap: 0px;
+        max-width: 100%;
     }
     
     .document-header {
@@ -2150,6 +2144,35 @@ const showActionsModal = ref(false);
     .mobile-actions-container {
         padding: 16px;
         border-radius: 16px;
+    }
+    
+    .bottom-generate-section {
+        margin-top: 20px;
+    }
+    
+    .bottom-generate-header {
+        margin-bottom: 16px;
+    }
+    
+    .bottom-generate-title {
+        font-size: 20px;
+        padding-bottom: 10px;
+    }
+    
+    .bottom-generate-title::after {
+        width: 60px;
+        height: 2px;
+    }
+    
+    .bottom-generate-container {
+        padding: 20px;
+        border-radius: 16px;
+    }
+    
+    .bottom-btn {
+        padding: 14px 28px;
+        font-size: 16px;
+        min-width: 180px;
     }
     
     /* Адаптация секции заголовка */
@@ -2371,6 +2394,35 @@ const showActionsModal = ref(false);
         border-radius: 12px;
     }
     
+    .bottom-generate-section {
+        margin-top: 16px;
+    }
+    
+    .bottom-generate-header {
+        margin-bottom: 12px;
+    }
+    
+    .bottom-generate-title {
+        font-size: 18px;
+        padding-bottom: 8px;
+    }
+    
+    .bottom-generate-title::after {
+        width: 50px;
+        height: 2px;
+    }
+    
+    .bottom-generate-container {
+        padding: 16px;
+        border-radius: 12px;
+    }
+    
+    .bottom-btn {
+        padding: 12px 24px;
+        font-size: 15px;
+        min-width: 160px;
+    }
+    
     /* Кнопка возврата на мобильных */
     .header-section {
         gap: 8px;
@@ -2509,6 +2561,16 @@ const showActionsModal = ref(false);
     .header-section {
         gap: 6px;
         margin-bottom: 0px;
+    }
+    
+    .bottom-generate-title {
+        font-size: 16px;
+        padding-bottom: 6px;
+    }
+    
+    .bottom-generate-title::after {
+        width: 40px;
+        height: 2px;
     }
     
     .dashboard-btn {
@@ -3020,6 +3082,63 @@ const showActionsModal = ref(false);
     padding: 14px 18px;
     width: 100%;
     justify-content: flex-start;
+}
+
+/* Секция генерации внизу документа */
+.bottom-generate-section {
+    margin-top: 32px;
+}
+
+.bottom-generate-header {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.bottom-generate-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+    line-height: 1.3;
+    position: relative;
+    padding-bottom: 12px;
+}
+
+.bottom-generate-title::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 3px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 2px;
+}
+
+/* Контейнер для кнопки внизу документа */
+.bottom-generate-container {
+    display: flex;
+    justify-content: center;
+    padding: 24px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-radius: 20px;
+    border: 2px dashed #e2e8f0;
+    transition: all 0.3s ease;
+}
+
+.bottom-generate-container:hover {
+    border-color: #667eea;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    transform: translateY(-2px);
+}
+
+/* Стили для кнопки внизу */
+.bottom-btn {
+    padding: 16px 32px;
+    font-size: 18px;
+    font-weight: 600;
+    min-width: 200px;
 }
 
 /* Модальное окно */
