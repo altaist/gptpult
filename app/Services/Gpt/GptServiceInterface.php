@@ -51,7 +51,7 @@ interface GptServiceInterface
      * @param int $maxRetries
      * @return array
      */
-    public function safeAddMessageToThread(string $threadId, string $content, int $maxRetries = 10): array;
+    public function safeAddMessageToThread(string $threadId, string $content, int $maxRetries = 5): array;
 
     /**
      * Создать run с ассистентом
