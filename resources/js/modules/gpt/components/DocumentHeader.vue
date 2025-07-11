@@ -556,14 +556,15 @@ const getDocumentDisplayTitle = () => {
     
     .details-row {
         gap: 8px;
-        justify-content: flex-start;
-        flex-wrap: wrap;
+        justify-content: space-between;
+        flex-wrap: nowrap;
+        width: 100%;
     }
     
     .detail-item {
         min-height: 44px;
         justify-content: center;
-        padding: 8px 15px;
+        padding: 8px 12px;
         font-size: 12px;
         display: flex;
         align-items: center;
@@ -571,7 +572,9 @@ const getDocumentDisplayTitle = () => {
         flex-shrink: 0;
         box-sizing: border-box;
         border-radius: 10px;
-        width: 180px;
+        width: calc(50% - 4px);
+        flex: 1;
+        min-width: 0;
     }
     
     .detail-icon {
@@ -626,18 +629,20 @@ const getDocumentDisplayTitle = () => {
     
     .details-row {
         gap: 6px;
-        justify-content: flex-start;
-        flex-wrap: wrap;
+        justify-content: space-between;
+        flex-wrap: nowrap;
+        width: 100%;
     }
     
     .detail-item {
         min-height: 40px;
-        padding: 6px 12px;
+        padding: 6px 10px;
         font-size: 11px;
         gap: 4px;
         border-radius: 8px;
-        width: 150px;
-        flex-shrink: 0;
+        width: calc(50% - 3px);
+        flex: 1;
+        min-width: 0;
     }
     
     .detail-icon {
@@ -678,18 +683,20 @@ const getDocumentDisplayTitle = () => {
     
     .details-row {
         gap: 4px;
-        justify-content: flex-start;
-        flex-wrap: wrap;
+        justify-content: space-between;
+        flex-wrap: nowrap;
+        width: 100%;
     }
     
     .detail-item {
         min-height: 36px;
-        padding: 5px 10px;
+        padding: 5px 8px;
         font-size: 10px;
         gap: 3px;
         border-radius: 6px;
-        width: 135px;
-        flex-shrink: 0;
+        width: calc(50% - 2px);
+        flex: 1;
+        min-width: 0;
     }
     
     .detail-icon {

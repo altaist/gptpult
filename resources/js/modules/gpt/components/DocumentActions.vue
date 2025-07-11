@@ -3,14 +3,23 @@
         <!-- Если не хватает баланса — панель оплаты -->
         <div v-if="canPay && document.status === 'pre_generated'">
             <div class="payment-panel">
-                <div class="payment-header">
-                    <div class="payment-icon">
-                        <q-icon name="credit_card" />
-                    </div>
-                    <div class="payment-title">Оформить Абонемент</div>
-                </div>
                 
                 <div class="payment-content">
+                    <div class="subscription-benefits">
+                        <div class="benefits-title">Что входит в абонемент:</div>
+                        <div class="benefit-item">
+                            <q-icon name="check_circle" class="benefit-icon" />
+                            <span>3 генерации документов</span>
+                        </div>
+                        <div class="benefit-item">
+                            <q-icon name="check_circle" class="benefit-icon" />
+                            <span>Полная работа с деталями</span>
+                        </div>
+                        <div class="benefit-item">
+                            <q-icon name="check_circle" class="benefit-icon" />
+                            <span>Скачивание в формате Word</span>
+                        </div>
+                    </div>
                     <div class="pricing-info">
                         <div class="price-item main-price">
                             <div class="price-label">Стоимость</div>
@@ -68,22 +77,6 @@
                     <div class="payment-restriction-notice">
                         <q-icon name="info" class="restriction-icon" />
                         <span>Оплата доступна с IP-адресов Российской Федерации</span>
-                    </div>
-                    
-                    <div class="subscription-benefits">
-                        <div class="benefits-title">Что входит в абонемент:</div>
-                        <div class="benefit-item">
-                            <q-icon name="check_circle" class="benefit-icon" />
-                            <span>3 генерации документов</span>
-                        </div>
-                        <div class="benefit-item">
-                            <q-icon name="check_circle" class="benefit-icon" />
-                            <span>Полное содержание с деталями</span>
-                        </div>
-                        <div class="benefit-item">
-                            <q-icon name="check_circle" class="benefit-icon" />
-                            <span>Скачивание в формате Word</span>
-                        </div>
                     </div>
                 </div>
                 
@@ -514,7 +507,7 @@ const getGenerationsText = () => {
 .actions-column {
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 16px;
     position: sticky;
     top: 24px;
 }
@@ -522,8 +515,8 @@ const getGenerationsText = () => {
 /* Панель оплаты */
 .payment-panel {
     background: #ffffff;
-    border-radius: 20px;
-    padding: 28px;
+    border-radius: 16px;
+    padding: 20px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     border: 1px solid #f1f5f9;
     transition: all 0.3s ease;
@@ -565,7 +558,7 @@ const getGenerationsText = () => {
 .payment-content {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 16px;
 }
 
 .pricing-info {
@@ -620,27 +613,27 @@ const getGenerationsText = () => {
 }
 
 .subscription-benefits {
-    padding: 20px;
+    padding: 16px;
     background: #f8fafc;
     border-radius: 12px;
     border: 1px solid #e2e8f0;
 }
 
 .benefits-title {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 600;
     color: #1e293b;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
 }
 
 .benefit-item {
     display: flex;
     align-items: center;
-    gap: 12px;
-    font-size: 14px;
+    gap: 10px;
+    font-size: 13px;
     color: #64748b;
     font-weight: 500;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
 .benefit-item:last-child {
@@ -655,7 +648,7 @@ const getGenerationsText = () => {
 
 .subscription-btn {
     width: 100%;
-    padding: 16px 24px;
+    padding: 14px 20px;
     border-radius: 12px;
     font-weight: 600;
     background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
@@ -689,8 +682,8 @@ const getGenerationsText = () => {
 /* Карточки действий */
 .action-card {
     background: #ffffff;
-    border-radius: 20px;
-    padding: 28px;
+    border-radius: 16px;
+    padding: 20px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     border: 1px solid #f1f5f9;
     transition: all 0.3s ease;
@@ -714,7 +707,7 @@ const getGenerationsText = () => {
 .action-item {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 16px;
 }
 
 .action-info {
@@ -722,20 +715,20 @@ const getGenerationsText = () => {
 }
 
 .action-name {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 600;
     color: #1e293b;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 
 .action-description {
-    font-size: 14px;
+    font-size: 13px;
     color: #64748b;
-    line-height: 1.5;
+    line-height: 1.4;
 }
 
 .action-btn {
-    padding: 16px 32px;
+    padding: 12px 24px;
     border-radius: 12px;
     font-weight: 600;
     transition: all 0.2s ease;
@@ -845,6 +838,62 @@ const getGenerationsText = () => {
     }
 }
 
+/* Восстановление размеров в модальном окне */
+.q-dialog .actions-column {
+    gap: 24px;
+}
+
+.q-dialog .payment-panel {
+    border-radius: 20px;
+    padding: 28px;
+}
+
+.q-dialog .action-card {
+    border-radius: 20px;
+    padding: 28px;
+}
+
+.q-dialog .payment-content {
+    gap: 20px;
+}
+
+.q-dialog .action-item {
+    gap: 20px;
+}
+
+.q-dialog .action-name {
+    font-size: 20px;
+    margin-bottom: 8px;
+}
+
+.q-dialog .action-description {
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.q-dialog .action-btn {
+    padding: 16px 32px;
+}
+
+.q-dialog .subscription-benefits {
+    padding: 20px;
+}
+
+.q-dialog .benefits-title {
+    font-size: 16px;
+    margin-bottom: 16px;
+}
+
+.q-dialog .benefit-item {
+    gap: 12px;
+    font-size: 14px;
+    margin-bottom: 12px;
+}
+
+.q-dialog .subscription-btn {
+    padding: 16px 24px;
+}
+
 /* Адаптивность */
 @media (max-width: 768px) {
     .actions-column {
@@ -929,7 +978,7 @@ const getGenerationsText = () => {
 
 /* Стили для поля email */
 .email-input-section {
-    margin-bottom: 16px;
+    margin-bottom: 0;
 }
 
 .custom-input-wrapper {
@@ -984,7 +1033,7 @@ const getGenerationsText = () => {
 
 /* Стили для чекбокса согласия */
 .privacy-consent-section {
-    margin-bottom: 16px;
+    margin: 0;
     padding: 14px 16px;
     background: #f8fafc;
     border-radius: 12px;
@@ -1040,7 +1089,7 @@ const getGenerationsText = () => {
 
     .privacy-consent-section {
         padding: 12px 14px;
-        margin-bottom: 14px;
+        margin: 0;
     }
 
     .privacy-consent-wrapper {
@@ -1069,7 +1118,7 @@ const getGenerationsText = () => {
 
     .privacy-consent-section {
         padding: 10px 12px;
-        margin-bottom: 12px;
+        margin: 0;
     }
 
     .privacy-consent-text {

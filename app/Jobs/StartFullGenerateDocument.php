@@ -23,6 +23,21 @@ class StartFullGenerateDocument implements ShouldQueue
      * Максимальное время выполнения задачи в секундах
      */
     public $timeout = 600;
+    
+    /**
+     * Максимальное количество попыток
+     */
+    public $tries = 2;
+    
+    /**
+     * Максимальное количество исключений
+     */
+    public $maxExceptions = 2;
+    
+    /**
+     * Задержки между попытками (в секундах)
+     */
+    public $backoff = [120, 300]; // 2 минуты, 5 минут
 
     /**
      * Create a new job instance.

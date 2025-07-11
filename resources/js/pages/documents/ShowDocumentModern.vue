@@ -267,7 +267,7 @@
     <q-dialog v-model="showActionsModal">
         <q-card class="actions-modal-card">
             <q-card-section class="modal-header">
-                <div class="modal-title">Сгенерировать</div>
+                <div class="modal-title">Для полной генерации работы нужно оформить абонемент</div>
                 <q-btn 
                     flat 
                     round 
@@ -3026,8 +3026,11 @@ const showActionsModal = ref(false);
 .actions-modal-card {
     width: 600px;
     max-width: 90vw;
+    max-height: 90vh;
     border-radius: 20px;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 .modal-header {
@@ -3058,6 +3061,9 @@ const showActionsModal = ref(false);
 .modal-content {
     padding: 0;
     background: #f8fafc;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
 }
 
 @media (max-width: 1024px) {
@@ -3074,6 +3080,24 @@ const showActionsModal = ref(false);
     /* Отступ между кнопкой и контентом */
     .main-content {
         gap: 10px;
+    }
+}
+
+@media (max-width: 768px) {
+    .actions-modal-card {
+        width: 95vw;
+        max-width: 95vw;
+        max-height: 85vh;
+        margin: auto;
+    }
+    
+    .modal-header {
+        padding: 16px 20px;
+    }
+    
+    .modal-title {
+        font-size: 18px;
+        line-height: 1.3;
     }
 }
 </style> 
