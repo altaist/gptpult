@@ -399,4 +399,58 @@ class OpenAiService implements GptServiceInterface
             return false;
         }
     }
+
+    /**
+     * Безопасно создать run с проверкой активности других run
+     *
+     * @param string $threadId
+     * @param string $assistantId
+     * @param int $maxRetries
+     * @return array
+     */
+    public function safeCreateRun(string $threadId, string $assistantId, int $maxRetries = 5): array
+    {
+        $attempts = 0;
+        
+        while ($attempts < $maxRetries) {
+            try {
+                // Проверяем активные run в thread
+                if ($this->hasActiveRuns($threadId)) {
+                    Log::info('Thread имеет активные run перед созданием нового, ожидаем...', [
+                        'thread_id' => $threadId,
+                        'assistant_id' => $assistantId,
+                        'attempt' => $attempts + 1
+                    ]);
+                    
+                    // Ждем перед повторной попыткой
+                    sleep(3);
+                    $attempts++;
+                    continue;
+                }
+                
+                // Пытаемся создать run
+                return $this->createRun($threadId, $assistantId);
+                
+            } catch (\Exception $e) {
+                if (strpos($e->getMessage(), 'already has an active run') !== false) {
+                    Log::warning('Попытка создать run в thread с активным run', [
+                        'thread_id' => $threadId,
+                        'assistant_id' => $assistantId,
+                        'attempt' => $attempts + 1,
+                        'error' => $e->getMessage()
+                    ]);
+                    
+                    // Ждем дольше при повторных попытках
+                    sleep(min(10, 3 + $attempts * 2));
+                    $attempts++;
+                    continue;
+                }
+                
+                // Если это другая ошибка, пробрасываем её
+                throw $e;
+            }
+        }
+        
+        throw new \Exception("Не удалось создать run после {$maxRetries} попыток. Thread постоянно имеет активные run.");
+    }
 } 

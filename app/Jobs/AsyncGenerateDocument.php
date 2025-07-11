@@ -128,8 +128,8 @@ class AsyncGenerateDocument implements ShouldQueue
         $prompt = $this->buildPrompt();
         $gptService->safeAddMessageToThread($thread['id'], $prompt);
 
-        // Создаем run
-        $run = $gptService->createRun($thread['id'], $assistantId);
+        // Безопасно создаем run
+        $run = $gptService->safeCreateRun($thread['id'], $assistantId);
 
         // Оптимизированное ожидание с переменной задержкой
         $result = $this->waitForRunWithOptimizedPolling($gptService, $thread['id'], $run['id']);

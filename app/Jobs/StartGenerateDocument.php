@@ -101,8 +101,8 @@ class StartGenerateDocument implements ShouldQueue
             // Безопасно добавляем сообщение в thread
             $gptService->safeAddMessageToThread($thread['id'], $prompt);
             
-            // Запускаем run с ассистентом
-            $run = $gptService->createRun($thread['id'], $assistantId);
+            // Безопасно запускаем run с ассистентом
+            $run = $gptService->safeCreateRun($thread['id'], $assistantId);
             
             // Ждем завершения run
             $completedRun = $gptService->waitForRunCompletion($thread['id'], $run['id']);
