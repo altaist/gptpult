@@ -72,6 +72,20 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'debug_generation' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/debug_generation.log'),
+            'level' => 'debug',
+            'replace_placeholders' => true,
+        ],
+
+        'full_generation' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/full_generation.log'),
+            'level' => 'debug',
+            'replace_placeholders' => true,
+        ],
+
         'daily' => [
             'driver' => 'daily',
             'path' => storage_path('logs/laravel.log'),

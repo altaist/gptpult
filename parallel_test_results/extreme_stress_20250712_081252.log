@@ -1,0 +1,1139 @@
+[2025-07-12 05:12:38] test.INFO: Stress test started {"document_id":7,"thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","workers":"5","iterations":"10","no_delay":true,"total_requests":50,"start_time":"2025-07-12 05:12:38.538"} 
+[2025-07-12 05:12:38] test.INFO: StressWorker #2: Stress worker started {"worker_id":"2","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress worker started","timestamp":"2025-07-12 05:12:38.761","process_id":1672958,"memory_usage":29360128,"memory_peak":29360128,"document_id":"7","iterations":10,"delay":0} 
+[2025-07-12 05:12:38] test.INFO: StressWorker #2: Attempting to add message {"worker_id":"2","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:38.765","process_id":1672958,"memory_usage":29360128,"memory_peak":29360128,"iteration":1,"message_length":153,"timestamp_before":"2025-07-12 05:12:38.765"} 
+[2025-07-12 05:12:38] test.INFO: StressWorker #5: Stress worker started {"worker_id":"5","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress worker started","timestamp":"2025-07-12 05:12:38.767","process_id":1672961,"memory_usage":29360128,"memory_peak":29360128,"document_id":"7","iterations":10,"delay":0} 
+[2025-07-12 05:12:38] test.INFO: StressWorker #5: Attempting to add message {"worker_id":"5","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:38.771","process_id":1672961,"memory_usage":29360128,"memory_peak":29360128,"iteration":1,"message_length":153,"timestamp_before":"2025-07-12 05:12:38.771"} 
+[2025-07-12 05:12:38] test.INFO: StressWorker #3: Stress worker started {"worker_id":"3","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress worker started","timestamp":"2025-07-12 05:12:38.810","process_id":1672959,"memory_usage":29360128,"memory_peak":29360128,"document_id":"7","iterations":10,"delay":0} 
+[2025-07-12 05:12:38] test.INFO: StressWorker #3: Attempting to add message {"worker_id":"3","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:38.814","process_id":1672959,"memory_usage":29360128,"memory_peak":29360128,"iteration":1,"message_length":153,"timestamp_before":"2025-07-12 05:12:38.814"} 
+[2025-07-12 05:12:38] test.INFO: StressWorker #1: Stress worker started {"worker_id":"1","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress worker started","timestamp":"2025-07-12 05:12:38.810","process_id":1672957,"memory_usage":29360128,"memory_peak":29360128,"document_id":"7","iterations":10,"delay":0} 
+[2025-07-12 05:12:38] test.INFO: StressWorker #1: Attempting to add message {"worker_id":"1","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:38.815","process_id":1672957,"memory_usage":29360128,"memory_peak":29360128,"iteration":1,"message_length":153,"timestamp_before":"2025-07-12 05:12:38.815"} 
+[2025-07-12 05:12:38] test.INFO: StressWorker #4: Stress worker started {"worker_id":"4","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress worker started","timestamp":"2025-07-12 05:12:38.816","process_id":1672960,"memory_usage":29360128,"memory_peak":29360128,"document_id":"7","iterations":10,"delay":0} 
+[2025-07-12 05:12:38] test.INFO: StressWorker #4: Attempting to add message {"worker_id":"4","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:38.821","process_id":1672960,"memory_usage":29360128,"memory_peak":29360128,"iteration":1,"message_length":153,"timestamp_before":"2025-07-12 05:12:38.821"} 
+[2025-07-12 05:12:39] test.INFO: StressWorker #1: Message added successfully {"worker_id":"1","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Message added successfully","timestamp":"2025-07-12 05:12:39.696","process_id":1672957,"memory_usage":31457280,"memory_peak":31457280,"iteration":1,"message_id":"msg_A9nY8w5iDGpHvOM0oYZAMyzm","add_time":"0.88019394874573s","timestamp_after":"2025-07-12 05:12:39.696"} 
+[2025-07-12 05:12:39] test.INFO: StressWorker #1: Creating run {"worker_id":"1","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Creating run","timestamp":"2025-07-12 05:12:39.696","process_id":1672957,"memory_usage":31457280,"memory_peak":31457280,"iteration":1,"assistant_id":"asst_8FBCbxGFVWfhwnGLHyo7T3Ju"} 
+[2025-07-12 05:12:39] test.INFO: StressWorker #2: Message added successfully {"worker_id":"2","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Message added successfully","timestamp":"2025-07-12 05:12:39.700","process_id":1672958,"memory_usage":31457280,"memory_peak":31457280,"iteration":1,"message_id":"msg_CUL1onIrEhHaqjVESRsmBql6","add_time":"0.93439602851868s","timestamp_after":"2025-07-12 05:12:39.700"} 
+[2025-07-12 05:12:39] test.INFO: StressWorker #2: Creating run {"worker_id":"2","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Creating run","timestamp":"2025-07-12 05:12:39.700","process_id":1672958,"memory_usage":31457280,"memory_peak":31457280,"iteration":1,"assistant_id":"asst_8FBCbxGFVWfhwnGLHyo7T3Ju"} 
+[2025-07-12 05:12:39] test.INFO: StressWorker #3: Message added successfully {"worker_id":"3","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Message added successfully","timestamp":"2025-07-12 05:12:39.980","process_id":1672959,"memory_usage":31457280,"memory_peak":31457280,"iteration":1,"message_id":"msg_3aKyrd02BAEwt6F2rONEKTSw","add_time":"1.1657731533051s","timestamp_after":"2025-07-12 05:12:39.980"} 
+[2025-07-12 05:12:39] test.INFO: StressWorker #3: Creating run {"worker_id":"3","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Creating run","timestamp":"2025-07-12 05:12:39.980","process_id":1672959,"memory_usage":31457280,"memory_peak":31457280,"iteration":1,"assistant_id":"asst_8FBCbxGFVWfhwnGLHyo7T3Ju"} 
+[2025-07-12 05:12:40] test.INFO: StressWorker #5: Message added successfully {"worker_id":"5","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Message added successfully","timestamp":"2025-07-12 05:12:40.147","process_id":1672961,"memory_usage":31457280,"memory_peak":31457280,"iteration":1,"message_id":"msg_oWbpVj3mKvszLBpa5ubsqqYu","add_time":"1.3753008842468s","timestamp_after":"2025-07-12 05:12:40.147"} 
+[2025-07-12 05:12:40] test.INFO: StressWorker #5: Creating run {"worker_id":"5","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Creating run","timestamp":"2025-07-12 05:12:40.147","process_id":1672961,"memory_usage":31457280,"memory_peak":31457280,"iteration":1,"assistant_id":"asst_8FBCbxGFVWfhwnGLHyo7T3Ju"} 
+[2025-07-12 05:12:40] test.INFO: StressWorker #3: Failed to create run {"worker_id":"3","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to create run","timestamp":"2025-07-12 05:12:40.953","process_id":1672959,"memory_usage":31457280,"memory_peak":31457280,"iteration":1,"error":"OpenAI Create Run failed: {
+  \"error\": {
+    \"message\": \"Thread thread_sBBUou34ch8Hf92FODmJe4L6 already has an active run run_tSxf2LOMHPB7icYx1hHLRT8Z.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","create_time":"0.97302389144897s"} 
+[2025-07-12 05:12:41] test.INFO: StressWorker #3: Attempting to add message {"worker_id":"3","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:41.054","process_id":1672959,"memory_usage":31457280,"memory_peak":31457280,"iteration":2,"message_length":145,"timestamp_before":"2025-07-12 05:12:41.053"} 
+[2025-07-12 05:12:41] test.INFO: StressWorker #4: Message added successfully {"worker_id":"4","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Message added successfully","timestamp":"2025-07-12 05:12:41.144","process_id":1672960,"memory_usage":31457280,"memory_peak":31457280,"iteration":1,"message_id":"msg_YHArO5k6dB8Ko34f07wN04SU","add_time":"2.3220770359039s","timestamp_after":"2025-07-12 05:12:41.144"} 
+[2025-07-12 05:12:41] test.INFO: StressWorker #4: Creating run {"worker_id":"4","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Creating run","timestamp":"2025-07-12 05:12:41.144","process_id":1672960,"memory_usage":31457280,"memory_peak":31457280,"iteration":1,"assistant_id":"asst_8FBCbxGFVWfhwnGLHyo7T3Ju"} 
+[2025-07-12 05:12:41] test.INFO: StressWorker #1: Run created {"worker_id":"1","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Run created","timestamp":"2025-07-12 05:12:41.206","process_id":1672957,"memory_usage":31457280,"memory_peak":31457280,"iteration":1,"run_id":"run_FIChaWviQGDb41BkYv1X7HLF","status":"queued","create_time":"1.5103471279144s"} 
+[2025-07-12 05:12:41] test.INFO: StressWorker #5: Failed to create run {"worker_id":"5","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to create run","timestamp":"2025-07-12 05:12:41.227","process_id":1672961,"memory_usage":31457280,"memory_peak":31457280,"iteration":1,"error":"OpenAI Create Run failed: {
+  \"error\": {
+    \"message\": \"Thread thread_sBBUou34ch8Hf92FODmJe4L6 already has an active run run_tSxf2LOMHPB7icYx1hHLRT8Z.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","create_time":"1.080146074295s"} 
+[2025-07-12 05:12:41] test.INFO: StressWorker #2: Run created {"worker_id":"2","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Run created","timestamp":"2025-07-12 05:12:41.264","process_id":1672958,"memory_usage":31457280,"memory_peak":31457280,"iteration":1,"run_id":"run_tSxf2LOMHPB7icYx1hHLRT8Z","status":"queued","create_time":"1.5637080669403s"} 
+[2025-07-12 05:12:41] test.INFO: StressWorker #1: Attempting to add message {"worker_id":"1","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:41.307","process_id":1672957,"memory_usage":31457280,"memory_peak":31457280,"iteration":2,"message_length":145,"timestamp_before":"2025-07-12 05:12:41.307"} 
+[2025-07-12 05:12:41] test.INFO: StressWorker #5: Attempting to add message {"worker_id":"5","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:41.328","process_id":1672961,"memory_usage":31457280,"memory_peak":31457280,"iteration":2,"message_length":145,"timestamp_before":"2025-07-12 05:12:41.328"} 
+[2025-07-12 05:12:41] test.INFO: StressWorker #2: Attempting to add message {"worker_id":"2","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:41.364","process_id":1672958,"memory_usage":31457280,"memory_peak":31457280,"iteration":2,"message_length":145,"timestamp_before":"2025-07-12 05:12:41.364"} 
+[2025-07-12 05:12:41] test.INFO: StressWorker #3: Failed to add message {"worker_id":"3","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:41.692","process_id":1672959,"memory_usage":31457280,"memory_peak":31457280,"iteration":2,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"0.63783693313599s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:41.692"} 
+[2025-07-12 05:12:41] test.INFO: StressWorker #3: Stress iteration failed {"worker_id":"3","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:41.692","process_id":1672959,"memory_usage":31457280,"memory_peak":31457280,"iteration":2,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:41] test.INFO: StressWorker #3: Attempting to add message {"worker_id":"3","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:41.792","process_id":1672959,"memory_usage":31457280,"memory_peak":31457280,"iteration":3,"message_length":138,"timestamp_before":"2025-07-12 05:12:41.792"} 
+[2025-07-12 05:12:42] test.INFO: StressWorker #5: Failed to add message {"worker_id":"5","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:42.029","process_id":1672961,"memory_usage":31457280,"memory_peak":31457280,"iteration":2,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"0.70090389251709s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:42.029"} 
+[2025-07-12 05:12:42] test.INFO: StressWorker #5: Stress iteration failed {"worker_id":"5","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:42.029","process_id":1672961,"memory_usage":31457280,"memory_peak":31457280,"iteration":2,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:42] test.INFO: StressWorker #2: Failed to add message {"worker_id":"2","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:42.069","process_id":1672958,"memory_usage":31457280,"memory_peak":31457280,"iteration":2,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"0.70453000068665s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:42.069"} 
+[2025-07-12 05:12:42] test.INFO: StressWorker #2: Stress iteration failed {"worker_id":"2","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:42.069","process_id":1672958,"memory_usage":31457280,"memory_peak":31457280,"iteration":2,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:42] test.INFO: StressWorker #5: Attempting to add message {"worker_id":"5","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:42.129","process_id":1672961,"memory_usage":31457280,"memory_peak":31457280,"iteration":3,"message_length":138,"timestamp_before":"2025-07-12 05:12:42.129"} 
+[2025-07-12 05:12:42] test.INFO: StressWorker #2: Attempting to add message {"worker_id":"2","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:42.170","process_id":1672958,"memory_usage":31457280,"memory_peak":31457280,"iteration":3,"message_length":138,"timestamp_before":"2025-07-12 05:12:42.170"} 
+[2025-07-12 05:12:42] test.INFO: StressWorker #1: Failed to add message {"worker_id":"1","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:42.331","process_id":1672957,"memory_usage":31457280,"memory_peak":31457280,"iteration":2,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"1.0242459774017s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:42.331"} 
+[2025-07-12 05:12:42] test.INFO: StressWorker #1: Stress iteration failed {"worker_id":"1","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:42.331","process_id":1672957,"memory_usage":31457280,"memory_peak":31457280,"iteration":2,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:42] test.INFO: StressWorker #1: Attempting to add message {"worker_id":"1","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:42.431","process_id":1672957,"memory_usage":31457280,"memory_peak":31457280,"iteration":3,"message_length":138,"timestamp_before":"2025-07-12 05:12:42.431"} 
+[2025-07-12 05:12:42] test.INFO: StressWorker #4: Failed to create run {"worker_id":"4","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to create run","timestamp":"2025-07-12 05:12:42.528","process_id":1672960,"memory_usage":31457280,"memory_peak":31457280,"iteration":1,"error":"OpenAI Create Run failed: {
+  \"error\": {
+    \"message\": \"Thread thread_sBBUou34ch8Hf92FODmJe4L6 already has an active run run_tSxf2LOMHPB7icYx1hHLRT8Z.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","create_time":"1.3841300010681s"} 
+[2025-07-12 05:12:42] test.INFO: StressWorker #4: Attempting to add message {"worker_id":"4","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:42.628","process_id":1672960,"memory_usage":31457280,"memory_peak":31457280,"iteration":2,"message_length":145,"timestamp_before":"2025-07-12 05:12:42.628"} 
+[2025-07-12 05:12:42] test.INFO: StressWorker #5: Failed to add message {"worker_id":"5","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:42.787","process_id":1672961,"memory_usage":31457280,"memory_peak":31457280,"iteration":3,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"0.65731692314148s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:42.787"} 
+[2025-07-12 05:12:42] test.INFO: StressWorker #5: Stress iteration failed {"worker_id":"5","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:42.787","process_id":1672961,"memory_usage":31457280,"memory_peak":31457280,"iteration":3,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:42] test.INFO: StressWorker #2: Failed to add message {"worker_id":"2","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:42.849","process_id":1672958,"memory_usage":31457280,"memory_peak":31457280,"iteration":3,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"0.67911982536316s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:42.849"} 
+[2025-07-12 05:12:42] test.INFO: StressWorker #2: Stress iteration failed {"worker_id":"2","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:42.849","process_id":1672958,"memory_usage":31457280,"memory_peak":31457280,"iteration":3,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:42] test.INFO: StressWorker #5: Attempting to add message {"worker_id":"5","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:42.887","process_id":1672961,"memory_usage":31457280,"memory_peak":31457280,"iteration":4,"message_length":158,"timestamp_before":"2025-07-12 05:12:42.887"} 
+[2025-07-12 05:12:42] test.INFO: StressWorker #2: Attempting to add message {"worker_id":"2","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:42.949","process_id":1672958,"memory_usage":31457280,"memory_peak":31457280,"iteration":4,"message_length":158,"timestamp_before":"2025-07-12 05:12:42.949"} 
+[2025-07-12 05:12:43] test.INFO: StressWorker #1: Failed to add message {"worker_id":"1","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:43.096","process_id":1672957,"memory_usage":31457280,"memory_peak":31457280,"iteration":3,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"0.66438603401184s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:43.096"} 
+[2025-07-12 05:12:43] test.INFO: StressWorker #1: Stress iteration failed {"worker_id":"1","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:43.096","process_id":1672957,"memory_usage":31457280,"memory_peak":31457280,"iteration":3,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:43] test.INFO: StressWorker #3: Failed to add message {"worker_id":"3","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:43.146","process_id":1672959,"memory_usage":31457280,"memory_peak":31457280,"iteration":3,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"1.3543028831482s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:43.146"} 
+[2025-07-12 05:12:43] test.INFO: StressWorker #3: Stress iteration failed {"worker_id":"3","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:43.147","process_id":1672959,"memory_usage":31457280,"memory_peak":31457280,"iteration":3,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:43] test.INFO: StressWorker #1: Attempting to add message {"worker_id":"1","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:43.196","process_id":1672957,"memory_usage":31457280,"memory_peak":31457280,"iteration":4,"message_length":158,"timestamp_before":"2025-07-12 05:12:43.196"} 
+[2025-07-12 05:12:43] test.INFO: StressWorker #3: Attempting to add message {"worker_id":"3","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:43.247","process_id":1672959,"memory_usage":31457280,"memory_peak":31457280,"iteration":4,"message_length":158,"timestamp_before":"2025-07-12 05:12:43.247"} 
+[2025-07-12 05:12:43] test.INFO: StressWorker #5: Failed to add message {"worker_id":"5","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:43.599","process_id":1672961,"memory_usage":31457280,"memory_peak":31457280,"iteration":4,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"0.71178984642029s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:43.599"} 
+[2025-07-12 05:12:43] test.INFO: StressWorker #5: Stress iteration failed {"worker_id":"5","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:43.599","process_id":1672961,"memory_usage":31457280,"memory_peak":31457280,"iteration":4,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:43] test.INFO: StressWorker #4: Failed to add message {"worker_id":"4","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:43.618","process_id":1672960,"memory_usage":31457280,"memory_peak":31457280,"iteration":2,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"0.98972797393799s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:43.618"} 
+[2025-07-12 05:12:43] test.INFO: StressWorker #4: Stress iteration failed {"worker_id":"4","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:43.618","process_id":1672960,"memory_usage":31457280,"memory_peak":31457280,"iteration":2,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:43] test.INFO: StressWorker #2: Failed to add message {"worker_id":"2","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:43.630","process_id":1672958,"memory_usage":31457280,"memory_peak":31457280,"iteration":4,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"0.68012595176697s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:43.630"} 
+[2025-07-12 05:12:43] test.INFO: StressWorker #2: Stress iteration failed {"worker_id":"2","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:43.630","process_id":1672958,"memory_usage":31457280,"memory_peak":31457280,"iteration":4,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:43] test.INFO: StressWorker #5: Attempting to add message {"worker_id":"5","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:43.699","process_id":1672961,"memory_usage":31457280,"memory_peak":31457280,"iteration":5,"message_length":145,"timestamp_before":"2025-07-12 05:12:43.699"} 
+[2025-07-12 05:12:43] test.INFO: StressWorker #4: Attempting to add message {"worker_id":"4","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:43.719","process_id":1672960,"memory_usage":31457280,"memory_peak":31457280,"iteration":3,"message_length":138,"timestamp_before":"2025-07-12 05:12:43.719"} 
+[2025-07-12 05:12:43] test.INFO: StressWorker #2: Attempting to add message {"worker_id":"2","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:43.730","process_id":1672958,"memory_usage":31457280,"memory_peak":31457280,"iteration":5,"message_length":145,"timestamp_before":"2025-07-12 05:12:43.730"} 
+[2025-07-12 05:12:43] test.INFO: StressWorker #3: Failed to add message {"worker_id":"3","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:43.928","process_id":1672959,"memory_usage":31457280,"memory_peak":31457280,"iteration":4,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"0.6812698841095s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:43.928"} 
+[2025-07-12 05:12:43] test.INFO: StressWorker #3: Stress iteration failed {"worker_id":"3","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:43.928","process_id":1672959,"memory_usage":31457280,"memory_peak":31457280,"iteration":4,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:44] test.INFO: StressWorker #3: Attempting to add message {"worker_id":"3","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:44.029","process_id":1672959,"memory_usage":31457280,"memory_peak":31457280,"iteration":5,"message_length":145,"timestamp_before":"2025-07-12 05:12:44.029"} 
+[2025-07-12 05:12:44] test.INFO: StressWorker #1: Failed to add message {"worker_id":"1","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:44.155","process_id":1672957,"memory_usage":31457280,"memory_peak":31457280,"iteration":4,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"0.95808792114258s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:44.155"} 
+[2025-07-12 05:12:44] test.INFO: StressWorker #1: Stress iteration failed {"worker_id":"1","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:44.155","process_id":1672957,"memory_usage":31457280,"memory_peak":31457280,"iteration":4,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:44] test.INFO: StressWorker #1: Attempting to add message {"worker_id":"1","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:44.255","process_id":1672957,"memory_usage":31457280,"memory_peak":31457280,"iteration":5,"message_length":145,"timestamp_before":"2025-07-12 05:12:44.255"} 
+[2025-07-12 05:12:44] test.INFO: StressWorker #4: Failed to add message {"worker_id":"4","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:44.399","process_id":1672960,"memory_usage":31457280,"memory_peak":31457280,"iteration":3,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"0.68052506446838s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:44.399"} 
+[2025-07-12 05:12:44] test.INFO: StressWorker #4: Stress iteration failed {"worker_id":"4","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:44.399","process_id":1672960,"memory_usage":31457280,"memory_peak":31457280,"iteration":3,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:44] test.INFO: StressWorker #5: Failed to add message {"worker_id":"5","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:44.406","process_id":1672961,"memory_usage":31457280,"memory_peak":31457280,"iteration":5,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"0.70689797401428s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:44.406"} 
+[2025-07-12 05:12:44] test.INFO: StressWorker #5: Stress iteration failed {"worker_id":"5","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:44.407","process_id":1672961,"memory_usage":31457280,"memory_peak":31457280,"iteration":5,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:44] test.INFO: StressWorker #2: Failed to add message {"worker_id":"2","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:44.426","process_id":1672958,"memory_usage":31457280,"memory_peak":31457280,"iteration":5,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"0.69583606719971s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:44.426"} 
+[2025-07-12 05:12:44] test.INFO: StressWorker #2: Stress iteration failed {"worker_id":"2","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:44.426","process_id":1672958,"memory_usage":31457280,"memory_peak":31457280,"iteration":5,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:44] test.INFO: StressWorker #4: Attempting to add message {"worker_id":"4","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:44.500","process_id":1672960,"memory_usage":31457280,"memory_peak":31457280,"iteration":4,"message_length":158,"timestamp_before":"2025-07-12 05:12:44.500"} 
+[2025-07-12 05:12:44] test.INFO: StressWorker #5: Attempting to add message {"worker_id":"5","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:44.507","process_id":1672961,"memory_usage":31457280,"memory_peak":31457280,"iteration":6,"message_length":146,"timestamp_before":"2025-07-12 05:12:44.507"} 
+[2025-07-12 05:12:44] test.INFO: StressWorker #2: Attempting to add message {"worker_id":"2","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:44.527","process_id":1672958,"memory_usage":31457280,"memory_peak":31457280,"iteration":6,"message_length":146,"timestamp_before":"2025-07-12 05:12:44.527"} 
+[2025-07-12 05:12:44] test.INFO: StressWorker #3: Failed to add message {"worker_id":"3","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:44.801","process_id":1672959,"memory_usage":31457280,"memory_peak":31457280,"iteration":5,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"0.77162885665894s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:44.801"} 
+[2025-07-12 05:12:44] test.INFO: StressWorker #3: Stress iteration failed {"worker_id":"3","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:44.801","process_id":1672959,"memory_usage":31457280,"memory_peak":31457280,"iteration":5,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:44] test.INFO: StressWorker #3: Attempting to add message {"worker_id":"3","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:44.901","process_id":1672959,"memory_usage":31457280,"memory_peak":31457280,"iteration":6,"message_length":146,"timestamp_before":"2025-07-12 05:12:44.901"} 
+[2025-07-12 05:12:45] test.INFO: StressWorker #5: Failed to add message {"worker_id":"5","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:45.220","process_id":1672961,"memory_usage":31457280,"memory_peak":31457280,"iteration":6,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"0.71320104598999s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:45.220"} 
+[2025-07-12 05:12:45] test.INFO: StressWorker #5: Stress iteration failed {"worker_id":"5","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:45.220","process_id":1672961,"memory_usage":31457280,"memory_peak":31457280,"iteration":6,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:45] test.INFO: StressWorker #1: Failed to add message {"worker_id":"1","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:45.254","process_id":1672957,"memory_usage":31457280,"memory_peak":31457280,"iteration":5,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"0.99888610839844s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:45.254"} 
+[2025-07-12 05:12:45] test.INFO: StressWorker #1: Stress iteration failed {"worker_id":"1","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:45.254","process_id":1672957,"memory_usage":31457280,"memory_peak":31457280,"iteration":5,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:45] test.INFO: StressWorker #4: Failed to add message {"worker_id":"4","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:45.320","process_id":1672960,"memory_usage":31457280,"memory_peak":31457280,"iteration":4,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"0.8204391002655s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:45.320"} 
+[2025-07-12 05:12:45] test.INFO: StressWorker #4: Stress iteration failed {"worker_id":"4","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:45.320","process_id":1672960,"memory_usage":31457280,"memory_peak":31457280,"iteration":4,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:45] test.INFO: StressWorker #5: Attempting to add message {"worker_id":"5","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:45.321","process_id":1672961,"memory_usage":31457280,"memory_peak":31457280,"iteration":7,"message_length":152,"timestamp_before":"2025-07-12 05:12:45.321"} 
+[2025-07-12 05:12:45] test.INFO: StressWorker #1: Attempting to add message {"worker_id":"1","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:45.355","process_id":1672957,"memory_usage":31457280,"memory_peak":31457280,"iteration":6,"message_length":146,"timestamp_before":"2025-07-12 05:12:45.355"} 
+[2025-07-12 05:12:45] test.INFO: StressWorker #2: Failed to add message {"worker_id":"2","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:45.378","process_id":1672958,"memory_usage":31457280,"memory_peak":31457280,"iteration":6,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"0.85167193412781s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:45.378"} 
+[2025-07-12 05:12:45] test.INFO: StressWorker #2: Stress iteration failed {"worker_id":"2","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:45.379","process_id":1672958,"memory_usage":31457280,"memory_peak":31457280,"iteration":6,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:45] test.INFO: StressWorker #4: Attempting to add message {"worker_id":"4","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:45.421","process_id":1672960,"memory_usage":31457280,"memory_peak":31457280,"iteration":5,"message_length":145,"timestamp_before":"2025-07-12 05:12:45.421"} 
+[2025-07-12 05:12:45] test.INFO: StressWorker #2: Attempting to add message {"worker_id":"2","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:45.479","process_id":1672958,"memory_usage":31457280,"memory_peak":31457280,"iteration":7,"message_length":152,"timestamp_before":"2025-07-12 05:12:45.479"} 
+[2025-07-12 05:12:45] test.INFO: StressWorker #3: Failed to add message {"worker_id":"3","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:45.600","process_id":1672959,"memory_usage":31457280,"memory_peak":31457280,"iteration":6,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"0.6985650062561s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:45.600"} 
+[2025-07-12 05:12:45] test.INFO: StressWorker #3: Stress iteration failed {"worker_id":"3","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:45.600","process_id":1672959,"memory_usage":31457280,"memory_peak":31457280,"iteration":6,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:45] test.INFO: StressWorker #3: Attempting to add message {"worker_id":"3","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:45.700","process_id":1672959,"memory_usage":31457280,"memory_peak":31457280,"iteration":7,"message_length":152,"timestamp_before":"2025-07-12 05:12:45.700"} 
+[2025-07-12 05:12:45] test.INFO: Thread monitor check #1 {"thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","check_number":1,"timestamp":"2025-07-12 05:12:45.911","total_runs":16,"active_runs":0,"completed_runs":15,"failed_runs":1,"other_runs":0,"has_active_via_method":true,"manual_check_has_active":false,"method_matches_manual":false,"active_runs_details":[],"all_runs":[{"id":"run_YXqEJkzsGZVtEaAC8MmCWNOi","status":"completed","created_at":1752296337,"started_at":1752296338,"completed_at":1752296344,"model":"o3-mini-2025-01-31"},{"id":"run_OJo8xM9N9F6RNgvRcjD63PaP","status":"completed","created_at":1752296327,"started_at":1752296328,"completed_at":1752296335,"model":"o3-mini-2025-01-31"},{"id":"run_lnvLyxVN87MhaeH62i9zK2m3","status":"completed","created_at":1752296312,"started_at":1752296315,"completed_at":1752296322,"model":"o3-mini-2025-01-31"},{"id":"run_fenpyWuqI6UVJq2wLzN00IFZ","status":"completed","created_at":1752296300,"started_at":1752296302,"completed_at":1752296309,"model":"o3-mini-2025-01-31"},{"id":"run_aTJWL82VcUL3zU69fqksF45d","status":"completed","created_at":1752296290,"started_at":1752296291,"completed_at":1752296297,"model":"o3-mini-2025-01-31"},{"id":"run_GAb31MiBIhXTXB27sqYsltR9","status":"completed","created_at":1752296281,"started_at":1752296282,"completed_at":1752296286,"model":"o3-mini-2025-01-31"},{"id":"run_PjtswQGRnfRUDS4uuv4eS2xX","status":"completed","created_at":1752296267,"started_at":1752296269,"completed_at":1752296273,"model":"o3-mini-2025-01-31"},{"id":"run_Fe0bCWJHiz4H8KsEPWfJHfPx","status":"completed","created_at":1752296258,"started_at":1752296259,"completed_at":1752296264,"model":"o3-mini-2025-01-31"},{"id":"run_g7tMMnqrBaNyFP41dkuzCYFc","status":"completed","created_at":1752296247,"started_at":1752296249,"completed_at":1752296254,"model":"o3-mini-2025-01-31"},{"id":"run_eCCkMTGHG5jsYBeFmAiWKlsg","status":"completed","created_at":1752296239,"started_at":1752296239,"completed_at":1752296243,"model":"o3-mini-2025-01-31"},{"id":"run_689SvUxmN1HUK69zq2JJetY8","status":"expired","created_at":1752295629,"started_at":1752295630,"completed_at":1752295647,"model":"o3-mini-2025-01-31"},{"id":"run_3El0KPkqhJ76Aa5b6ectgWmL","status":"completed","created_at":1752295584,"started_at":1752295586,"completed_at":1752295614,"model":"o3-mini-2025-01-31"},{"id":"run_z5YMrgWdJCBw4jZXHyHOw4XT","status":"completed","created_at":1752295547,"started_at":1752295548,"completed_at":1752295567,"model":"o3-mini-2025-01-31"},{"id":"run_TxKsZp43bAMrntHxvgKGVdDj","status":"completed","created_at":1752295511,"started_at":1752295513,"completed_at":1752295536,"model":"o3-mini-2025-01-31"},{"id":"run_u0cooBjXGbs0P7KUrQy3r1cu","status":"completed","created_at":1752295479,"started_at":1752295480,"completed_at":1752295497,"model":"o3-mini-2025-01-31"},{"id":"run_TlzAB1lnVz14mQoaC58M4GUo","status":"completed","created_at":1752295306,"started_at":1752295308,"completed_at":1752295330,"model":"o3-mini-2025-01-31"}]} 
+[2025-07-12 05:12:46] test.INFO: StressWorker #5: Failed to add message {"worker_id":"5","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:46.002","process_id":1672961,"memory_usage":31457280,"memory_peak":31457280,"iteration":7,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"0.68100786209106s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:46.002"} 
+[2025-07-12 05:12:46] test.INFO: StressWorker #5: Stress iteration failed {"worker_id":"5","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:46.002","process_id":1672961,"memory_usage":31457280,"memory_peak":31457280,"iteration":7,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:46] test.INFO: StressWorker #1: Failed to add message {"worker_id":"1","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:46.086","process_id":1672957,"memory_usage":31457280,"memory_peak":31457280,"iteration":6,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"0.73149514198303s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:46.086"} 
+[2025-07-12 05:12:46] test.INFO: StressWorker #1: Stress iteration failed {"worker_id":"1","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:46.087","process_id":1672957,"memory_usage":31457280,"memory_peak":31457280,"iteration":6,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:46] test.INFO: StressWorker #4: Failed to add message {"worker_id":"4","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:46.093","process_id":1672960,"memory_usage":31457280,"memory_peak":31457280,"iteration":5,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"0.67259311676025s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:46.093"} 
+[2025-07-12 05:12:46] test.INFO: StressWorker #4: Stress iteration failed {"worker_id":"4","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:46.094","process_id":1672960,"memory_usage":31457280,"memory_peak":31457280,"iteration":5,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:46] test.INFO: StressWorker #5: Attempting to add message {"worker_id":"5","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:46.103","process_id":1672961,"memory_usage":31457280,"memory_peak":31457280,"iteration":8,"message_length":150,"timestamp_before":"2025-07-12 05:12:46.103"} 
+[2025-07-12 05:12:46] test.INFO: StressWorker #2: Failed to add message {"worker_id":"2","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:46.158","process_id":1672958,"memory_usage":31457280,"memory_peak":31457280,"iteration":7,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"0.67828297615051s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:46.158"} 
+[2025-07-12 05:12:46] test.INFO: StressWorker #2: Stress iteration failed {"worker_id":"2","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:46.158","process_id":1672958,"memory_usage":31457280,"memory_peak":31457280,"iteration":7,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:46] test.INFO: StressWorker #1: Attempting to add message {"worker_id":"1","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:46.187","process_id":1672957,"memory_usage":31457280,"memory_peak":31457280,"iteration":7,"message_length":152,"timestamp_before":"2025-07-12 05:12:46.187"} 
+[2025-07-12 05:12:46] test.INFO: StressWorker #4: Attempting to add message {"worker_id":"4","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:46.194","process_id":1672960,"memory_usage":31457280,"memory_peak":31457280,"iteration":6,"message_length":146,"timestamp_before":"2025-07-12 05:12:46.194"} 
+[2025-07-12 05:12:46] test.INFO: StressWorker #2: Attempting to add message {"worker_id":"2","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:46.258","process_id":1672958,"memory_usage":31457280,"memory_peak":31457280,"iteration":8,"message_length":150,"timestamp_before":"2025-07-12 05:12:46.258"} 
+[2025-07-12 05:12:46] test.INFO: StressWorker #3: Failed to add message {"worker_id":"3","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:46.426","process_id":1672959,"memory_usage":31457280,"memory_peak":31457280,"iteration":7,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"0.72556304931641s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:46.426"} 
+[2025-07-12 05:12:46] test.INFO: StressWorker #3: Stress iteration failed {"worker_id":"3","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:46.426","process_id":1672959,"memory_usage":31457280,"memory_peak":31457280,"iteration":7,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:46] test.INFO: StressWorker #3: Attempting to add message {"worker_id":"3","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:46.527","process_id":1672959,"memory_usage":31457280,"memory_peak":31457280,"iteration":8,"message_length":150,"timestamp_before":"2025-07-12 05:12:46.527"} 
+[2025-07-12 05:12:46] test.INFO: StressWorker #1: Failed to add message {"worker_id":"1","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:46.854","process_id":1672957,"memory_usage":31457280,"memory_peak":31457280,"iteration":7,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"0.66689610481262s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:46.854"} 
+[2025-07-12 05:12:46] test.INFO: StressWorker #1: Stress iteration failed {"worker_id":"1","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:46.854","process_id":1672957,"memory_usage":31457280,"memory_peak":31457280,"iteration":7,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:46] test.INFO: StressWorker #2: Failed to add message {"worker_id":"2","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:46.928","process_id":1672958,"memory_usage":31457280,"memory_peak":31457280,"iteration":8,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"0.67014980316162s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:46.928"} 
+[2025-07-12 05:12:46] test.INFO: StressWorker #2: Stress iteration failed {"worker_id":"2","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:46.928","process_id":1672958,"memory_usage":31457280,"memory_peak":31457280,"iteration":8,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:46] test.INFO: StressWorker #1: Attempting to add message {"worker_id":"1","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:46.954","process_id":1672957,"memory_usage":31457280,"memory_peak":31457280,"iteration":8,"message_length":150,"timestamp_before":"2025-07-12 05:12:46.954"} 
+[2025-07-12 05:12:46] test.INFO: StressWorker #4: Failed to add message {"worker_id":"4","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:46.962","process_id":1672960,"memory_usage":31457280,"memory_peak":31457280,"iteration":6,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"0.76760697364807s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:46.962"} 
+[2025-07-12 05:12:46] test.INFO: StressWorker #4: Stress iteration failed {"worker_id":"4","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:46.962","process_id":1672960,"memory_usage":31457280,"memory_peak":31457280,"iteration":6,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:46] test.INFO: StressWorker #5: Failed to add message {"worker_id":"5","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:46.990","process_id":1672961,"memory_usage":31457280,"memory_peak":31457280,"iteration":8,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"0.88736319541931s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:46.990"} 
+[2025-07-12 05:12:46] test.INFO: StressWorker #5: Stress iteration failed {"worker_id":"5","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:46.990","process_id":1672961,"memory_usage":31457280,"memory_peak":31457280,"iteration":8,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:47] test.INFO: StressWorker #2: Attempting to add message {"worker_id":"2","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:47.029","process_id":1672958,"memory_usage":31457280,"memory_peak":31457280,"iteration":9,"message_length":147,"timestamp_before":"2025-07-12 05:12:47.029"} 
+[2025-07-12 05:12:47] test.INFO: StressWorker #4: Attempting to add message {"worker_id":"4","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:47.062","process_id":1672960,"memory_usage":31457280,"memory_peak":31457280,"iteration":7,"message_length":152,"timestamp_before":"2025-07-12 05:12:47.062"} 
+[2025-07-12 05:12:47] test.INFO: StressWorker #5: Attempting to add message {"worker_id":"5","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:47.091","process_id":1672961,"memory_usage":31457280,"memory_peak":31457280,"iteration":9,"message_length":147,"timestamp_before":"2025-07-12 05:12:47.091"} 
+[2025-07-12 05:12:47] test.INFO: StressWorker #3: Failed to add message {"worker_id":"3","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:47.195","process_id":1672959,"memory_usage":31457280,"memory_peak":31457280,"iteration":8,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"0.66831088066101s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:47.195"} 
+[2025-07-12 05:12:47] test.INFO: StressWorker #3: Stress iteration failed {"worker_id":"3","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:47.195","process_id":1672959,"memory_usage":31457280,"memory_peak":31457280,"iteration":8,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:47] test.INFO: StressWorker #3: Attempting to add message {"worker_id":"3","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:47.296","process_id":1672959,"memory_usage":31457280,"memory_peak":31457280,"iteration":9,"message_length":147,"timestamp_before":"2025-07-12 05:12:47.296"} 
+[2025-07-12 05:12:47] test.INFO: StressWorker #2: Failed to add message {"worker_id":"2","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:47.697","process_id":1672958,"memory_usage":31457280,"memory_peak":31457280,"iteration":9,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"0.66758799552917s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:47.697"} 
+[2025-07-12 05:12:47] test.INFO: StressWorker #2: Stress iteration failed {"worker_id":"2","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:47.697","process_id":1672958,"memory_usage":31457280,"memory_peak":31457280,"iteration":9,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:47] test.INFO: StressWorker #4: Failed to add message {"worker_id":"4","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:47.794","process_id":1672960,"memory_usage":31457280,"memory_peak":31457280,"iteration":7,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"0.73162293434143s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:47.794"} 
+[2025-07-12 05:12:47] test.INFO: StressWorker #4: Stress iteration failed {"worker_id":"4","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:47.794","process_id":1672960,"memory_usage":31457280,"memory_peak":31457280,"iteration":7,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:47] test.INFO: StressWorker #2: Attempting to add message {"worker_id":"2","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:47.797","process_id":1672958,"memory_usage":31457280,"memory_peak":31457280,"iteration":10,"message_length":157,"timestamp_before":"2025-07-12 05:12:47.797"} 
+[2025-07-12 05:12:47] test.INFO: StressWorker #1: Failed to add message {"worker_id":"1","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:47.886","process_id":1672957,"memory_usage":31457280,"memory_peak":31457280,"iteration":8,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"0.93154311180115s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:47.886"} 
+[2025-07-12 05:12:47] test.INFO: StressWorker #1: Stress iteration failed {"worker_id":"1","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:47.886","process_id":1672957,"memory_usage":31457280,"memory_peak":31457280,"iteration":8,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:47] test.INFO: StressWorker #4: Attempting to add message {"worker_id":"4","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:47.894","process_id":1672960,"memory_usage":31457280,"memory_peak":31457280,"iteration":8,"message_length":150,"timestamp_before":"2025-07-12 05:12:47.894"} 
+[2025-07-12 05:12:47] test.INFO: StressWorker #3: Failed to add message {"worker_id":"3","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:47.983","process_id":1672959,"memory_usage":31457280,"memory_peak":31457280,"iteration":9,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"0.68772196769714s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:47.983"} 
+[2025-07-12 05:12:47] test.INFO: StressWorker #3: Stress iteration failed {"worker_id":"3","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:47.984","process_id":1672959,"memory_usage":31457280,"memory_peak":31457280,"iteration":9,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:47] test.INFO: StressWorker #1: Attempting to add message {"worker_id":"1","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:47.987","process_id":1672957,"memory_usage":31457280,"memory_peak":31457280,"iteration":9,"message_length":147,"timestamp_before":"2025-07-12 05:12:47.987"} 
+[2025-07-12 05:12:48] test.INFO: StressWorker #3: Attempting to add message {"worker_id":"3","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:48.084","process_id":1672959,"memory_usage":31457280,"memory_peak":31457280,"iteration":10,"message_length":157,"timestamp_before":"2025-07-12 05:12:48.084"} 
+[2025-07-12 05:12:48] test.INFO: StressWorker #5: Failed to add message {"worker_id":"5","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:48.097","process_id":1672961,"memory_usage":31457280,"memory_peak":31457280,"iteration":9,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"1.0064401626587s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:48.097"} 
+[2025-07-12 05:12:48] test.INFO: StressWorker #5: Stress iteration failed {"worker_id":"5","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:48.097","process_id":1672961,"memory_usage":31457280,"memory_peak":31457280,"iteration":9,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:48] test.INFO: StressWorker #5: Attempting to add message {"worker_id":"5","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:48.198","process_id":1672961,"memory_usage":31457280,"memory_peak":31457280,"iteration":10,"message_length":157,"timestamp_before":"2025-07-12 05:12:48.198"} 
+[2025-07-12 05:12:48] test.INFO: StressWorker #2: Failed to add message {"worker_id":"2","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:48.498","process_id":1672958,"memory_usage":31457280,"memory_peak":31457280,"iteration":10,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"0.70111107826233s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:48.498"} 
+[2025-07-12 05:12:48] test.INFO: StressWorker #2: Stress iteration failed {"worker_id":"2","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:48.498","process_id":1672958,"memory_usage":31457280,"memory_peak":31457280,"iteration":10,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:48] test.INFO: StressWorker #4: Failed to add message {"worker_id":"4","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:48.582","process_id":1672960,"memory_usage":31457280,"memory_peak":31457280,"iteration":8,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"0.68713402748108s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:48.582"} 
+[2025-07-12 05:12:48] test.INFO: StressWorker #4: Stress iteration failed {"worker_id":"4","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:48.582","process_id":1672960,"memory_usage":31457280,"memory_peak":31457280,"iteration":8,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:48] test.INFO: StressWorker #2: Stress worker final stats {"worker_id":"2","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress worker final stats","timestamp":"2025-07-12 05:12:48.598","process_id":1672958,"memory_usage":31457280,"memory_peak":31457280,"total_attempts":10,"successful_adds":1,"failed_adds":9,"successful_runs":1,"failed_runs":0,"active_run_errors":9,"total_time":8.832225322723389,"errors":[{"iteration":2,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"},{"iteration":3,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"},{"iteration":4,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"},{"iteration":5,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"},{"iteration":6,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"},{"iteration":7,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"},{"iteration":8,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"},{"iteration":9,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"},{"iteration":10,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"}],"total_execution_time":9.833057165145874} 
+[2025-07-12 05:12:48] test.INFO: StressWorker #2: Stress worker completed successfully {"worker_id":"2","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress worker completed successfully","timestamp":"2025-07-12 05:12:48.599","process_id":1672958,"memory_usage":31457280,"memory_peak":31457280} 
+[2025-07-12 05:12:48] test.INFO: StressWorker #4: Attempting to add message {"worker_id":"4","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:48.682","process_id":1672960,"memory_usage":31457280,"memory_peak":31457280,"iteration":9,"message_length":147,"timestamp_before":"2025-07-12 05:12:48.682"} 
+[2025-07-12 05:12:48] test.INFO: StressWorker #3: Failed to add message {"worker_id":"3","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:48.754","process_id":1672959,"memory_usage":31457280,"memory_peak":31457280,"iteration":10,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"0.66951704025269s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:48.754"} 
+[2025-07-12 05:12:48] test.INFO: StressWorker #3: Stress iteration failed {"worker_id":"3","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:48.754","process_id":1672959,"memory_usage":31457280,"memory_peak":31457280,"iteration":10,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:48] test.INFO: StressWorker #3: Stress worker final stats {"worker_id":"3","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress worker final stats","timestamp":"2025-07-12 05:12:48.854","process_id":1672959,"memory_usage":31457280,"memory_peak":31457280,"total_attempts":10,"successful_adds":1,"failed_adds":9,"successful_runs":0,"failed_runs":1,"active_run_errors":9,"total_time":9.039103507995605,"errors":[{"iteration":2,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"},{"iteration":3,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"},{"iteration":4,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"},{"iteration":5,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"},{"iteration":6,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"},{"iteration":7,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"},{"iteration":8,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"},{"iteration":9,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"},{"iteration":10,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"}],"total_execution_time":10.039992094039917} 
+[2025-07-12 05:12:48] test.INFO: StressWorker #3: Stress worker completed successfully {"worker_id":"3","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress worker completed successfully","timestamp":"2025-07-12 05:12:48.855","process_id":1672959,"memory_usage":31457280,"memory_peak":31457280} 
+[2025-07-12 05:12:48] test.INFO: StressWorker #1: Failed to add message {"worker_id":"1","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:48.923","process_id":1672957,"memory_usage":31457280,"memory_peak":31457280,"iteration":9,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"0.93664693832397s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:48.923"} 
+[2025-07-12 05:12:48] test.INFO: StressWorker #1: Stress iteration failed {"worker_id":"1","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:48.923","process_id":1672957,"memory_usage":31457280,"memory_peak":31457280,"iteration":9,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:49] test.INFO: StressWorker #1: Attempting to add message {"worker_id":"1","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:49.024","process_id":1672957,"memory_usage":31457280,"memory_peak":31457280,"iteration":10,"message_length":157,"timestamp_before":"2025-07-12 05:12:49.024"} 
+[2025-07-12 05:12:49] test.INFO: StressWorker #5: Failed to add message {"worker_id":"5","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:49.190","process_id":1672961,"memory_usage":31457280,"memory_peak":31457280,"iteration":10,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"0.99212718009949s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:49.190"} 
+[2025-07-12 05:12:49] test.INFO: StressWorker #5: Stress iteration failed {"worker_id":"5","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:49.190","process_id":1672961,"memory_usage":31457280,"memory_peak":31457280,"iteration":10,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:49] test.INFO: StressWorker #5: Stress worker final stats {"worker_id":"5","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress worker final stats","timestamp":"2025-07-12 05:12:49.290","process_id":1672961,"memory_usage":31457280,"memory_peak":31457280,"total_attempts":10,"successful_adds":1,"failed_adds":9,"successful_runs":0,"failed_runs":1,"active_run_errors":9,"total_time":9.518004179000854,"errors":[{"iteration":2,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"},{"iteration":3,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"},{"iteration":4,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"},{"iteration":5,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"},{"iteration":6,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"},{"iteration":7,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"},{"iteration":8,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"},{"iteration":9,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"},{"iteration":10,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"}],"total_execution_time":10.5189049243927} 
+[2025-07-12 05:12:49] test.INFO: StressWorker #5: Stress worker completed successfully {"worker_id":"5","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress worker completed successfully","timestamp":"2025-07-12 05:12:49.291","process_id":1672961,"memory_usage":31457280,"memory_peak":31457280} 
+[2025-07-12 05:12:49] test.INFO: StressWorker #4: Failed to add message {"worker_id":"4","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:49.395","process_id":1672960,"memory_usage":31457280,"memory_peak":31457280,"iteration":9,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"0.71305704116821s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:49.395"} 
+[2025-07-12 05:12:49] test.INFO: StressWorker #4: Stress iteration failed {"worker_id":"4","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:49.396","process_id":1672960,"memory_usage":31457280,"memory_peak":31457280,"iteration":9,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:49] test.INFO: StressWorker #4: Attempting to add message {"worker_id":"4","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Attempting to add message","timestamp":"2025-07-12 05:12:49.496","process_id":1672960,"memory_usage":31457280,"memory_peak":31457280,"iteration":10,"message_length":157,"timestamp_before":"2025-07-12 05:12:49.496"} 
+[2025-07-12 05:12:49] test.INFO: StressWorker #1: Failed to add message {"worker_id":"1","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:49.721","process_id":1672957,"memory_usage":31457280,"memory_peak":31457280,"iteration":10,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"0.69695401191711s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:49.721"} 
+[2025-07-12 05:12:49] test.INFO: StressWorker #1: Stress iteration failed {"worker_id":"1","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:49.721","process_id":1672957,"memory_usage":31457280,"memory_peak":31457280,"iteration":10,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:49] test.INFO: StressWorker #1: Stress worker final stats {"worker_id":"1","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress worker final stats","timestamp":"2025-07-12 05:12:49.821","process_id":1672957,"memory_usage":31457280,"memory_peak":31457280,"total_attempts":10,"successful_adds":1,"failed_adds":9,"successful_runs":1,"failed_runs":0,"active_run_errors":9,"total_time":10.005131244659424,"errors":[{"iteration":2,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"},{"iteration":3,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"},{"iteration":4,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"},{"iteration":5,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"},{"iteration":6,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"},{"iteration":7,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"},{"iteration":8,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"},{"iteration":9,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"},{"iteration":10,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"}],"total_execution_time":11.006009817123413} 
+[2025-07-12 05:12:49] test.INFO: StressWorker #1: Stress worker completed successfully {"worker_id":"1","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress worker completed successfully","timestamp":"2025-07-12 05:12:49.822","process_id":1672957,"memory_usage":31457280,"memory_peak":31457280} 
+[2025-07-12 05:12:50] test.INFO: StressWorker #4: Failed to add message {"worker_id":"4","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Failed to add message","timestamp":"2025-07-12 05:12:50.132","process_id":1672960,"memory_usage":31457280,"memory_peak":31457280,"iteration":10,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","add_time":"0.63556790351868s","is_active_run_error":true,"timestamp_after":"2025-07-12 05:12:50.132"} 
+[2025-07-12 05:12:50] test.INFO: StressWorker #4: Stress iteration failed {"worker_id":"4","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress iteration failed","timestamp":"2025-07-12 05:12:50.132","process_id":1672960,"memory_usage":31457280,"memory_peak":31457280,"iteration":10,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","error_type":"active_run_error"} 
+[2025-07-12 05:12:50] test.INFO: StressWorker #4: Stress worker final stats {"worker_id":"4","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress worker final stats","timestamp":"2025-07-12 05:12:50.232","process_id":1672960,"memory_usage":31457280,"memory_peak":31457280,"total_attempts":10,"successful_adds":1,"failed_adds":9,"successful_runs":0,"failed_runs":1,"active_run_errors":9,"total_time":10.409806728363037,"errors":[{"iteration":2,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"},{"iteration":3,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"},{"iteration":4,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"},{"iteration":5,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"},{"iteration":6,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"},{"iteration":7,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"},{"iteration":8,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"},{"iteration":9,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"},{"iteration":10,"error":"OpenAI Add Message failed: {
+  \"error\": {
+    \"message\": \"Can't add messages to thread_sBBUou34ch8Hf92FODmJe4L6 while a run run_tSxf2LOMHPB7icYx1hHLRT8Z is active.\",
+    \"type\": \"invalid_request_error\",
+    \"param\": null,
+    \"code\": null
+  }
+}","type":"active_run_error"}],"total_execution_time":11.410619020462036} 
+[2025-07-12 05:12:50] test.INFO: StressWorker #4: Stress worker completed successfully {"worker_id":"4","worker_type":"stress","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","event":"Stress worker completed successfully","timestamp":"2025-07-12 05:12:50.232","process_id":1672960,"memory_usage":31457280,"memory_peak":31457280} 
+[2025-07-12 05:12:52] test.INFO: Stress test completed {"test_type":"stress_test","timestamp":"2025-07-12 05:12:52.560","document_id":"7","thread_id":"thread_sBBUou34ch8Hf92FODmJe4L6","parameters":{"workers":"5","iterations":"10","no_delay":true,"total_expected_requests":50},"results":{"total_requests":50,"successful_requests":5,"failed_requests":45,"active_run_errors":135,"race_conditions":0,"timeout_errors":0,"workers_stats":{"2":{"requests":10,"successes":1,"errors":9},"5":{"requests":10,"successes":1,"errors":9},"3":{"requests":10,"successes":1,"errors":9},"1":{"requests":10,"successes":1,"errors":9},"4":{"requests":10,"successes":1,"errors":9}},"thread_conflicts":[],"performance_metrics":{"min_time":0.63556790351868,"max_time":2.3220770359039,"total_time":41.26533675193784,"api_calls":50,"avg_time":0.8253067350387567}},"recommendations":["Critical: Success rate is too low - implement robust retry mechanism","Consider implementing distributed locking for thread access","High number of active run errors - improve run status checking","Implement thread-level locking or queuing system"]} 
