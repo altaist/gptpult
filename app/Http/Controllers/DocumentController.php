@@ -346,7 +346,29 @@ class DocumentController extends Controller
         $this->authorize('view', $document);
 
         try {
-            $file = $this->wordDocumentService->generate($document);
+            // Проверяем, есть ли уже существующий файл документа
+            $file = $document->files()
+                ->where('mime_type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+                ->where('created_at', '>', $document->updated_at) // Файл должен быть новее последнего обновления документа
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            // Если файл существует и доступен, используем его
+            if ($file && file_exists($file->getFullPath())) {
+                \Illuminate\Support\Facades\Log::info('Используется существующий Word файл', [
+                    'document_id' => $document->id,
+                    'file_id' => $file->id,
+                    'file_path' => $file->getFullPath()
+                ]);
+            } else {
+                // Создаем новый файл
+                \Illuminate\Support\Facades\Log::info('Создается новый Word файл', [
+                    'document_id' => $document->id,
+                    'existing_file_found' => $file ? 'yes' : 'no',
+                    'file_exists' => $file ? file_exists($file->getFullPath()) : 'no_file'
+                ]);
+                $file = $this->wordDocumentService->generate($document);
+            }
 
             // Проверяем, работает ли пользователь в Telegram WebApp
             $isTelegramWebApp = $request->header('X-Telegram-User-Id') || 
@@ -379,6 +401,13 @@ class DocumentController extends Controller
             ]);
 
         } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Ошибка при скачивании документа', [
+                'document_id' => $document->id,
+                'error' => $e->getMessage(),
+                'error_type' => get_class($e),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             return response()->json([
                 'message' => 'Ошибка при генерации документа: ' . $e->getMessage()
             ], 500);
