@@ -14,6 +14,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class StartFullGenerateDocument implements ShouldQueue
 {
@@ -79,6 +80,36 @@ class StartFullGenerateDocument implements ShouldQueue
                 'php_version' => PHP_VERSION,
                 'process_id' => getmypid()
             ]);
+            
+            // Проверяем, не выполняется ли уже такая же задача для этого документа
+            $activeJobsCount = DB::table('jobs')
+                ->where('payload', 'like', '%"document_id":' . $this->document->id . '%')
+                ->where('payload', 'like', '%StartFullGenerateDocument%')
+                ->count();
+                
+            $this->logDetailedStep(++$this->stepCounter, 'Проверка дублирующих задач', [
+                'document_id' => $this->document->id,
+                'active_jobs_count' => $activeJobsCount,
+                'current_job_id' => $this->job->getJobId()
+            ]);
+            
+            if ($activeJobsCount > 1) {
+                $this->logDetailedStep(++$this->stepCounter, 'ОБНАРУЖЕНО ДУБЛИРОВАНИЕ: Найдено несколько активных задач для этого документа', [
+                    'document_id' => $this->document->id,
+                    'active_jobs_count' => $activeJobsCount,
+                    'current_job_id' => $this->job->getJobId(),
+                    'action' => 'Прерываем выполнение этой задачи'
+                ]);
+                
+                // Прерываем выполнение, чтобы избежать дублирования
+                Log::channel('queue')->warning('Прервано выполнение дублирующей задачи полной генерации', [
+                    'document_id' => $this->document->id,
+                    'job_id' => $this->job->getJobId(),
+                    'active_jobs_count' => $activeJobsCount
+                ]);
+                
+                return;
+            }
             
             // Безопасная перезагрузка документа - игнорируем ошибки подключения к БД
             try {

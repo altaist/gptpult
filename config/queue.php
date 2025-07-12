@@ -48,7 +48,7 @@ return [
             'connection' => env('DB_QUEUE_CONNECTION'),
             'table' => env('DB_QUEUE_TABLE', 'jobs'),
             'queue' => 'document_creates',
-            'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 300),
+            'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 900), // 15 минут - больше чем timeout job (10 минут)
             'after_commit' => false,
         ],
 

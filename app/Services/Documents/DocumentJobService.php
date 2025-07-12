@@ -61,6 +61,20 @@ class DocumentJobService
         if ($this->hasActiveJob($document)) {
             throw new \Exception('Для этого документа уже запущена задача генерации');
         }
+        
+        // Дополнительная проверка конкретно для StartFullGenerateDocument
+        $activeFullGenerationJobs = DB::table('jobs')
+            ->where('payload', 'like', '%"document_id":' . $document->id . '%')
+            ->where('payload', 'like', '%StartFullGenerateDocument%')
+            ->count();
+            
+        if ($activeFullGenerationJobs > 0) {
+            Log::warning('Попытка запуска полной генерации при наличии активных задач', [
+                'document_id' => $document->id,
+                'active_jobs_count' => $activeFullGenerationJobs
+            ]);
+            throw new \Exception('Для этого документа уже запущена задача полной генерации (найдено активных задач: ' . $activeFullGenerationJobs . ')');
+        }
 
         if ($document->status !== DocumentStatus::FULL_GENERATION_FAILED && $transitionService) {
             $user = $document->user;
