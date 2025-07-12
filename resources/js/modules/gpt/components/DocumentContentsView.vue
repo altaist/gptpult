@@ -25,17 +25,6 @@
             
             <div class="section-content">
                 <div class="contents-list">
-                    <!-- Титульник -->
-                    <div class="content-item main-item">
-                        <span class="item-number">1</span>
-                        <span class="item-title">Титульник</span>
-                    </div>
-                    
-                    <!-- Содержание -->
-                    <div class="content-item main-item">
-                        <span class="item-number">2</span>
-                        <span class="item-title">Содержание</span>
-                    </div>
                     
                     <!-- Основные разделы -->
                     <div v-for="(topic, index) in contents" :key="index" class="content-block">
