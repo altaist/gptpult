@@ -1219,13 +1219,16 @@ class WordDocumentService
                 'trace' => $e->getTraceAsString()
             ]);
             
-            // Если это ошибка XML парсинга, попробуем создать упрощенную версию
+            // Если это ошибка XML парсинга или ZIP архива, попробуем создать упрощенную версию
             if (strpos($e->getMessage(), 'SAXParseException') !== false || 
                 strpos($e->getMessage(), 'fastparser') !== false ||
-                strpos($e->getMessage(), 'WriterFilter') !== false) {
+                strpos($e->getMessage(), 'WriterFilter') !== false ||
+                strpos($e->getMessage(), 'Could not close zip file') !== false ||
+                strpos($e->getMessage(), 'zip file') !== false) {
                 
-                \Illuminate\Support\Facades\Log::warning('Обнаружена ошибка XML парсинга, создаем упрощенную версию документа', [
-                    'document_id' => $document->id
+                \Illuminate\Support\Facades\Log::warning('Обнаружена ошибка XML парсинга или ZIP архива, создаем упрощенную версию документа', [
+                    'document_id' => $document->id,
+                    'error_type' => get_class($e)
                 ]);
                 
                 return $this->createSimplifiedDocument($document, $fullSavePath);
@@ -1353,10 +1356,12 @@ class WordDocumentService
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Ошибка при создании упрощенного документа', [
                 'document_id' => $document->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'error_type' => get_class($e)
             ]);
             
-            throw new \Exception('Не удалось создать Word документ: ' . $e->getMessage());
+            // Если и упрощенный документ не удается создать, создаем минимальный документ
+            return $this->createMinimalDocument($document, $fullSavePath);
         }
     }
     
@@ -1389,5 +1394,59 @@ class WordDocumentService
         $text = preg_replace('/\s+/', ' ', $text);
         
         return trim($text);
+    }
+    
+    /**
+     * Создает минимальный документ в случае критических ошибок
+     */
+    private function createMinimalDocument(Document $document, string $fullSavePath): string
+    {
+        try {
+            // Создаем самый простой документ без сложных элементов
+            $phpWord = new PhpWord();
+            $section = $phpWord->addSection();
+            
+            // Добавляем только заголовок документа
+            $title = mb_substr($document->title, 0, 100, 'UTF-8'); // Ограничиваем длину
+            $title = preg_replace('/[^\p{L}\p{N}\s\-\.]/u', '', $title); // Убираем все кроме букв, цифр, пробелов, дефисов и точек
+            
+            if (!empty($title)) {
+                $section->addText($title, ['bold' => true, 'size' => 14]);
+            }
+            
+            $section->addTextBreak(2);
+            
+            // Добавляем простое сообщение
+            $section->addText(
+                'Документ создан с упрощенной структурой из-за технических ограничений.',
+                ['size' => 12]
+            );
+            
+            $section->addTextBreak(1);
+            $section->addText(
+                'Для получения полной версии документа обратитесь к администратору.',
+                ['size' => 12, 'italic' => true]
+            );
+            
+            // Сохраняем минимальный документ
+            $objWriter = IOFactory::createWriter($phpWord, 'Word2007');
+            $objWriter->save($fullSavePath);
+            
+            \Illuminate\Support\Facades\Log::info('Минимальный Word документ создан', [
+                'document_id' => $document->id,
+                'file_path' => $fullSavePath
+            ]);
+            
+            return $fullSavePath;
+            
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Критическая ошибка: не удалось создать даже минимальный документ', [
+                'document_id' => $document->id,
+                'error' => $e->getMessage(),
+                'error_type' => get_class($e)
+            ]);
+            
+            throw new \Exception('Критическая ошибка при создании документа: ' . $e->getMessage());
+        }
     }
 } 
