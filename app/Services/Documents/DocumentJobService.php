@@ -53,12 +53,58 @@ class DocumentJobService
      */
     public function startFullGeneration(Document $document, TransitionService $transitionService = null): void
     {
+        $startTime = microtime(true);
+        
+        Log::channel('queue_operations')->info('🚀 ЗАПУСК ПОЛНОЙ ГЕНЕРАЦИИ: Начало процесса', [
+            'event' => 'start_full_generation_begin',
+            'timestamp' => now()->format('Y-m-d H:i:s.v'),
+            'document_id' => $document->id,
+            'document_title' => $document->title,
+            'current_status' => $document->status->value,
+            'has_transition_service' => $transitionService !== null,
+            'memory_usage' => memory_get_usage(true),
+            'process_id' => getmypid()
+        ]);
+        
         // Проверяем статус документа перед началом генерации
         if (in_array($document->status, [DocumentStatus::FULL_GENERATING, DocumentStatus::FULL_GENERATED])) {
+            Log::channel('queue_operations')->warning('🚨 ЗАПУСК ПОЛНОЙ ГЕНЕРАЦИИ: Отклонен по статусу документа', [
+                'event' => 'start_full_generation_rejected_status',
+                'timestamp' => now()->format('Y-m-d H:i:s.v'),
+                'document_id' => $document->id,
+                'current_status' => $document->status->value,
+                'rejected_statuses' => [DocumentStatus::FULL_GENERATING->value, DocumentStatus::FULL_GENERATED->value],
+                'process_id' => getmypid()
+            ]);
             throw new \Exception('Документ уже генерируется или полностью готов (статус: ' . $document->status->value . ')');
         }
         
-        if ($this->hasActiveJob($document)) {
+        Log::channel('queue_operations')->info('✅ ЗАПУСК ПОЛНОЙ ГЕНЕРАЦИИ: Статус документа проверен', [
+            'event' => 'start_full_generation_status_ok',
+            'timestamp' => now()->format('Y-m-d H:i:s.v'),
+            'document_id' => $document->id,
+            'current_status' => $document->status->value,
+            'process_id' => getmypid()
+        ]);
+        
+        // Проверяем активные задачи через hasActiveJob
+        $hasActiveJobResult = $this->hasActiveJob($document);
+        
+        Log::channel('queue_operations')->info('🔍 ЗАПУСК ПОЛНОЙ ГЕНЕРАЦИИ: Проверка активных задач (hasActiveJob)', [
+            'event' => 'start_full_generation_check_active_jobs',
+            'timestamp' => now()->format('Y-m-d H:i:s.v'),
+            'document_id' => $document->id,
+            'has_active_job' => $hasActiveJobResult,
+            'process_id' => getmypid()
+        ]);
+        
+        if ($hasActiveJobResult) {
+            Log::channel('queue_operations')->warning('🚨 ЗАПУСК ПОЛНОЙ ГЕНЕРАЦИИ: Отклонен - найдена активная задача', [
+                'event' => 'start_full_generation_rejected_active_job',
+                'timestamp' => now()->format('Y-m-d H:i:s.v'),
+                'document_id' => $document->id,
+                'process_id' => getmypid()
+            ]);
             throw new \Exception('Для этого документа уже запущена задача генерации');
         }
         
@@ -68,10 +114,21 @@ class DocumentJobService
             ->where('payload', 'like', '%StartFullGenerateDocument%')
             ->count();
             
+        Log::channel('queue_operations')->info('🔍 ЗАПУСК ПОЛНОЙ ГЕНЕРАЦИИ: Дополнительная проверка StartFullGenerateDocument', [
+            'event' => 'start_full_generation_check_specific_jobs',
+            'timestamp' => now()->format('Y-m-d H:i:s.v'),
+            'document_id' => $document->id,
+            'active_full_generation_jobs' => $activeFullGenerationJobs,
+            'process_id' => getmypid()
+        ]);
+            
         if ($activeFullGenerationJobs > 0) {
-            Log::warning('Попытка запуска полной генерации при наличии активных задач', [
+            Log::channel('queue_operations')->warning('🚨 ЗАПУСК ПОЛНОЙ ГЕНЕРАЦИИ: Отклонен - найдены активные задачи StartFullGenerateDocument', [
+                'event' => 'start_full_generation_rejected_specific_jobs',
+                'timestamp' => now()->format('Y-m-d H:i:s.v'),
                 'document_id' => $document->id,
-                'active_jobs_count' => $activeFullGenerationJobs
+                'active_jobs_count' => $activeFullGenerationJobs,
+                'process_id' => getmypid()
             ]);
             throw new \Exception('Для этого документа уже запущена задача полной генерации (найдено активных задач: ' . $activeFullGenerationJobs . ')');
         }
@@ -103,14 +160,51 @@ class DocumentJobService
         }
 
         // Обновляем статус документа на full_generating
+        Log::channel('queue_operations')->info('📝 ЗАПУСК ПОЛНОЙ ГЕНЕРАЦИИ: Обновление статуса документа', [
+            'event' => 'start_full_generation_update_status',
+            'timestamp' => now()->format('Y-m-d H:i:s.v'),
+            'document_id' => $document->id,
+            'old_status' => $document->status->value,
+            'new_status' => DocumentStatus::FULL_GENERATING->value,
+            'process_id' => getmypid()
+        ]);
+        
         $document->update(['status' => DocumentStatus::FULL_GENERATING]);
+
+        Log::channel('queue_operations')->info('✅ ЗАПУСК ПОЛНОЙ ГЕНЕРАЦИИ: Статус документа обновлен', [
+            'event' => 'start_full_generation_status_updated',
+            'timestamp' => now()->format('Y-m-d H:i:s.v'),
+            'document_id' => $document->id,
+            'current_status' => $document->status->value,
+            'process_id' => getmypid()
+        ]);
 
         Log::info('Запуск полной генерации документа', [
             'document_id' => $document->id,
             'document_title' => $document->title
         ]);
 
+        Log::channel('queue_operations')->info('🎯 ЗАПУСК ПОЛНОЙ ГЕНЕРАЦИИ: Добавление задачи в очередь', [
+            'event' => 'start_full_generation_dispatch_job',
+            'timestamp' => now()->format('Y-m-d H:i:s.v'),
+            'document_id' => $document->id,
+            'queue_name' => 'document_creates',
+            'job_class' => 'StartFullGenerateDocument',
+            'process_id' => getmypid()
+        ]);
+
         StartFullGenerateDocument::dispatch($document)->onQueue('document_creates');
+        
+        $executionTime = round((microtime(true) - $startTime) * 1000, 2);
+        
+        Log::channel('queue_operations')->info('🎉 ЗАПУСК ПОЛНОЙ ГЕНЕРАЦИИ: Задача успешно добавлена в очередь', [
+            'event' => 'start_full_generation_job_dispatched',
+            'timestamp' => now()->format('Y-m-d H:i:s.v'),
+            'document_id' => $document->id,
+            'execution_time_ms' => $executionTime,
+            'memory_usage' => memory_get_usage(true),
+            'process_id' => getmypid()
+        ]);
     }
 
     /**

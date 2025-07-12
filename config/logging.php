@@ -86,6 +86,13 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'queue_operations' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/queue_operations.log'),
+            'level' => 'debug',
+            'replace_placeholders' => true,
+        ],
+
         'daily' => [
             'driver' => 'daily',
             'path' => storage_path('logs/laravel.log'),

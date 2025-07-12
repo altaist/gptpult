@@ -25,7 +25,24 @@ class DocumentGenerationController extends Controller
      */
     public function startFullGeneration(Document $document)
     {
+        $requestStartTime = microtime(true);
+        
         $this->authorize('update', $document);
+
+        Log::channel('queue_operations')->info('🌐 API ЗАПРОС: Запуск полной генерации', [
+            'event' => 'api_start_full_generation_request',
+            'timestamp' => now()->format('Y-m-d H:i:s.v'),
+            'document_id' => $document->id,
+            'document_title' => $document->title,
+            'current_status' => $document->status->value,
+            'user_id' => Auth::id(),
+            'user_agent' => request()->header('User-Agent'),
+            'ip' => request()->ip(),
+            'request_method' => request()->method(),
+            'request_url' => request()->fullUrl(),
+            'memory_usage' => memory_get_usage(true),
+            'process_id' => getmypid()
+        ]);
 
         Log::info('API: Попытка запуска полной генерации', [
             'document_id' => $document->id,
@@ -59,12 +76,40 @@ class DocumentGenerationController extends Controller
         }
 
         try {
+            Log::channel('queue_operations')->info('🔄 API ЗАПРОС: Вызов DocumentJobService.startFullGeneration', [
+                'event' => 'api_call_document_job_service',
+                'timestamp' => now()->format('Y-m-d H:i:s.v'),
+                'document_id' => $document->id,
+                'user_id' => Auth::id(),
+                'process_id' => getmypid()
+            ]);
+            
             // Используем DocumentJobService для запуска полной генерации с автоматическим списанием
             $this->documentJobService->startFullGeneration($document, $this->transitionService);
+
+            Log::channel('queue_operations')->info('✅ API ЗАПРОС: DocumentJobService.startFullGeneration выполнен успешно', [
+                'event' => 'api_document_job_service_success',
+                'timestamp' => now()->format('Y-m-d H:i:s.v'),
+                'document_id' => $document->id,
+                'user_id' => Auth::id(),
+                'process_id' => getmypid()
+            ]);
 
             Log::info('API: Полная генерация успешно запущена', [
                 'document_id' => $document->id,
                 'user_id' => Auth::id()
+            ]);
+
+            $responseTime = round((microtime(true) - $requestStartTime) * 1000, 2);
+            
+            Log::channel('queue_operations')->info('🎉 API ОТВЕТ: Полная генерация успешно запущена', [
+                'event' => 'api_start_full_generation_success',
+                'timestamp' => now()->format('Y-m-d H:i:s.v'),
+                'document_id' => $document->id,
+                'user_id' => Auth::id(),
+                'response_time_ms' => $responseTime,
+                'memory_usage' => memory_get_usage(true),
+                'process_id' => getmypid()
             ]);
 
             return response()->json([
@@ -74,6 +119,21 @@ class DocumentGenerationController extends Controller
             ]);
 
         } catch (\Exception $e) {
+            $responseTime = round((microtime(true) - $requestStartTime) * 1000, 2);
+            
+            Log::channel('queue_operations')->error('❌ API ОШИБКА: Не удалось запустить полную генерацию', [
+                'event' => 'api_start_full_generation_error',
+                'timestamp' => now()->format('Y-m-d H:i:s.v'),
+                'document_id' => $document->id,
+                'user_id' => Auth::id(),
+                'error_message' => $e->getMessage(),
+                'error_file' => $e->getFile(),
+                'error_line' => $e->getLine(),
+                'response_time_ms' => $responseTime,
+                'memory_usage' => memory_get_usage(true),
+                'process_id' => getmypid()
+            ]);
+
             Log::error('API: Ошибка при запуске полной генерации', [
                 'document_id' => $document->id,
                 'user_id' => Auth::id(),
