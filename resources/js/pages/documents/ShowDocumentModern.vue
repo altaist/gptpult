@@ -429,6 +429,32 @@ if (shouldAutoload) {
     isPollingActive.value = true;
 }
 
+// Автоматически переходим на загрузочный экран если документ генерируется
+const checkAndRedirectToLoadingScreen = () => {
+    const status = currentDocument.value?.status;
+    
+    // Дополнительная проверка: если мы уже на загрузочном экране, не делаем ничего
+    if (shouldAutoload) {
+        // console.log('Уже на загрузочном экране, пропускаем перенаправление');
+        return;
+    }
+    
+    // Проверяем если документ генерируется и мы не на загрузочном экране
+    if ((status === 'full_generating' || status === 'pre_generating') && !shouldAutoload) {
+        // console.log('Документ генерируется, переходим на загрузочный экран...', status);
+        // Если документ генерируется, но мы не на загрузочном экране - переходим туда
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.set('autoload', '1');
+        // Удаляем опасные параметры
+        currentUrl.searchParams.delete('start_generation');
+        
+        // Используем timeout чтобы дать возможность завершиться текущим операциям
+        setTimeout(() => {
+            window.location.href = currentUrl.toString();
+        }, 100);
+    }
+};
+
 // Новые переменные для улучшенной машинки
 const currentTypedText = ref('');
 const printedLines = ref([]);
@@ -613,32 +639,6 @@ const animateRandomKeyPress = () => {
     }
 };
 
-// Автоматически переходим на загрузочный экран если документ генерируется
-const checkAndRedirectToLoadingScreen = () => {
-    const status = currentDocument.value?.status;
-    
-    // Дополнительная проверка: если мы уже на загрузочном экране, не делаем ничего
-    if (shouldAutoload) {
-        // console.log('Уже на загрузочном экране, пропускаем перенаправление');
-        return;
-    }
-    
-    // Проверяем если документ генерируется и мы не на загрузочном экране
-    if ((status === 'full_generating' || status === 'pre_generating') && !shouldAutoload) {
-        // console.log('Документ генерируется, переходим на загрузочный экран...', status);
-        // Если документ генерируется, но мы не на загрузочном экране - переходим туда
-        const currentUrl = new URL(window.location.href);
-        currentUrl.searchParams.set('autoload', '1');
-        // Удаляем опасные параметры
-        currentUrl.searchParams.delete('start_generation');
-        
-        // Используем timeout чтобы дать возможность завершиться текущим операциям
-        setTimeout(() => {
-            window.location.href = currentUrl.toString();
-        }, 100);
-    }
-};
-
 // Добавляем watcher для отслеживания изменения статуса генерации
 watch(
     () => getIsGenerating(),
@@ -805,7 +805,7 @@ onUnmounted(() => {
 // Маппинг статусов для отображения без API
 const statusTextMapping = {
     'draft': 'Черновик',
-    'pre_generating': 'Генерируется структура...',
+    'pre_generating': 'Генерируется структура и ссылки...',
     'pre_generated': 'Структура готова',
     'pre_generation_failed': 'Ошибка генерации структуры',
     'full_generating': 'Генерируется содержимое...',
@@ -850,10 +850,6 @@ const stopTracking = () => {
 const getDisplayStatusText = () => {
     // Если есть данные из API, используем их
     if (documentStatus.value) {
-        // Специальное сообщение для ожидания ссылок
-        if (isWaitingForReferences()) {
-            return 'Генерируются ссылки...';
-        }
         return getStatusText();
     }
     

@@ -476,23 +476,16 @@ export const checkAuth = async () => {
         return false
     }
 
-    console.log('checkAuth: Запуск проверки авторизации...', {
-        hasTelegramData: !!(window.Telegram?.WebApp?.initDataUnsafe?.user),
-        isAuthenticated: isAuthenticated.value,
-        currentPath: window.location.pathname
-    })
+
     
     try {
         // Если есть Telegram WebApp данные, позволяем useTelegramMiniApp обработать их первым
         if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
-            console.log('checkAuth: Обнаружены данные Telegram WebApp, ждем обработки TMA composable')
-            
             // Даем время для обработки TMA composable
             await new Promise(resolve => setTimeout(resolve, 200))
             
             // Проверяем, была ли аутентификация уже обработана
             if (isRedirectingAuth) {
-                console.log('checkAuth: TMA composable уже обрабатывает редирект')
                 return false
             }
         }
@@ -506,20 +499,17 @@ export const checkAuth = async () => {
                 const sessionValid = await checkSessionStatus()
                 
                 if (sessionValid === false) {
-                    console.log('checkAuth: Сессия неактивна, пытаемся создать новый аккаунт')
-                    
                     if (window.location.pathname === '/login') {
                         try {
                             const authResult = await authLocalSaved(true)
                             if (authResult) {
-                                console.log('checkAuth: Новый аккаунт создан, перенаправляем на intended URL')
                                 isRedirectingAuth = true
                                 const redirectUrl = getRedirectUrl();
                                 window.location.href = redirectUrl;
                                 return true
                             }
                         } catch (error) {
-                            console.warn('checkAuth: Ошибка создания нового аккаунта:', error)
+                            // Ошибка создания нового аккаунта
                         }
                     }
                     
@@ -527,16 +517,12 @@ export const checkAuth = async () => {
                 }
                 
                 if (sessionValid === null) {
-                    console.log('checkAuth: Неопределенное состояние сессии')
                     return false
                 }
             }
             
-            console.log('checkAuth: Пользователь уже авторизован через Inertia')
-            
             // Если на странице логина, но уже авторизован - редиректим
             if (window.location.pathname === '/login' && !isRedirectingAuth) {
-                console.log('checkAuth: Пользователь на странице логина, но авторизован - перенаправляем')
                 isRedirectingAuth = true
                 const redirectUrl = getRedirectUrl();
                 window.location.href = redirectUrl;
@@ -555,14 +541,11 @@ export const checkAuth = async () => {
         if (window.location.pathname === '/login' && !isRedirectingAuth) {
             // Если есть Telegram данные, не мешаем TMA composable
             if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
-                console.log('checkAuth: Есть Telegram данные, позволяем TMA composable обработать аутентификацию')
                 return false
             }
             
-            console.log('checkAuth: Пытаемся восстановить авторизацию или автозарегистрироваться')
             const authResult = await authLocalSaved(true)
             if (authResult) {
-                console.log('checkAuth: Авторизация восстановлена/создана - перенаправляем')
                 isRedirectingAuth = true
                 const redirectUrl = getRedirectUrl();
                 window.location.href = redirectUrl;
@@ -571,11 +554,9 @@ export const checkAuth = async () => {
         }
         
         const result = isAuthenticated.value
-        console.log('checkAuth: Результат проверки авторизации:', !!result)
         
         return !!result
     } catch (error) {
-        console.error('checkAuth: Ошибка проверки авторизации:', error)
         errorMessage.value = error.response?.data?.message || 'Ошибка проверки авторизации'
         return false
     }

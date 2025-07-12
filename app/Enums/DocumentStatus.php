@@ -22,7 +22,7 @@ enum DocumentStatus: string
     {
         return match($this) {
             self::DRAFT => 'Черновик',
-            self::PRE_GENERATING => 'Генерируется структура...',
+            self::PRE_GENERATING => 'Генерируется структура и ссылки...',
             self::PRE_GENERATED => 'Структура готова',
             self::PRE_GENERATION_FAILED => 'Ошибка генерации структуры',
             self::FULL_GENERATING => 'Генерируется содержимое...',

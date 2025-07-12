@@ -159,13 +159,13 @@ class StartGenerateDocument implements ShouldQueue
                 $structure['description'] = $parsedData['description'];
             }
 
-            // Сохраняем изменения
+            // Сохраняем изменения БЕЗ изменения статуса
             $this->document->update([
                 'structure' => $structure,
-                'status' => DocumentStatus::PRE_GENERATED
+                // Статус НЕ меняем - оставляем PRE_GENERATING до завершения генерации ссылок
             ]);
 
-            Log::channel('queue')->info('Документ успешно сгенерирован', [
+            Log::channel('queue')->info('Содержание документа успешно сгенерировано', [
                 'document_id' => $this->document->id,
                 'contents_count' => count($structure['contents']),
                 'objectives_count' => count($structure['objectives']),
@@ -174,6 +174,16 @@ class StartGenerateDocument implements ShouldQueue
 
             // Генерируем ссылки сразу после создания структуры
             $this->generateReferences($gptService);
+
+            // Теперь меняем статус на PRE_GENERATED - структура полностью готова
+            $this->document->update([
+                'status' => DocumentStatus::PRE_GENERATED
+            ]);
+
+            Log::channel('queue')->info('Документ полностью готов - структура и ссылки сгенерированы', [
+                'document_id' => $this->document->id,
+                'final_status' => DocumentStatus::PRE_GENERATED->value
+            ]);
 
             // Создаем фиктивный GptRequest для совместимости с существующими событиями
             $gptRequest = new \App\Models\GptRequest([
@@ -369,8 +379,8 @@ class StartGenerateDocument implements ShouldQueue
                             ],
                             'required' => ['title', 'url', 'type', 'description']
                         ],
-                        'minItems' => 5,
-                        'maxItems' => 10
+                        'minItems' => 10,
+                        'maxItems' => 15
                     ]
                 ],
                 'required' => ['references']
@@ -473,7 +483,7 @@ class StartGenerateDocument implements ShouldQueue
 - author: Автор (если указан на сайте)
 - publication_date: Дата публикации (если найдена)
 
-Обязательно найди минимум 8-10 различных актуальных источников через веб-поиск.
+Обязательно найди минимум 10-15 различных актуальных источников через веб-поиск.
 
 Верни результат строго в JSON формате согласно схеме.";
     }

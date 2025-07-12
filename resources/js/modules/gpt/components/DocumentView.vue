@@ -270,18 +270,12 @@ const editDialog = reactive({
 
 // Определяем когда показывать загрузочное состояние для ссылок
 const shouldShowReferencesLoading = computed(() => {
-    // Показываем загрузку если:
-    // 1. Документ еще генерируется (структура или полное содержимое)
-    // 2. Или если есть содержание, но еще нет ссылок
+    // Показываем загрузку только если документ генерируется (структура)
+    // Теперь ссылки генерируются вместе с содержанием
     const isCurrentlyGenerating = props.isGenerating || 
-                                props.documentStatus?.status === 'pre_generating' || 
-                                props.documentStatus?.status === 'full_generating';
+                                props.documentStatus?.status === 'pre_generating';
     
-    const hasContents = props.document?.structure?.contents && props.document.structure.contents.length > 0;
-    const hasReferences = props.document?.structure?.references && props.document.structure.references.length > 0;
-    
-    // Показываем загрузку если есть содержание, но нет ссылок, и не генерируется
-    return hasContents && !hasReferences && !isCurrentlyGenerating;
+    return isCurrentlyGenerating;
 });
 
 // Определяем можно ли редактировать содержание документа

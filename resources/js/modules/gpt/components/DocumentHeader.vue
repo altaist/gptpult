@@ -178,7 +178,7 @@ const titleError = ref('');
 // Маппинг статусов для отображения без API
 const statusTextMapping = {
     'draft': 'Черновик',
-    'pre_generating': 'Генерируется структура...',
+    'pre_generating': 'Генерируется структура и ссылки...',
     'pre_generated': 'Структура готова',
     'pre_generation_failed': 'Ошибка генерации структуры',
     'full_generating': 'Генерируется содержимое...',

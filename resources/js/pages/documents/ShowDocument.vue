@@ -207,7 +207,7 @@ if (shouldAutoload) {
 // Маппинг статусов для отображения без API
 const statusTextMapping = {
     'draft': 'Черновик',
-    'pre_generating': 'Генерируется структура...',
+    'pre_generating': 'Генерируется структура и ссылки...',
     'pre_generated': 'Структура готова',
     'pre_generation_failed': 'Ошибка генерации структуры',
     'full_generating': 'Генерируется содержимое...',
@@ -250,10 +250,6 @@ const stopTracking = () => {
 const getDisplayStatusText = () => {
     // Если есть данные из API, используем их
     if (documentStatus.value) {
-        // Специальное сообщение для ожидания ссылок
-        if (isWaitingForReferences()) {
-            return 'Генерируются ссылки...';
-        }
         return getStatusText();
     }
     

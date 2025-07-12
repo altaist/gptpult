@@ -32,7 +32,7 @@ graph TD
 | Статус | Описание | Цвет | Иконка | Финальный |
 |--------|----------|------|--------|-----------|
 | `draft` | Черновик (создан, не запущена генерация) | grey | edit | ❌ |
-| `pre_generating` | Генерируется базовая структура | primary | sync | ❌ |
+| `pre_generating` | Генерируется структура и ссылки | primary | sync | ❌ |
 | `pre_generated` | Базовая структура готова | positive | check_circle | ❌ |
 | `pre_generation_failed` | Ошибка генерации структуры | negative | error | ✅ |
 | `full_generating` | Генерируется полное содержимое | secondary | autorenew | ❌ |

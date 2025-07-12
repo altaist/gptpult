@@ -155,7 +155,7 @@ export function useDocumentStatus(documentId, options = {}) {
         const currentStatus = statusValue || status.value?.status
         const statusMap = {
             'draft': 'Черновик',
-            'pre_generating': 'Генерируется структура...',
+            'pre_generating': 'Генерируется структура и ссылки...',
             'pre_generated': 'Структура готова',
             'pre_generation_failed': 'Ошибка генерации структуры',
             'full_generating': 'Генерируется содержимое...',
@@ -213,7 +213,9 @@ export function useDocumentStatus(documentId, options = {}) {
      * Проверить, ожидается ли генерация ссылок
      */
     const isWaitingForReferences = () => {
-        return status.value?.status === 'pre_generated' && !hasReferences()
+        // Теперь ссылки генерируются вместе с содержанием,
+        // поэтому отдельного состояния ожидания ссылок нет
+        return false
     }
     
     /**

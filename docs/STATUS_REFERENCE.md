@@ -5,7 +5,7 @@
 | Статус | Русское название | Цвет | Иконка | Финальный | Генерация |
 |--------|------------------|------|--------|-----------|-----------|
 | `draft` | Черновик | grey | edit | ❌ | ❌ |
-| `pre_generating` | Генерируется структура... | primary | sync | ❌ | ✅ |
+| `pre_generating` | Генерируется структура и ссылки... | primary | sync | ❌ | ✅ |
 | `pre_generated` | Структура готова | positive | check_circle | ❌ | ❌ |
 | `pre_generation_failed` | Ошибка генерации структуры | negative | error | ✅ | ❌ |
 | `full_generating` | Генерируется содержимое... | secondary | autorenew | ❌ | ✅ |
