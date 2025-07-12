@@ -195,9 +195,10 @@ class YookassaPaymentService
             // Обрабатываем различные типы событий
             switch ($eventType) {
                 case 'payment.succeeded':
-                    Log::info('Обработка успешного платежа', [
+                    Log::info('Обработка успешного платежа через webhook', [
                         'order_id' => $order->id,
-                        'payment_id' => $paymentObject['id']
+                        'payment_id' => $paymentObject['id'],
+                        'current_order_status' => $order->status->value
                     ]);
                     return $this->handleSuccessfulPayment($order, $paymentObject);
 
@@ -278,6 +279,21 @@ class YookassaPaymentService
      */
     public function forceHandleSuccessfulPayment(Order $order, array $paymentData): bool
     {
+        Log::info('Принудительная обработка платежа', [
+            'order_id' => $order->id,
+            'payment_id' => $paymentData['id'],
+            'current_order_status' => $order->status->value
+        ]);
+
+        // Дополнительная проверка перед обработкой
+        if ($order->status === OrderStatus::PAID) {
+            Log::info('Заказ уже оплачен, пропускаем принудительную обработку', [
+                'order_id' => $order->id,
+                'payment_id' => $paymentData['id']
+            ]);
+            return true;
+        }
+
         return $this->handleSuccessfulPayment($order, $paymentData);
     }
 
@@ -315,12 +331,39 @@ class YookassaPaymentService
     protected function handleSuccessfulPayment(Order $order, array $paymentData): bool
     {
         return DB::transaction(function () use ($order, $paymentData) {
-            // Обновляем статус платежа в базе
+            // Находим локальный платеж
             $localPayment = Payment::where('order_id', $order->id)
                 ->whereJsonContains('payment_data->yookassa_payment_id', $paymentData['id'])
                 ->first();
 
-            if ($localPayment) {
+            if (!$localPayment) {
+                Log::warning('Локальный платеж не найден для успешного платежа ЮКассы', [
+                    'order_id' => $order->id,
+                    'yookassa_payment_id' => $paymentData['id']
+                ]);
+                return false;
+            }
+
+            // КРИТИЧЕСКАЯ ПРОВЕРКА: Если платеж уже обработан, не обрабатываем повторно
+            if ($localPayment->status === 'completed') {
+                Log::warning('Попытка повторной обработки уже завершенного платежа', [
+                    'order_id' => $order->id,
+                    'payment_id' => $paymentData['id'],
+                    'local_payment_id' => $localPayment->id,
+                    'current_status' => $localPayment->status
+                ]);
+                return true; // Возвращаем true, так как платеж уже обработан
+            }
+
+            // Проверяем, не был ли уже начислен баланс для этого заказа
+            if ($order->status === OrderStatus::PAID) {
+                Log::warning('Заказ уже оплачен, пропускаем начисление баланса', [
+                    'order_id' => $order->id,
+                    'payment_id' => $paymentData['id'],
+                    'order_status' => $order->status->value
+                ]);
+                
+                // Обновляем только статус платежа, но не начисляем баланс
                 $paymentDataLocal = $localPayment->payment_data;
                 $paymentDataLocal['yookassa_status'] = $paymentData['status'];
                 $paymentDataLocal['paid_at'] = now()->format('Y-m-d H:i:s');
@@ -329,7 +372,19 @@ class YookassaPaymentService
                     'status' => 'completed',
                     'payment_data' => $paymentDataLocal
                 ]);
+                
+                return true;
             }
+
+            // Обновляем статус платежа в базе
+            $paymentDataLocal = $localPayment->payment_data;
+            $paymentDataLocal['yookassa_status'] = $paymentData['status'];
+            $paymentDataLocal['paid_at'] = now()->format('Y-m-d H:i:s');
+
+            $localPayment->update([
+                'status' => 'completed',
+                'payment_data' => $paymentDataLocal
+            ]);
 
             // Пополняем баланс пользователя
             $amount = $paymentData['amount']['value'] ?? $order->amount;
@@ -345,7 +400,8 @@ class YookassaPaymentService
             Log::info('Платеж успешно обработан', [
                 'order_id' => $order->id,
                 'payment_id' => $paymentData['id'],
-                'amount' => $amount
+                'amount' => $amount,
+                'local_payment_id' => $localPayment->id
             ]);
 
             return true;

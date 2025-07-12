@@ -7,6 +7,7 @@ use App\Services\Orders\PaymentService;
 use App\Services\Orders\YookassaPaymentService;
 use App\Services\Documents\DocumentJobService;
 use App\Services\Orders\TransitionService;
+use App\Enums\OrderStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -206,6 +207,9 @@ class PaymentController extends Controller
             // Используем принудительную проверку статуса
             $paymentStatus = $this->forceCheckPaymentStatusFromYookassa($order);
 
+            // Обновляем данные заказа после проверки статуса
+            $order->refresh();
+
             // Если платеж успешен и это платеж за документ, запускаем генерацию
             if ($paymentStatus === 'completed' && $order->document_id && $order->document) {
                 $document = $order->document;
@@ -312,6 +316,14 @@ class PaymentController extends Controller
                 'request_params' => $request->all()
             ]);
 
+            // Небольшая задержка для обработки возможного вебхука
+            // Это позволяет вебхуку обработаться первым и избежать дублирования
+            Log::info('Ожидание перед проверкой статуса платежа', [
+                'order_id' => $orderId,
+                'delay_seconds' => 3
+            ]);
+            sleep(3);
+
             // Получаем последний платеж для этого заказа
             $payment = $order->payments()
                 ->whereJsonContains('payment_data->payment_method', 'yookassa')
@@ -352,6 +364,23 @@ class PaymentController extends Controller
 
                 // Если платеж успешен, обрабатываем его принудительно
                 if ($paymentInfo['status'] === 'succeeded') {
+                    // Проверяем, не обработан ли уже заказ
+                    $order->refresh(); // Обновляем данные заказа из БД
+                    
+                    if ($order->status === OrderStatus::PAID) {
+                        Log::info('Заказ уже оплачен при возврате с ЮКассы', [
+                            'order_id' => $orderId,
+                            'payment_id' => $paymentInfo['id']
+                        ]);
+                        
+                        $redirectRoute = $order->document_id 
+                            ? route('documents.show', $order->document_id)
+                            : route('dashboard');
+                            
+                        return redirect($redirectRoute)
+                            ->with('success', 'Платеж уже обработан! Средства зачислены на баланс.');
+                    }
+                    
                     $this->yookassaPaymentService->forceHandleSuccessfulPayment($order, $paymentInfo);
                     
                     $redirectRoute = $order->document_id 
