@@ -689,7 +689,9 @@ class WordDocumentService
         
         // Убираем множественные пробелы, но сохраняем переносы строк
         $text = preg_replace('/[ \t]+/', ' ', $text);
-        $text = preg_replace('/\n+/', "\n", $text);
+        // Нормализуем переносы строк - убираем множественные, но сохраняем структуру
+        $text = preg_replace('/\n{3,}/', "\n\n", $text); // Не более двух переносов подряд
+        $text = preg_replace('/\n\s*\n\s*\n/', "\n\n", $text); // Убираем лишние пробелы между переносами
         
         return trim($text);
     }
@@ -1151,39 +1153,71 @@ class WordDocumentService
         // Убираем лишние пробелы и переносы
         $text = trim($text);
         
+        // Обрабатываем специальные символы форматирования
+        $text = $this->processFormattingMarkers($text);
+        
         // Очищаем текст от проблемных символов
         $text = $this->sanitizeForXml($text);
         
-        // Разбиваем по двойным переносам строк
+        // Сначала разбиваем по двойным переносам строк (четкие границы абзацев)
         $paragraphs = preg_split('/\n\s*\n/', $text);
         
-        // Если абзацев мало, разбиваем по точкам (но не более чем на 5 абзацев)
-        if (count($paragraphs) <= 1 && strlen($text) > 500) {
-            $sentences = preg_split('/\.\s+/', $text);
-            $paragraphs = [];
-            $currentParagraph = '';
-            $sentenceCount = 0;
-            
-            foreach ($sentences as $sentence) {
-                $currentParagraph .= $sentence . '. ';
-                $sentenceCount++;
-                
-                // Создаем новый абзац каждые 3-4 предложения или когда достигаем 400 символов
-                if ($sentenceCount >= 3 || strlen($currentParagraph) >= 400) {
-                    $paragraphs[] = trim($this->sanitizeForXml($currentParagraph));
-                    $currentParagraph = '';
-                    $sentenceCount = 0;
-                }
+        // Обрабатываем каждый блок текста
+        $finalParagraphs = [];
+        
+        foreach ($paragraphs as $paragraph) {
+            $paragraph = trim($paragraph);
+            if (empty($paragraph)) {
+                continue;
             }
             
-            // Добавляем остаток
-            if (!empty(trim($currentParagraph))) {
-                $paragraphs[] = trim($this->sanitizeForXml($currentParagraph));
+            // Если в абзаце есть одиночные переходы на новую строку, обрабатываем их
+            if (strpos($paragraph, "\n") !== false) {
+                // Разбиваем по одиночным переходам на новую строку
+                $lines = explode("\n", $paragraph);
+                
+                foreach ($lines as $line) {
+                    $line = trim($line);
+                    if (!empty($line) && strlen($line) > 3) {
+                        $finalParagraphs[] = $line;
+                    }
+                }
+            } else {
+                // Если абзац длинный и без переносов, разбиваем по точкам
+                if (strlen($paragraph) > 500) {
+                    $sentences = preg_split('/\.\s+/', $paragraph);
+                    $currentParagraph = '';
+                    $sentenceCount = 0;
+                    
+                    foreach ($sentences as $sentence) {
+                        $sentence = trim($sentence);
+                        if (empty($sentence)) continue;
+                        
+                        $currentParagraph .= $sentence . '. ';
+                        $sentenceCount++;
+                        
+                        // Создаем новый абзац каждые 3-4 предложения или когда достигаем 400 символов
+                        if ($sentenceCount >= 3 || strlen($currentParagraph) >= 400) {
+                            $finalParagraphs[] = trim($currentParagraph);
+                            $currentParagraph = '';
+                            $sentenceCount = 0;
+                        }
+                    }
+                    
+                    // Добавляем остаток
+                    if (!empty(trim($currentParagraph))) {
+                        $finalParagraphs[] = trim($currentParagraph);
+                    }
+                } else {
+                    // Короткий абзац добавляем как есть
+                    $finalParagraphs[] = $paragraph;
+                }
             }
         }
         
-        return array_filter($paragraphs, function($p) {
-            return !empty(trim($p));
+        // Фильтруем пустые абзацы и возвращаем результат
+        return array_filter($finalParagraphs, function($p) {
+            return !empty(trim($p)) && strlen(trim($p)) > 3;
         });
     }
 
@@ -1311,8 +1345,8 @@ class WordDocumentService
                                 $content = $this->safeSanitizeText($subtopic['content']);
                                 
                                 if (!empty($content)) {
-                                    // Простое разделение на абзацы (максимально безопасно)
-                                    $paragraphs = explode("\n", $content);
+                                    // Улучшенное разделение на абзацы с поддержкой переходов на новую строку
+                                    $paragraphs = $this->splitTextIntoParagraphsSimple($content);
                                     foreach ($paragraphs as $paragraph) {
                                         $paragraph = trim($paragraph);
                                         if (!empty($paragraph) && strlen($paragraph) > 3) {
@@ -1365,6 +1399,94 @@ class WordDocumentService
         }
     }
     
+    /**
+     * Простое разделение текста на абзацы для упрощенного документа
+     */
+    private function splitTextIntoParagraphsSimple(string $text): array
+    {
+        if (empty($text)) {
+            return [];
+        }
+        
+        // Убираем лишние пробелы
+        $text = trim($text);
+        
+        // Обрабатываем специальные символы форматирования
+        $text = $this->processFormattingMarkers($text);
+        
+        // Сначала разбиваем по двойным переносам строк
+        $paragraphs = preg_split('/\n\s*\n/', $text);
+        
+        $finalParagraphs = [];
+        
+        foreach ($paragraphs as $paragraph) {
+            $paragraph = trim($paragraph);
+            if (empty($paragraph)) {
+                continue;
+            }
+            
+            // Если в абзаце есть одиночные переходы на новую строку, разбиваем их
+            if (strpos($paragraph, "\n") !== false) {
+                $lines = explode("\n", $paragraph);
+                
+                foreach ($lines as $line) {
+                    $line = trim($line);
+                    if (!empty($line) && strlen($line) > 3) {
+                        $finalParagraphs[] = $line;
+                    }
+                }
+            } else {
+                // Добавляем абзац как есть
+                if (strlen($paragraph) > 3) {
+                    $finalParagraphs[] = $paragraph;
+                }
+            }
+        }
+        
+        return $finalParagraphs;
+    }
+
+    /**
+     * Обрабатывает специальные маркеры форматирования в тексте
+     */
+    private function processFormattingMarkers(string $text): string
+    {
+        // Обрабатываем различные варианты маркеров перехода на новую строку
+        $newlineMarkers = [
+            '\\n',           // Экранированный \n
+            '<br>',          // HTML тег
+            '<br/>',         // HTML тег с закрытием
+            '<br />',        // HTML тег с пробелом
+            '\r\n',          // Windows перевод строки
+            '\r',            // Mac перевод строки
+            '[новая строка]', // Текстовый маркер
+            '[перевод строки]', // Текстовый маркер
+            '[break]',       // Английский маркер
+        ];
+        
+        // Заменяем все маркеры на обычный перевод строки
+        foreach ($newlineMarkers as $marker) {
+            $text = str_replace($marker, "\n", $text);
+        }
+        
+        // Обрабатываем маркеры абзацев
+        $paragraphMarkers = [
+            '\\n\\n',        // Двойной экранированный \n
+            '<p>',           // HTML тег параграфа
+            '</p>',          // Закрывающий тег параграфа
+            '[новый абзац]', // Текстовый маркер
+            '[абзац]',       // Текстовый маркер
+            '[paragraph]',   // Английский маркер
+        ];
+        
+        // Заменяем маркеры абзацев на двойной перевод строки
+        foreach ($paragraphMarkers as $marker) {
+            $text = str_replace($marker, "\n\n", $text);
+        }
+        
+        return $text;
+    }
+
     /**
      * Максимально безопасная очистка текста
      */
