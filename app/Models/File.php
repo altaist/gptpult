@@ -45,7 +45,7 @@ class File extends Model
      */
     public function getFullPath(): string
     {
-        return storage_path('app/' . $this->storage_disk . '/' . $this->path);
+        return storage_path('app/public/' . $this->path);
     }
 
     /**
