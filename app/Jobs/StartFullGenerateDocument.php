@@ -15,6 +15,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 
 class StartFullGenerateDocument implements ShouldQueue
 {
@@ -81,28 +82,90 @@ class StartFullGenerateDocument implements ShouldQueue
                 'process_id' => getmypid()
             ]);
             
-            // Проверяем, не выполняется ли уже такая же задача для этого документа
+            // УЛУЧШЕННАЯ ЗАЩИТА ОТ ДУБЛИРОВАНИЯ
+            $lockKey = "full_generation_lock_{$this->document->id}";
+            $processKey = "full_generation_process_{$this->document->id}";
+            
+            // Попытка получить блокировку на 15 минут (больше timeout)
+            $lockAcquired = Cache::lock($lockKey, 900)->get(function () use ($processKey) {
+                // Проверяем, не выполняется ли уже процесс
+                $existingProcess = Cache::get($processKey);
+                
+                if ($existingProcess) {
+                    $this->logDetailedStep(++$this->stepCounter, 'ОБНАРУЖЕН АКТИВНЫЙ ПРОЦЕСС', [
+                        'document_id' => $this->document->id,
+                        'existing_process' => $existingProcess,
+                        'current_process_id' => getmypid(),
+                        'current_job_id' => $this->job->getJobId(),
+                        'action' => 'Прерываем выполнение дублирующей задачи'
+                    ]);
+                    
+                    return false; // Не удалось получить блокировку
+                }
+                
+                // Регистрируем текущий процесс
+                Cache::put($processKey, [
+                    'process_id' => getmypid(),
+                    'job_id' => $this->job->getJobId(),
+                    'started_at' => now()->toISOString(),
+                    'document_id' => $this->document->id
+                ], 900); // 15 минут
+                
+                return true;
+            });
+            
+            if (!$lockAcquired) {
+                $this->logDetailedStep(++$this->stepCounter, 'НЕ УДАЛОСЬ ПОЛУЧИТЬ БЛОКИРОВКУ: Процесс уже выполняется', [
+                    'document_id' => $this->document->id,
+                    'current_process_id' => getmypid(),
+                    'current_job_id' => $this->job->getJobId(),
+                    'lock_key' => $lockKey,
+                    'process_key' => $processKey,
+                    'action' => 'Прерываем выполнение дублирующей задачи'
+                ]);
+                
+                Log::channel('queue')->warning('Прервано выполнение дублирующей задачи полной генерации (блокировка)', [
+                    'document_id' => $this->document->id,
+                    'job_id' => $this->job->getJobId(),
+                    'process_id' => getmypid()
+                ]);
+                
+                return;
+            }
+            
+            $this->logDetailedStep(++$this->stepCounter, 'БЛОКИРОВКА ПОЛУЧЕНА: Процесс зарегистрирован', [
+                'document_id' => $this->document->id,
+                'process_id' => getmypid(),
+                'job_id' => $this->job->getJobId(),
+                'lock_key' => $lockKey,
+                'process_key' => $processKey
+            ]);
+            
+            // Дополнительная проверка через таблицу jobs (для совместимости)
             $activeJobsCount = DB::table('jobs')
                 ->where('payload', 'like', '%"document_id":' . $this->document->id . '%')
                 ->where('payload', 'like', '%StartFullGenerateDocument%')
                 ->count();
                 
-            $this->logDetailedStep(++$this->stepCounter, 'Проверка дублирующих задач', [
+            $this->logDetailedStep(++$this->stepCounter, 'Дополнительная проверка дублирующих задач в БД', [
                 'document_id' => $this->document->id,
                 'active_jobs_count' => $activeJobsCount,
                 'current_job_id' => $this->job->getJobId()
             ]);
             
             if ($activeJobsCount > 1) {
-                $this->logDetailedStep(++$this->stepCounter, 'ОБНАРУЖЕНО ДУБЛИРОВАНИЕ: Найдено несколько активных задач для этого документа', [
+                $this->logDetailedStep(++$this->stepCounter, 'ОБНАРУЖЕНО ДУБЛИРОВАНИЕ В БД: Найдено несколько активных задач', [
                     'document_id' => $this->document->id,
                     'active_jobs_count' => $activeJobsCount,
                     'current_job_id' => $this->job->getJobId(),
                     'action' => 'Прерываем выполнение этой задачи'
                 ]);
                 
-                // Прерываем выполнение, чтобы избежать дублирования
-                Log::channel('queue')->warning('Прервано выполнение дублирующей задачи полной генерации', [
+                // Освобождаем блокировку и процесс
+                Cache::forget($processKey);
+                Cache::lock($lockKey)->release();
+                
+                Log::channel('queue')->warning('Прервано выполнение дублирующей задачи полной генерации (БД)', [
                     'document_id' => $this->document->id,
                     'job_id' => $this->job->getJobId(),
                     'active_jobs_count' => $activeJobsCount
@@ -631,6 +694,16 @@ class StartFullGenerateDocument implements ShouldQueue
                 'memory_current' => memory_get_usage(true)
             ]);
             
+            // Освобождаем блокировку и процесс
+            Cache::forget($processKey);
+            Cache::lock($lockKey)->release();
+            
+            $this->logDetailedStep(++$this->stepCounter, 'БЛОКИРОВКА ОСВОБОЖДЕНА: Процесс завершен', [
+                'document_id' => $this->document->id,
+                'process_id' => getmypid(),
+                'job_id' => $this->job->getJobId()
+            ]);
+            
             Log::info('Полная генерация документа завершена', [
                 'document_id' => $this->document->id
             ]);
@@ -639,15 +712,17 @@ class StartFullGenerateDocument implements ShouldQueue
             /*
             $gptRequest = new \App\Models\GptRequest([
                 'document_id' => $this->document->id,
-                'prompt' => 'Полная генерация по частям',
-                'response' => 'Сгенерировано ' . count($generatedContent['topics']) . ' разделов',
+                'prompt' => 'Полная генерация документа',
+                'response' => json_encode($generatedContent),
                 'status' => 'completed',
                 'metadata' => [
                     'service' => $service,
                     'assistant_id' => $assistantId,
-                    'generation_type' => 'full_by_parts',
+                    'execution_time' => $executionTime,
                     'topics_count' => count($generatedContent['topics']),
-                    'temperature' => $temperature,
+                    'subtopics_count' => array_sum(array_map(function($topic) {
+                        return count($topic['subtopics'] ?? []);
+                    }, $generatedContent['topics']))
                 ]
             ]);
             $gptRequest->document = $this->document;
@@ -669,6 +744,18 @@ class StartFullGenerateDocument implements ShouldQueue
                 'memory_usage' => memory_get_usage(true),
                 'memory_peak' => memory_get_peak_usage(true),
                 'error_trace' => $e->getTraceAsString()
+            ]);
+            
+            // Освобождаем блокировку и процесс при ошибке
+            $lockKey = "full_generation_lock_{$this->document->id}";
+            $processKey = "full_generation_process_{$this->document->id}";
+            Cache::forget($processKey);
+            Cache::lock($lockKey)->release();
+            
+            $this->logDetailedStep(++$this->stepCounter, 'БЛОКИРОВКА ОСВОБОЖДЕНА: Процесс завершен с ошибкой', [
+                'document_id' => $this->document->id,
+                'process_id' => getmypid(),
+                'job_id' => $this->job->getJobId()
             ]);
             
             Log::channel('queue')->error('Ошибка при полной генерации документа', [
@@ -718,6 +805,12 @@ class StartFullGenerateDocument implements ShouldQueue
     {
         $executionTime = isset($this->startTime) ? round(microtime(true) - $this->startTime, 3) : 0;
         
+        // Освобождаем блокировку и процесс при failure
+        $lockKey = "full_generation_lock_{$this->document->id}";
+        $processKey = "full_generation_process_{$this->document->id}";
+        Cache::forget($processKey);
+        Cache::lock($lockKey)->release();
+        
         $this->logDetailedStep(++$this->stepCounter, 'JOB FAILED - Вызван метод failed()', [
             'document_id' => $this->document->id,
             'exception_message' => $exception->getMessage(),
@@ -728,7 +821,8 @@ class StartFullGenerateDocument implements ShouldQueue
             'steps_completed' => $this->stepCounter - 1,
             'memory_usage' => memory_get_usage(true),
             'memory_peak' => memory_get_peak_usage(true),
-            'exception_trace' => $exception->getTraceAsString()
+            'exception_trace' => $exception->getTraceAsString(),
+            'lock_released' => 'yes'
         ]);
         
         Log::channel('queue')->error('Job полной генерации документа завершился с ошибкой', [
@@ -754,18 +848,6 @@ class StartFullGenerateDocument implements ShouldQueue
                 'original_exception' => $exception->getMessage()
             ]);
         }
-
-        // ВРЕМЕННО ОТКЛЮЧЕНО: Создаем фиктивный GptRequest для события ошибки
-        /*
-        $gptRequest = new \App\Models\GptRequest([
-            'document_id' => $this->document->id,
-            'status' => 'failed',
-            'error_message' => $exception->getMessage(),
-        ]);
-        $gptRequest->document = $this->document;
-
-        event(new GptRequestFailed($gptRequest, $exception->getMessage()));
-        */
     }
 
     /**

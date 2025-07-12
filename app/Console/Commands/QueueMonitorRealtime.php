@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
 
 class QueueMonitorRealtime extends Command
@@ -26,6 +27,8 @@ class QueueMonitorRealtime extends Command
     private $lastJobsCount = 0;
     private $processedJobs = 0;
     private $failedJobs = 0;
+    private $interval;
+    private $documentId;
 
     /**
      * Execute the console command.
@@ -33,31 +36,204 @@ class QueueMonitorRealtime extends Command
     public function handle()
     {
         $this->startTime = now();
-        $interval = (int) $this->option('interval');
-        $documentId = $this->option('document-id');
+        $this->interval = (int) $this->option('interval');
+        $this->documentId = $this->option('document-id');
         
         $this->info('🔄 Запуск мониторинга очереди в реальном времени');
-        $this->info("📊 Интервал обновления: {$interval} секунд");
+        $this->info("📊 Интервал обновления: {$this->interval} секунд");
         
-        if ($documentId) {
-            $this->info("🎯 Фильтр по документу ID: {$documentId}");
+        if ($this->documentId) {
+            $this->info("🎯 Фильтр по документу ID: {$this->documentId}");
         }
         
         $this->info('📋 Для остановки нажмите Ctrl+C');
         $this->line('');
         
-        while (true) {
-            $this->clearScreen();
-            $this->displayHeader();
-            $this->displayQueueStats($documentId);
-            $this->displayActiveJobs($documentId);
-            $this->displayRecentActivity($documentId);
-            $this->displaySystemInfo();
-            
-            sleep($interval);
-        }
+        $this->displayMonitoringInfo();
         
         return 0;
+    }
+    
+    /**
+     * Получить информацию о системе
+     */
+    private function getSystemInfo(): array
+    {
+        return [
+            'timestamp' => now()->format('Y-m-d H:i:s'),
+            'memory_usage' => round(memory_get_usage(true) / 1024 / 1024, 2) . ' MB',
+            'memory_peak' => round(memory_get_peak_usage(true) / 1024 / 1024, 2) . ' MB',
+            'php_version' => PHP_VERSION,
+            'server_load' => sys_getloadavg()[0] ?? 'N/A',
+        ];
+    }
+
+    /**
+     * Получить информацию о воркерах
+     */
+    private function getWorkersInfo(): array
+    {
+        // Получаем информацию о процессах PHP
+        $output = [];
+        $returnVar = 0;
+        exec('ps aux | grep "queue:work\|artisan.*queue" | grep -v grep', $output, $returnVar);
+        
+        $workers = [];
+        foreach ($output as $line) {
+            if (preg_match('/(\d+)\s+[\d.]+\s+[\d.]+\s+[\d.]+\s+[\d:]+\s+(.+)/', $line, $matches)) {
+                $workers[] = [
+                    'pid' => $matches[1],
+                    'command' => trim($matches[2])
+                ];
+            }
+        }
+        
+        return $workers;
+    }
+
+    /**
+     * Получить активные процессы генерации из кэша
+     */
+    private function getActiveProcesses(): array
+    {
+        $processes = [];
+        
+        // Получаем все ключи кэша, связанные с процессами генерации
+        $cacheKeys = [
+            'full_generation_process_*',
+            'base_generation_process_*'
+        ];
+        
+        // Проверяем известные процессы для документов
+        for ($i = 1; $i <= 100; $i++) {
+            $fullKey = "full_generation_process_{$i}";
+            $baseKey = "base_generation_process_{$i}";
+            
+            if (Cache::has($fullKey)) {
+                $processInfo = Cache::get($fullKey);
+                $processes[] = [
+                    'type' => 'full_generation',
+                    'document_id' => $i,
+                    'process_info' => $processInfo,
+                    'cache_key' => $fullKey
+                ];
+            }
+            
+            if (Cache::has($baseKey)) {
+                $processInfo = Cache::get($baseKey);
+                $processes[] = [
+                    'type' => 'base_generation',
+                    'document_id' => $i,
+                    'process_info' => $processInfo,
+                    'cache_key' => $baseKey
+                ];
+            }
+        }
+        
+        return $processes;
+    }
+
+    /**
+     * Отобразить информацию о мониторинге
+     */
+    private function displayMonitoringInfo(): void
+    {
+        $this->line('');
+        $this->line('<fg=cyan>📊 МОНИТОРИНГ ОЧЕРЕДИ В РЕАЛЬНОМ ВРЕМЕНИ</fg=cyan>');
+        $this->line('<fg=gray>Нажмите Ctrl+C для выхода</fg=gray>');
+        $this->line('');
+
+        while (true) {
+            // Очищаем экран
+            $this->line("\033[2J\033[H");
+            
+            // Заголовок
+            $this->line('<fg=cyan>📊 МОНИТОРИНГ ОЧЕРЕДИ</fg=cyan> ' . now()->format('Y-m-d H:i:s'));
+            $this->line(str_repeat('=', 80));
+            
+            // Системная информация
+            $systemInfo = $this->getSystemInfo();
+            $this->line('<fg=yellow>🖥️  СИСТЕМА:</fg=yellow>');
+            $this->line("   Время: {$systemInfo['timestamp']}");
+            $this->line("   Память: {$systemInfo['memory_usage']} / Пик: {$systemInfo['memory_peak']}");
+            $this->line("   PHP: {$systemInfo['php_version']} | Нагрузка: {$systemInfo['server_load']}");
+            $this->line('');
+
+            // Активные процессы из кэша
+            $activeProcesses = $this->getActiveProcesses();
+            $this->line('<fg=green>🔄 АКТИВНЫЕ ПРОЦЕССЫ ГЕНЕРАЦИИ:</fg=green>');
+            if (empty($activeProcesses)) {
+                $this->line('   <fg=gray>Нет активных процессов</fg=gray>');
+            } else {
+                foreach ($activeProcesses as $process) {
+                    $type = $process['type'] === 'full_generation' ? 'ПОЛНАЯ' : 'БАЗОВАЯ';
+                    $info = $process['process_info'];
+                    $startedAt = $info['started_at'] ?? 'неизвестно';
+                    $processId = $info['process_id'] ?? 'неизвестно';
+                    $jobId = $info['job_id'] ?? 'неизвестно';
+                    
+                    $this->line("   📄 Документ {$process['document_id']} ({$type})");
+                    $this->line("      PID: {$processId} | Job ID: {$jobId}");
+                    $this->line("      Запущен: {$startedAt}");
+                    $this->line('');
+                }
+            }
+
+            // Активные задачи в очереди
+            $activeJobs = $this->getActiveJobs();
+            $this->line('<fg=blue>📋 АКТИВНЫЕ ЗАДАЧИ В ОЧЕРЕДИ:</fg=blue>');
+            if ($activeJobs->isEmpty()) {
+                $this->line('   <fg=gray>Нет активных задач</fg=gray>');
+            } else {
+                foreach ($activeJobs as $job) {
+                    $payload = json_decode($job->payload, true);
+                    $jobClass = $payload['displayName'] ?? 'Unknown';
+                    $documentId = $this->extractDocumentId($payload);
+                    
+                    $this->line("   🔧 {$jobClass}");
+                    $this->line("      ID: {$job->id} | Попытки: {$job->attempts}");
+                    if ($documentId) {
+                        $this->line("      Документ: {$documentId}");
+                    }
+                    $this->line("      Создана: " . date('Y-m-d H:i:s', $job->created_at));
+                    $this->line('');
+                }
+            }
+
+            // Статистика очередей
+            $queueStats = $this->getQueueStats();
+            $this->line('<fg=magenta>📈 СТАТИСТИКА ОЧЕРЕДЕЙ:</fg=magenta>');
+            foreach ($queueStats as $queue => $stats) {
+                $this->line("   {$queue}: {$stats['active']} активных | {$stats['failed']} неудачных");
+            }
+            $this->line('');
+
+            // Информация о воркерах
+            $workers = $this->getWorkersInfo();
+            $this->line('<fg=cyan>👷 ВОРКЕРЫ:</fg=cyan>');
+            if (empty($workers)) {
+                $this->line('   <fg=red>Нет запущенных воркеров</fg=red>');
+            } else {
+                foreach ($workers as $worker) {
+                    $this->line("   PID: {$worker['pid']} | {$worker['command']}");
+                }
+            }
+
+            // Фильтр по документу
+            if ($this->documentId) {
+                $this->line('');
+                $this->line('<fg=yellow>🔍 ФИЛЬТР ПО ДОКУМЕНТУ:</fg=yellow> ' . $this->documentId);
+                $this->displayDocumentSpecificInfo($this->documentId);
+            }
+
+            // Последние события из логов
+            $this->displayRecentLogEvents();
+
+            $this->line('');
+            $this->line('<fg=gray>Обновление каждые ' . $this->interval . ' секунд... (Ctrl+C для выхода)</fg=gray>');
+
+            sleep($this->interval);
+        }
     }
     
     private function clearScreen()
