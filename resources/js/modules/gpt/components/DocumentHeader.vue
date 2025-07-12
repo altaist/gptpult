@@ -79,7 +79,7 @@
             <q-card-section class="edit-dialog-header">
                 <div class="edit-dialog-title">
                     <q-icon name="edit" class="edit-dialog-icon" />
-                    Редактировать заголовок
+                    Редактировать название работы
                 </div>
                 <q-btn icon="close" flat round dense v-close-popup class="close-btn" />
             </q-card-section>
@@ -87,16 +87,20 @@
             <q-separator class="dialog-separator" />
 
             <q-card-section class="edit-dialog-content">
-                <CustomInput
-                    v-model="editTitleDialog.value"
-                    type="text"
-                    label="Заголовок документа"
-                    :autofocus="true"
-                    placeholder="Введите заголовок документа..."
-                    :maxlength="30"
-                    :counter="true"
-                    :error="titleError"
-                />
+                <div class="input-container">
+                    <CustomInput
+                        v-model="editTitleDialog.value"
+                        type="text"
+                        label="Название"
+                        :autofocus="true"
+                        placeholder="Введите название работы..."
+                        :maxlength="50"
+                        :error="isTitleTooLong() ? getTitleErrorMessage() : ''"
+                    />
+                    <div class="character-counter" :class="{ 'counter-error': isTitleTooLong() }">
+                        {{ editTitleDialog.value.length }} / 50
+                    </div>
+                </div>
             </q-card-section>
 
             <q-separator class="dialog-separator" />
@@ -115,6 +119,7 @@
                     color="primary" 
                     @click="saveTitleEdit" 
                     :loading="editTitleDialog.loading" 
+                    :disable="isTitleTooLong()"
                     class="save-btn"
                     no-caps
                 />
@@ -174,6 +179,18 @@ const editTitleDialog = reactive({
 });
 
 const titleError = ref('');
+
+// Функции для валидации заголовка
+const isTitleTooLong = () => {
+    return editTitleDialog.value.length > 50;
+};
+
+const getTitleErrorMessage = () => {
+    if (isTitleTooLong()) {
+        return 'Превышен лимит символов (50)';
+    }
+    return '';
+};
 
 // Маппинг статусов для отображения без API
 const statusTextMapping = {
@@ -258,12 +275,15 @@ const closeEditTitleDialog = () => {
 const saveTitleEdit = async () => {
     // Валидация длины заголовка
     if (!editTitleDialog.value.trim()) {
-        titleError.value = 'Заголовок не может быть пустым';
+        titleError.value = 'Название не может быть пустым';
         return;
     }
     
-    if (editTitleDialog.value.length > 255) {
-        titleError.value = 'Заголовок не может быть длиннее 255 символов';
+    if (editTitleDialog.value.length > 50) {
+        $q.notify({
+            type: 'negative',
+            message: 'Превышен лимит символов (50). Сократите название.'
+        });
         return;
     }
     
@@ -285,7 +305,7 @@ const saveTitleEdit = async () => {
 
         $q.notify({
             type: 'positive',
-            message: 'Заголовок успешно обновлен'
+            message: 'Название успешно обновлено'
         });
 
         closeEditTitleDialog();
@@ -760,6 +780,27 @@ const getDocumentDisplayTitle = () => {
     background: #ffffff;
 }
 
+/* Контейнер для input с счетчиком */
+.input-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.character-counter {
+    display: flex;
+    justify-content: flex-end;
+    font-size: 12px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.counter-error {
+    color: #ef4444;
+    font-weight: 600;
+}
+
 .edit-dialog-actions {
     background: #f8fafc;
     padding: 24px 32px;
@@ -793,6 +834,13 @@ const getDocumentDisplayTitle = () => {
 .save-btn:hover {
     box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
     transform: translateY(-1px);
+}
+
+.save-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
 }
 
 @media (max-width: 768px) {

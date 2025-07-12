@@ -15,7 +15,7 @@
                         flat 
                         round 
                         size="sm" 
-                        @click="openEditDialog('document_title', 'Заголовок документа', document.structure.document_title)"
+                        @click="openEditDialog('document_title', 'Редактировать заголовок', document.structure.document_title)"
                         class="edit-btn"
                     />
                 </div>
@@ -157,21 +157,46 @@
                 <q-separator class="dialog-separator" />
 
                 <q-card-section class="edit-dialog-content">
-                    <CustomInput
-                        v-if="editDialog.type === 'topic'"
-                        v-model="editDialog.value"
-                        type="text"
-                        label="Тема документа"
-                        :autofocus="true"
-                    />
-                    <CustomInput
-                        v-else
-                        v-model="editDialog.value"
-                        type="textarea"
-                        :rows="getTextareaRows()"
-                        :autofocus="true"
-                        :placeholder="getTextareaPlaceholder()"
-                    />
+                    <div v-if="editDialog.type === 'topic'" class="input-container">
+                        <CustomInput
+                            v-model="editDialog.value"
+                            type="text"
+                            label="Тема документа"
+                            :autofocus="true"
+                            :maxlength="getMaxLength()"
+                            :error="isValueTooLong() ? getErrorMessage() : ''"
+                        />
+                        <div class="character-counter" :class="{ 'counter-error': isValueTooLong() }">
+                            {{ editDialog.value.length }} / {{ getMaxLength() }}
+                        </div>
+                    </div>
+                    <div v-else-if="editDialog.type === 'document_title'" class="input-container">
+                        <CustomInput
+                            v-model="editDialog.value"
+                            type="text"
+                            label="Заголовок документа"
+                            :autofocus="true"
+                            :maxlength="getMaxLength()"
+                            :error="isValueTooLong() ? getErrorMessage() : ''"
+                        />
+                        <div class="character-counter" :class="{ 'counter-error': isValueTooLong() }">
+                            {{ editDialog.value.length }} / {{ getMaxLength() }}
+                        </div>
+                    </div>
+                    <div v-else class="textarea-container">
+                        <CustomInput
+                            v-model="editDialog.value"
+                            type="textarea"
+                            :rows="getTextareaRows()"
+                            :autofocus="true"
+                            :placeholder="getTextareaPlaceholder()"
+                            :maxlength="getMaxLength()"
+                            :error="isValueTooLong() ? getErrorMessage() : ''"
+                        />
+                        <div class="character-counter" :class="{ 'counter-error': isValueTooLong() }">
+                            {{ editDialog.value.length }} / {{ getMaxLength() }}
+                        </div>
+                    </div>
                 </q-card-section>
 
                 <q-separator class="dialog-separator" />
@@ -190,6 +215,7 @@
                         color="primary" 
                         @click="saveEdit" 
                         :loading="editDialog.loading" 
+                        :disable="isValueTooLong()"
                         class="save-btn"
                         no-caps
                     />
@@ -407,7 +433,49 @@ function getTextareaPlaceholder() {
     }
 }
 
+// Функция для получения максимальной длины текста
+function getMaxLength() {
+    switch (editDialog.type) {
+        case 'document_title':
+            return 200;
+        case 'objectives':
+            return 600;
+        case 'description':
+            return 800;
+        case 'contents':
+            return 4000; // Увеличиваем лимит для содержания
+        case 'theses':
+            return 1000;
+        case 'topic':
+            return 300;
+        default:
+            return 1000;
+    }
+}
+
+// Функция для проверки превышения лимита
+function isValueTooLong() {
+    return editDialog.value.length > getMaxLength();
+}
+
+// Функция для получения сообщения об ошибке
+function getErrorMessage() {
+    if (isValueTooLong()) {
+        return `Превышен лимит символов (${getMaxLength()})`;
+    }
+    return '';
+}
+
 async function saveEdit() {
+    // Проверяем лимит символов перед сохранением
+    if (isValueTooLong()) {
+        $q.notify({
+            type: 'negative',
+            message: `Превышен лимит символов (${getMaxLength()}). Сократите текст.`
+        });
+        return;
+    }
+    
     editDialog.loading = true;
     
     try {
@@ -599,22 +667,16 @@ function handleReferencesUpdated(newReferences) {
 .section-card {
     background: #ffffff;
     border-radius: 20px;
-    padding: 28px;
+    padding: 32px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     border: 1px solid #f1f5f9;
-    transition: all 0.3s ease;
-}
-
-.section-card:hover {
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-    transform: translateY(-2px);
 }
 
 .section-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
     padding-bottom: 16px;
     border-bottom: 2px solid #f1f5f9;
 }
@@ -653,43 +715,32 @@ function handleReferencesUpdated(newReferences) {
 .objectives-list {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 8px;
 }
 
 .objective-item {
     display: flex;
     align-items: flex-start;
     gap: 16px;
-    padding: 16px;
+    padding: 16px 20px;
     background: #f8fafc;
     border-radius: 12px;
     border: 1px solid #e2e8f0;
-    transition: all 0.2s ease;
-}
-
-.objective-item:hover {
-    background: #f1f5f9;
-    border-color: #cbd5e1;
 }
 
 .objective-number {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-    color: white;
-    border-radius: 50%;
     font-size: 14px;
     font-weight: 600;
+    color: #64748b;
     flex-shrink: 0;
+    min-width: 32px;
 }
 
 .objective-text {
     flex: 1;
-    font-size: 15px;
-    line-height: 1.5;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.4;
     color: #374151;
 }
 
@@ -752,6 +803,35 @@ function handleReferencesUpdated(newReferences) {
     background: #ffffff;
 }
 
+/* Контейнер для textarea с счетчиком */
+.textarea-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Контейнер для input с счетчиком */
+.input-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.character-counter {
+    display: flex;
+    justify-content: flex-end;
+    font-size: 12px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.counter-error {
+    color: #ef4444;
+    font-weight: 600;
+}
+
 .edit-dialog-actions {
     background: #f8fafc;
     padding: 24px 32px;
@@ -787,6 +867,13 @@ function handleReferencesUpdated(newReferences) {
     transform: translateY(-1px);
 }
 
+.save-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
 /* Адаптивность */
 @media (max-width: 1024px) {
     .document-title {
@@ -794,7 +881,21 @@ function handleReferencesUpdated(newReferences) {
     }
     
     .section-card {
-        padding: 24px;
+        padding: 28px;
+    }
+    
+    .objective-item {
+        padding: 14px 18px;
+        gap: 14px;
+    }
+    
+    .objective-number {
+        font-size: 13px;
+        min-width: 28px;
+    }
+    
+    .objective-text {
+        font-size: 15px;
     }
 }
 
@@ -808,7 +909,7 @@ function handleReferencesUpdated(newReferences) {
     }
     
     .section-card {
-        padding: 20px;
+        padding: 24px;
     }
     
     .section-header {
@@ -817,8 +918,22 @@ function handleReferencesUpdated(newReferences) {
         gap: 12px;
     }
     
+    .section-title {
+        font-size: 18px;
+    }
+    
     .objective-item {
-        padding: 12px;
+        padding: 12px 16px;
+        gap: 12px;
+    }
+    
+    .objective-number {
+        font-size: 12px;
+        min-width: 24px;
+    }
+    
+    .objective-text {
+        font-size: 14px;
     }
     
     .edit-dialog {
@@ -846,17 +961,25 @@ function handleReferencesUpdated(newReferences) {
     }
     
     .section-card {
-        padding: 16px;
+        padding: 20px;
     }
     
     .section-title {
-        font-size: 18px;
+        font-size: 16px;
+    }
+    
+    .objective-item {
+        padding: 10px 14px;
+        gap: 10px;
     }
     
     .objective-number {
-        width: 28px;
-        height: 28px;
-        font-size: 12px;
+        font-size: 11px;
+        min-width: 20px;
+    }
+    
+    .objective-text {
+        font-size: 13px;
     }
     
     .edit-dialog-header {
@@ -880,6 +1003,43 @@ function handleReferencesUpdated(newReferences) {
     .save-btn {
         width: 100%;
         justify-content: center;
+    }
+    
+    .character-counter {
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 360px) {
+    .section-card {
+        padding: 16px;
+    }
+    
+    .section-title {
+        font-size: 15px;
+        gap: 8px;
+    }
+    
+    .section-icon {
+        font-size: 20px;
+    }
+    
+    .objective-item {
+        padding: 8px 12px;
+        gap: 8px;
+    }
+    
+    .objective-number {
+        font-size: 10px;
+        min-width: 18px;
+    }
+    
+    .objective-text {
+        font-size: 12px;
+    }
+    
+    .character-counter {
+        font-size: 10px;
     }
 }
 </style>

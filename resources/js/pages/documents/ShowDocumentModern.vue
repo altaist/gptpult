@@ -111,7 +111,7 @@
                     <!-- Время ожидания с анимированными точками -->
                     <div class="time-estimate">
                         <q-icon name="schedule" class="time-icon" />
-                        <span>Примерное время: {{ currentDocument.status === 'full_generating' ? '5-8' : '1-3' }} минут</span>
+                        <span>Примерное время: {{ currentDocument.status === 'full_generating' ? '4-6 минут' : '1-2 минуты' }}</span>
                     </div>
 
                     <!-- Подпись о возможности закрыть страницу -->
@@ -135,7 +135,7 @@
                                 icon="fab fa-telegram-plane"
                             />
                             <p class="telegram-caption">
-                                {{ shouldShowTelegramAuth ? 'Авторизуйтесь через Telegram для удобного доступа к аккаунту' : 'Свяжите аккаунт с Telegram для получения уведомлений о готовности документа' }}
+                                {{ shouldShowTelegramAuth ? 'Не жди! Авторизуйся и получи уведомление о готовности документа в Telegram!' : 'Свяжи аккаунт с Telegram и получай уведомления о статусе документа!' }}
                             </p>
                         </div>
                     </div>
@@ -195,20 +195,18 @@
                 <div class="main-content" :class="{ 'single-column': canPay }">
                     <!-- Левая колонка с документом -->
                     <div class="document-column">
-                        <div class="document-card">
-                            <document-view 
-                                :document="currentDocument"
-                                :document-status="documentStatus"
-                                :status-text="getDisplayStatusText()"
-                                :is-generating="getIsGenerating()"
-                                :is-pre-generation-complete="isPreGenerationComplete()"
-                                :is-full-generation-complete="getIsFullGenerationComplete()"
-                                :has-failed="hasFailed()"
-                                :is-approved="isApproved()"
-                                :editable="canEdit"
-                                @updated="handleDocumentUpdate"
-                            />
-                        </div>
+                        <document-view 
+                            :document="currentDocument"
+                            :document-status="documentStatus"
+                            :status-text="getDisplayStatusText()"
+                            :is-generating="getIsGenerating()"
+                            :is-pre-generation-complete="isPreGenerationComplete()"
+                            :is-full-generation-complete="getIsFullGenerationComplete()"
+                            :has-failed="hasFailed()"
+                            :is-approved="isApproved()"
+                            :editable="canEdit"
+                            @updated="handleDocumentUpdate"
+                        />
                         
                         <!-- Кнопка генерации внизу документа (только на мобильных, когда нужна оплата) -->
                         <div v-if="canPay" class="bottom-generate-section mobile-only">

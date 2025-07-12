@@ -148,22 +148,16 @@ const openLink = (url) => {
 .section-card {
     background: #ffffff;
     border-radius: 20px;
-    padding: 28px;
+    padding: 32px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     border: 1px solid #f1f5f9;
-    transition: all 0.3s ease;
-}
-
-.section-card:hover {
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-    transform: translateY(-2px);
 }
 
 .section-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
     padding-bottom: 16px;
     border-bottom: 2px solid #f1f5f9;
 }
@@ -234,7 +228,7 @@ const openLink = (url) => {
 .references-list {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px;
 }
 
 .reference-item {
@@ -246,13 +240,6 @@ const openLink = (url) => {
     border-radius: 12px;
     border: 1px solid #e2e8f0;
     cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.reference-item:hover {
-    background: #f1f5f9;
-    border-color: #cbd5e1;
-    transform: translateX(4px);
 }
 
 .reference-content {
@@ -328,19 +315,23 @@ const openLink = (url) => {
 /* Адаптивность */
 @media (max-width: 1024px) {
     .section-card {
-        padding: 24px;
+        padding: 28px;
     }
 }
 
 @media (max-width: 768px) {
     .section-card {
-        padding: 20px;
+        padding: 24px;
     }
     
     .section-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 12px;
+    }
+    
+    .section-title {
+        font-size: 18px;
     }
     
     .reference-item {
@@ -358,11 +349,11 @@ const openLink = (url) => {
 
 @media (max-width: 480px) {
     .section-card {
-        padding: 16px;
+        padding: 20px;
     }
     
     .section-title {
-        font-size: 18px;
+        font-size: 16px;
     }
     
     .reference-item {
@@ -380,6 +371,43 @@ const openLink = (url) => {
     
     .action-icon {
         font-size: 14px;
+    }
+}
+
+@media (max-width: 360px) {
+    .section-card {
+        padding: 16px;
+    }
+    
+    .section-title {
+        font-size: 15px;
+        gap: 8px;
+    }
+    
+    .section-icon {
+        font-size: 20px;
+    }
+    
+    .reference-item {
+        padding: 10px 12px;
+        gap: 10px;
+    }
+    
+    .reference-title {
+        font-size: 14px;
+    }
+    
+    .reference-author {
+        font-size: 12px;
+    }
+    
+    .reference-action {
+        width: 26px;
+        height: 26px;
+    }
+    
+    .action-icon {
+        font-size: 13px;
     }
 }
 </style> 

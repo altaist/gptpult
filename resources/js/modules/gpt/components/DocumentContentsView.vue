@@ -25,31 +25,46 @@
             
             <div class="section-content">
                 <div class="contents-list">
-                    <div v-for="(topic, index) in contents" :key="index" class="topic-item">
+                    <!-- Титульник -->
+                    <div class="content-item main-item">
+                        <span class="item-number">1</span>
+                        <span class="item-title">Титульник</span>
+                    </div>
+                    
+                    <!-- Содержание -->
+                    <div class="content-item main-item">
+                        <span class="item-number">2</span>
+                        <span class="item-title">Содержание</span>
+                    </div>
+                    
+                    <!-- Основные разделы -->
+                    <div v-for="(topic, index) in contents" :key="index" class="content-block">
                         <!-- Основная тема -->
-                        <div class="topic-main">
-                            <div class="topic-number">{{ index + 1 }}</div>
-                            <div class="topic-content">
-                                <div class="topic-title">{{ topic.title }}</div>
-                            </div>
+                        <div class="content-item main-item">
+                            <span class="item-number">{{ index + 3 }}</span>
+                            <span class="item-title">{{ topic.title }}</span>
                         </div>
                         
                         <!-- Подтемы -->
-                        <div v-if="topic.subtopics && topic.subtopics.length" class="subtopics-list">
+                        <div v-if="topic.subtopics && topic.subtopics.length" class="subtopics-container">
                             <div 
                                 v-for="(subtopic, subIndex) in topic.subtopics" 
                                 :key="subIndex" 
-                                class="subtopic-item"
+                                class="content-item sub-item"
                             >
-                                <div class="subtopic-number">{{ index + 1 }}.{{ subIndex + 1 }}</div>
-                                <div class="subtopic-content">
-                                    <div class="subtopic-title">{{ subtopic.title }}</div>
-                                    <div v-if="subtopic.description" class="subtopic-description">
-                                        {{ subtopic.description }}
-                                    </div>
-                                </div>
+                                <span class="item-number">{{ index + 3 }}.{{ subIndex + 1 }}</span>
+                                <span class="item-title">{{ subtopic.title }}</span>
+                                <span v-if="subtopic.description" class="item-description">
+                                    {{ subtopic.description }}
+                                </span>
                             </div>
                         </div>
+                    </div>
+                    
+                    <!-- Список литературы -->
+                    <div class="content-item main-item">
+                        <span class="item-number">{{ contents.length + 3 }}</span>
+                        <span class="item-title">Список литературы</span>
                     </div>
                 </div>
             </div>
@@ -90,22 +105,16 @@ const emit = defineEmits(['edit-contents']);
 .section-card {
     background: #ffffff;
     border-radius: 20px;
-    padding: 28px;
+    padding: 32px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     border: 1px solid #f1f5f9;
-    transition: all 0.3s ease;
-}
-
-.section-card:hover {
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-    transform: translateY(-2px);
 }
 
 .section-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
     padding-bottom: 16px;
     border-bottom: 2px solid #f1f5f9;
 }
@@ -144,255 +153,95 @@ const emit = defineEmits(['edit-contents']);
 .contents-list {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 8px;
 }
 
-.topic-item {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+/* Блок содержания (пункт + подпункты) */
+.content-block {
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
 }
 
-/* Основная тема */
-.topic-main {
+/* Элементы содержания */
+.content-item {
     display: flex;
     align-items: flex-start;
     gap: 16px;
-    padding: 20px;
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-    border-radius: 16px;
-    border: 1px solid #e2e8f0;
-    transition: all 0.2s ease;
+    padding: 16px 20px;
 }
 
-.topic-main:hover {
-    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-    border-color: #cbd5e1;
-    transform: translateX(4px);
-}
-
-.topic-number {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+/* Основные пункты (синие) */
+.main-item {
+    background: #3b82f6;
     color: white;
     border-radius: 12px;
-    font-size: 16px;
-    font-weight: 700;
-    flex-shrink: 0;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    border: 1px solid #2563eb;
 }
 
-.topic-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.topic-title {
-    font-size: 18px;
-    font-weight: 600;
-    color: #1e293b;
-    line-height: 1.4;
-}
-
-/* Подтемы */
-.subtopics-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-left: 32px;
-    padding-left: 24px;
-    border-left: 3px solid #e2e8f0;
-    position: relative;
-}
-
-.subtopics-list::before {
-    content: '';
-    position: absolute;
-    left: -3px;
-    top: 0;
-    bottom: 0;
-    width: 3px;
-    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-    border-radius: 2px;
-}
-
-.subtopic-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 12px 16px;
+/* Подпункты (белые) */
+.sub-item {
     background: #ffffff;
-    border-radius: 12px;
-    border: 1px solid #f1f5f9;
-    transition: all 0.2s ease;
-    position: relative;
+    color: #374151;
+    border-bottom: 1px solid #f1f5f9;
 }
 
-.subtopic-item:hover {
-    background: #f8fafc;
-    border-color: #e2e8f0;
-    transform: translateX(4px);
+.sub-item:last-child {
+    border-bottom: none;
 }
 
-.subtopic-number {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 56px;
-    height: 28px;
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    color: white;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 600;
-    flex-shrink: 0;
-    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
-}
-
-.subtopic-content {
-    flex: 1;
+/* Контейнер подпунктов */
+.subtopics-container {
     display: flex;
     flex-direction: column;
-    gap: 4px;
 }
 
-.subtopic-title {
-    font-size: 15px;
+/* Номер элемента */
+.item-number {
+    font-size: 14px;
+    font-weight: 600;
+    flex-shrink: 0;
+    min-width: 32px;
+}
+
+.main-item .item-number {
+    color: white;
+}
+
+.sub-item .item-number {
+    color: #64748b;
+}
+
+/* Заголовок элемента */
+.item-title {
+    font-size: 16px;
     font-weight: 500;
-    color: #374151;
     line-height: 1.4;
+    flex: 1;
 }
 
-.subtopic-description {
+.main-item .item-title {
+    color: white;
+    font-weight: 600;
+}
+
+.sub-item .item-title {
+    color: #374151;
+    font-weight: 500;
+    font-size: 15px;
+}
+
+/* Описание элемента */
+.item-description {
     font-size: 13px;
     color: #6b7280;
     line-height: 1.4;
     font-style: italic;
+    margin-left: 8px;
 }
 
-/* Адаптивность */
-@media (max-width: 1024px) {
-    .section-card {
-        padding: 24px;
-    }
-    
-    .topic-number {
-        width: 36px;
-        height: 36px;
-        font-size: 15px;
-    }
-    
-    .topic-title {
-        font-size: 17px;
-    }
-}
-
-@media (max-width: 768px) {
-    .section-card {
-        padding: 20px;
-    }
-    
-    .section-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
-    }
-    
-    .topic-main {
-        padding: 16px;
-        gap: 12px;
-    }
-    
-    .topic-number {
-        width: 32px;
-        height: 32px;
-        font-size: 14px;
-        border-radius: 10px;
-    }
-    
-    .topic-title {
-        font-size: 16px;
-    }
-    
-    .subtopics-list {
-        margin-left: 20px;
-        padding-left: 16px;
-    }
-    
-    .subtopic-item {
-        padding: 10px 12px;
-        gap: 10px;
-    }
-    
-    .subtopic-number {
-        min-width: 48px;
-        height: 24px;
-        font-size: 12px;
-        border-radius: 6px;
-    }
-    
-    .subtopic-title {
-        font-size: 14px;
-    }
-    
-    .subtopic-description {
-        font-size: 12px;
-    }
-}
-
-@media (max-width: 480px) {
-    .section-card {
-        padding: 16px;
-    }
-    
-    .section-title {
-        font-size: 18px;
-    }
-    
-    .topic-main {
-        padding: 12px;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        gap: 12px;
-    }
-    
-    .topic-number {
-        width: 40px;
-        height: 40px;
-        font-size: 16px;
-    }
-    
-    .subtopics-list {
-        margin-left: 0;
-        padding-left: 16px;
-        border-left: 2px solid #e2e8f0;
-    }
-    
-    .subtopics-list::before {
-        width: 2px;
-        left: -2px;
-    }
-    
-    .subtopic-item {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        gap: 8px;
-    }
-    
-    .subtopic-number {
-        min-width: 44px;
-        height: 26px;
-    }
-}
-
+/* Заблокированный индикатор */
 .locked-indicator {
     display: flex;
     align-items: center;
@@ -414,5 +263,137 @@ const emit = defineEmits(['edit-contents']);
     font-size: 13px !important;
     font-weight: 500 !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Адаптивность */
+@media (max-width: 1024px) {
+    .section-card {
+        padding: 28px;
+    }
+    
+    .content-item {
+        padding: 14px 18px;
+        gap: 14px;
+    }
+    
+    .item-number {
+        font-size: 13px;
+        min-width: 28px;
+    }
+    
+    .item-title {
+        font-size: 15px;
+    }
+    
+    .sub-item .item-title {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 768px) {
+    .section-card {
+        padding: 24px;
+    }
+    
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .section-title {
+        font-size: 18px;
+    }
+    
+    .content-item {
+        padding: 12px 16px;
+        gap: 12px;
+    }
+    
+    .item-number {
+        font-size: 12px;
+        min-width: 24px;
+    }
+    
+    .item-title {
+        font-size: 14px;
+    }
+    
+    .sub-item .item-title {
+        font-size: 13px;
+    }
+    
+    .item-description {
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .section-card {
+        padding: 20px;
+    }
+    
+    .section-title {
+        font-size: 16px;
+    }
+    
+    .content-item {
+        padding: 10px 14px;
+        gap: 10px;
+    }
+    
+    .item-number {
+        font-size: 11px;
+        min-width: 20px;
+    }
+    
+    .item-title {
+        font-size: 13px;
+    }
+    
+    .sub-item .item-title {
+        font-size: 12px;
+    }
+    
+    .item-description {
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 360px) {
+    .section-card {
+        padding: 16px;
+    }
+    
+    .section-title {
+        font-size: 15px;
+        gap: 8px;
+    }
+    
+    .section-icon {
+        font-size: 20px;
+    }
+    
+    .content-item {
+        padding: 8px 12px;
+        gap: 8px;
+    }
+    
+    .item-number {
+        font-size: 10px;
+        min-width: 18px;
+    }
+    
+    .item-title {
+        font-size: 12px;
+    }
+    
+    .sub-item .item-title {
+        font-size: 11px;
+    }
+    
+    .item-description {
+        font-size: 10px;
+    }
 }
 </style> 
