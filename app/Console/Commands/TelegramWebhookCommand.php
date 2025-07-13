@@ -70,7 +70,14 @@ class TelegramWebhookCommand extends Command
             $this->info('📝 Описание: ' . ($result['description'] ?? 'No description'));
             return 0;
         } else {
-            $this->error('❌ Ошибка при установке веб-хука: ' . ($result['description'] ?? 'Unknown error'));
+            $errorMessage = $result['description'] ?? $result['error'] ?? 'Unknown error';
+            $this->error('❌ Ошибка при установке веб-хука: ' . $errorMessage);
+            
+            // Показываем дополнительную информацию для отладки
+            if (isset($result['error'])) {
+                $this->line('🔍 Детали ошибки: ' . $result['error']);
+            }
+            
             return 1;
         }
     }
@@ -89,7 +96,14 @@ class TelegramWebhookCommand extends Command
             $this->info('📝 Описание: ' . ($result['description'] ?? 'No description'));
             return 0;
         } else {
-            $this->error('❌ Ошибка при удалении веб-хука: ' . ($result['description'] ?? 'Unknown error'));
+            $errorMessage = $result['description'] ?? $result['error'] ?? 'Unknown error';
+            $this->error('❌ Ошибка при удалении веб-хука: ' . $errorMessage);
+            
+            // Показываем дополнительную информацию для отладки
+            if (isset($result['error'])) {
+                $this->line('🔍 Детали ошибки: ' . $result['error']);
+            }
+            
             return 1;
         }
     }
@@ -117,7 +131,14 @@ class TelegramWebhookCommand extends Command
             
             return 0;
         } else {
-            $this->error('❌ Ошибка при получении информации о веб-хуке: ' . ($result['description'] ?? 'Unknown error'));
+            $errorMessage = $result['description'] ?? $result['error'] ?? 'Unknown error';
+            $this->error('❌ Ошибка при получении информации о веб-хуке: ' . $errorMessage);
+            
+            // Показываем дополнительную информацию для отладки
+            if (isset($result['error'])) {
+                $this->line('🔍 Детали ошибки: ' . $result['error']);
+            }
+            
             return 1;
         }
     }

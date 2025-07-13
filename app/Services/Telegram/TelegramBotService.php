@@ -789,13 +789,15 @@ class TelegramBotService
                 CURLOPT_POSTFIELDS => json_encode($data),
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_TIMEOUT => 30,
-                CURLOPT_CONNECTTIMEOUT => 5,
+                CURLOPT_CONNECTTIMEOUT => 15,
                 CURLOPT_HTTPHEADER => [
                     'Content-Type: application/json',
                     'User-Agent: Laravel/11.0'
                 ],
                 CURLOPT_SSL_VERIFYPEER => true,
                 CURLOPT_SSL_VERIFYHOST => 2,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_MAXREDIRS => 3,
             ]);
             
             $response = curl_exec($ch);
