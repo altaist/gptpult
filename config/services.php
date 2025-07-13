@@ -60,6 +60,8 @@ return [
         'webhook_url' => env('TELEGRAM_WEBHOOK_URL'),
         'bot_username' => env('TELEGRAM_BOT_USERNAME'),
         'test_app_url' => env('TELEGRAM_TEST_APP_URL', 'http://127.0.0.1:8000'),
+        'proxy_url' => env('TELEGRAM_PROXY_URL', env('OPENAI_PROXY_URL')),
+        'use_proxy' => env('TELEGRAM_USE_PROXY', env('OPENAI_USE_PROXY', false)),
     ],
 
     'yookassa' => [

@@ -783,7 +783,7 @@ class TelegramBotService
             $url = "{$this->baseUrl}/{$method}";
             
             $ch = curl_init();
-            curl_setopt_array($ch, [
+            $curlOptions = [
                 CURLOPT_URL => $url,
                 CURLOPT_POST => true,
                 CURLOPT_POSTFIELDS => json_encode($data),
@@ -798,7 +798,16 @@ class TelegramBotService
                 CURLOPT_SSL_VERIFYHOST => 2,
                 CURLOPT_FOLLOWLOCATION => true,
                 CURLOPT_MAXREDIRS => 3,
-            ]);
+            ];
+            
+            // Добавляем прокси если настроен
+            if (config('services.telegram.use_proxy') && config('services.telegram.proxy_url')) {
+                $curlOptions[CURLOPT_PROXY] = config('services.telegram.proxy_url');
+                $curlOptions[CURLOPT_PROXYTYPE] = CURLPROXY_HTTP;
+                $curlOptions[CURLOPT_PROXYUSERPWD] = null; // Если нужна авторизация
+            }
+            
+            curl_setopt_array($ch, $curlOptions);
             
             $response = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
