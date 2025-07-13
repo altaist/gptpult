@@ -174,7 +174,7 @@
                     />
                 </div>
 
-                <!-- Блок действий для мобильных (когда оплата не нужна) -->
+                <!-- Блок действий для мобильных (когда оплата не нужна) - ВЕРХНИЙ -->
                 <div v-if="!canPay" class="mobile-actions-container mobile-only">
                     <DocumentActions 
                         :document="currentDocument"
@@ -190,6 +190,23 @@
                         @download-word="downloadWord"
                         @retry-generation="retryGeneration"
                     />
+                </div>
+
+                <!-- Кнопка генерации для мобильных (когда нужна оплата) - ВЕРХНЯЯ -->
+                <div v-if="canPay" class="mobile-generate-section mobile-only">
+                    <div class="mobile-generate-container">
+                        <q-btn 
+                            class="generate-btn mobile-btn"
+                            unelevated
+                            rounded
+                            size="lg"
+                            no-caps
+                            @click="showActionsModal = true"
+                        >
+                            <q-icon name="auto_awesome" class="btn-icon" />
+                            <span>Сгенерировать</span>
+                        </q-btn>
+                    </div>
                 </div>
 
                 <!-- Основной контент -->
@@ -261,6 +278,44 @@
                             @download-word="downloadWord"
                             @retry-generation="retryGeneration"
                         />
+                    </div>
+                </div>
+
+                <!-- Дубликаты кнопок и блоков действий в конце страницы для мобильных -->
+                <div class="mobile-bottom-actions mobile-only">
+                    <!-- Блок действий для мобильных (когда оплата не нужна) - НИЖНИЙ -->
+                    <div v-if="!canPay" class="mobile-actions-container">
+                        <DocumentActions 
+                            :document="currentDocument"
+                            :balance="balance"
+                            :order-price="orderPrice"
+                            :can-start-full-generation="getCanStartFullGeneration()"
+                            :is-full-generation-complete="getIsFullGenerationComplete()"
+                            :is-generating="getIsGenerating()"
+                            :is-starting-full-generation="isStartingFullGeneration"
+                            :is-downloading="isDownloading"
+                            :user="user"
+                            @start-full-generation="startFullGeneration"
+                            @download-word="downloadWord"
+                            @retry-generation="retryGeneration"
+                        />
+                    </div>
+
+                    <!-- Кнопка генерации для мобильных (когда нужна оплата) - НИЖНЯЯ -->
+                    <div v-if="canPay" class="mobile-generate-section">
+                        <div class="mobile-generate-container">
+                            <q-btn 
+                                class="generate-btn mobile-btn"
+                                unelevated
+                                rounded
+                                size="lg"
+                                no-caps
+                                @click="showActionsModal = true"
+                            >
+                                <q-icon name="auto_awesome" class="btn-icon" />
+                                <span>Сгенерировать</span>
+                            </q-btn>
+                        </div>
                     </div>
                 </div>
             </template>
@@ -2170,6 +2225,15 @@ const showActionsModal = ref(false);
         border-radius: 16px;
     }
     
+    .mobile-generate-container {
+        padding: 16px;
+        border-radius: 16px;
+    }
+    
+    .mobile-bottom-actions {
+        margin-top: 0px;
+    }
+    
     .bottom-generate-section {
         margin-top: 20px;
     }
@@ -2346,6 +2410,15 @@ const showActionsModal = ref(false);
         border-radius: 14px;
     }
     
+    .mobile-generate-container {
+        padding: 14px;
+        border-radius: 14px;
+    }
+    
+    .mobile-bottom-actions {
+        margin-top: 0px;
+    }
+    
     .dashboard-btn {
         padding: 8px 12px;
         font-size: 11px;
@@ -2416,6 +2489,15 @@ const showActionsModal = ref(false);
     .mobile-actions-container {
         padding: 12px;
         border-radius: 12px;
+    }
+    
+    .mobile-generate-container {
+        padding: 12px;
+        border-radius: 12px;
+    }
+    
+    .mobile-bottom-actions {
+        margin-top: 0px;
     }
     
     .bottom-generate-section {
@@ -3062,6 +3144,33 @@ const showActionsModal = ref(false);
     padding: 20px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     border: 1px solid #f1f5f9;
+}
+
+/* Секция генерации для мобильных */
+.mobile-generate-section {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.mobile-generate-container {
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-radius: 20px;
+    border: 2px dashed #e2e8f0;
+    transition: all 0.3s ease;
+}
+
+.mobile-generate-container:hover {
+    border-color: #667eea;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    transform: translateY(-2px);
+}
+
+/* Нижние действия для мобильных */
+.mobile-bottom-actions {
+    margin-top: 0px;
 }
 
 /* Правая колонка с действиями */
