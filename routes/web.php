@@ -47,6 +47,26 @@ Route::get('/design5', function () {
     return view('v4-design5');
 })->name('design5');
 
+// API роут для получения IP адреса пользователя
+Route::get('/api/user-ip', function () {
+    $ip = request()->ip();
+    
+    // Попытка получить реальный IP через заголовки
+    $realIp = request()->header('X-Forwarded-For') 
+        ?? request()->header('X-Real-IP') 
+        ?? request()->header('CF-Connecting-IP') 
+        ?? $ip;
+    
+    // Если IP содержит несколько адресов через запятую, берем первый
+    if (strpos($realIp, ',') !== false) {
+        $realIp = trim(explode(',', $realIp)[0]);
+    }
+    
+    return response()->json([
+        'ip' => $realIp
+    ]);
+})->name('user-ip');
+
 Route::get('/dashboard', [LkController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
