@@ -163,13 +163,20 @@
                             <!-- Кнопка отправки -->
                             <div class="submit-section">
                                 <div class="submit-container">
-                                    <div class="submit-wrapper" @click="handleSubmitClick">
+                                    <!-- Мобильная подсказка -->
+                                    <div v-if="showMobileHint" :class="['mobile-hint', { 'mobile-hint-closing': mobileHintClosing }]">
+                                        <q-icon name="info" class="mobile-hint-icon" />
+                                        <span>{{ getMobileHintText() }}</span>
+                                    </div>
+                                    
+                                    <div class="submit-wrapper">
                                         <q-btn
                                             type="button"
                                             :loading="isLoading"
-                                            :disable="!canSubmit"
-                                            class="submit-btn"
+                                            :class="['submit-btn', { 'submit-btn-disabled': !canSubmit }]"
                                             unelevated
+                                            @click="handleSubmitClick"
+                                            @touchstart="handleTouchStart"
                                         >
                                             <q-tooltip 
                                                 v-if="!canSubmit && !isMobile" 
@@ -189,12 +196,6 @@
                                     <div class="time-estimate">
                                         <q-icon name="schedule" class="time-icon" />
                                         <span>Общее время генерации: 5-10 минут</span>
-                                    </div>
-                                    
-                                    <!-- Мобильная подсказка -->
-                                    <div v-if="showMobileHint" class="mobile-hint">
-                                        <q-icon name="info" class="mobile-hint-icon" />
-                                        <span>{{ getMobileHintText() }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -230,6 +231,7 @@ const form = ref({
 });
 
 const showMobileHint = ref(false);
+const mobileHintClosing = ref(false);
 const isMobile = ref(false);
 
 const { hasError, getError } = useLaravelErrors();
@@ -246,7 +248,7 @@ const currentStep = computed(() => {
 
 // Методы
 const checkMobile = () => {
-    isMobile.value = window.innerWidth <= 768;
+    isMobile.value = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 };
 
 const selectWorkType = (type) => {
@@ -255,13 +257,13 @@ const selectWorkType = (type) => {
 
 const getSubmitHint = () => {
     if (!form.value.document_type_id && form.value.topic.trim().length < 10) {
-        return 'Выбери тип работы и введи тему (минимум 10 символов)';
+        return 'Для продолжения выбери тип работы и введи тему (минимум 10 символов)';
     }
     if (!form.value.document_type_id) {
-        return 'Выбери тип работы';
+        return 'Для продолжения выбери тип работы выше';
     }
     if (form.value.topic.trim().length < 10) {
-        return 'Введи тему работы (минимум 10 символов)';
+        return 'Для продолжения введи тему работы (минимум 10 символов)';
     }
     return '';
 };
@@ -271,10 +273,16 @@ const handleSubmitClick = (event) => {
         if (isMobile.value) {
             event.preventDefault();
             event.stopPropagation();
+            
             showMobileHint.value = true;
+            mobileHintClosing.value = false;
             setTimeout(() => {
-                showMobileHint.value = false;
-            }, 3000);
+                mobileHintClosing.value = true;
+                setTimeout(() => {
+                    showMobileHint.value = false;
+                    mobileHintClosing.value = false;
+                }, 300); // Время анимации исчезновения
+            }, 4000); // Увеличиваем время показа до 4 секунд
         }
         return;
     }
@@ -282,6 +290,22 @@ const handleSubmitClick = (event) => {
     // Если можем отправить форму, вызываем onSubmit
     if (canSubmit.value && !isLoading.value) {
         onSubmit();
+    }
+};
+
+const handleTouchStart = (event) => {
+    if (!canSubmit.value && isMobile.value) {
+        event.preventDefault();
+        
+        showMobileHint.value = true;
+        mobileHintClosing.value = false;
+        setTimeout(() => {
+            mobileHintClosing.value = true;
+            setTimeout(() => {
+                showMobileHint.value = false;
+                mobileHintClosing.value = false;
+            }, 300); // Время анимации исчезновения
+        }, 4000);
     }
 };
 
@@ -731,6 +755,14 @@ onUnmounted(() => {
     cursor: not-allowed;
 }
 
+.submit-btn-disabled {
+    opacity: 0.6;
+    transform: none;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+    cursor: not-allowed;
+    pointer-events: all !important;
+}
+
 .submit-icon {
     margin-right: 8px;
     font-size: 20px;
@@ -766,34 +798,78 @@ onUnmounted(() => {
 .mobile-hint {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 12px 16px;
-    background: #fef3c7;
-    border: 1px solid #fbbf24;
+    gap: 10px;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border: 1px solid #e2e8f0;
     border-radius: 12px;
-    color: #92400e;
+    color: #475569;
     font-size: 14px;
     font-weight: 500;
-    animation: slideIn 0.3s ease;
+    animation: slideInDown 0.3s ease-out;
     max-width: 100%;
     text-align: center;
-    margin: 0 auto;
+    margin: 0 auto 16px auto;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    position: relative;
+}
+
+.mobile-hint-closing {
+    animation: slideOutUp 0.3s ease-in;
 }
 
 .mobile-hint-icon {
     font-size: 18px;
-    color: #f59e0b;
+    color: #64748b;
     flex-shrink: 0;
 }
 
-@keyframes slideIn {
-    from { 
+/* Стрелка вниз для указания на кнопку */
+.mobile-hint::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 8px solid #e2e8f0;
+}
+
+.mobile-hint::before {
+    content: '';
+    position: absolute;
+    bottom: -7px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-top: 7px solid #f1f5f9;
+}
+
+@keyframes slideInDown {
+    0% { 
         opacity: 0; 
-        transform: translateY(-10px); 
+        transform: translateY(-20px); 
     }
-    to { 
+    100% { 
         opacity: 1; 
         transform: translateY(0); 
+    }
+}
+
+@keyframes slideOutUp {
+    0% { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+    100% { 
+        opacity: 0; 
+        transform: translateY(-20px); 
     }
 }
 
