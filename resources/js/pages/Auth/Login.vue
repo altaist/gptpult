@@ -3,14 +3,22 @@ import GuestLayout from '@/_breeze/Layouts/GuestLayout.vue';
 import { Head, router } from '@inertiajs/vue3';
 import { onMounted, ref } from 'vue';
 import { checkAuth } from '@/composables/auth';
+import { useRecaptcha } from '@/composables/recaptcha';
 
-defineProps({
+const props = defineProps({
     canResetPassword: {
         type: Boolean,
     },
     status: {
         type: String,
     },
+    recaptcha: {
+        type: Object,
+        default: () => ({
+            site_key: null,
+            enabled: false
+        })
+    }
 });
 
 // Состояния
@@ -18,6 +26,10 @@ const isLoading = ref(true);
 const showSupport = ref(false);
 const loadingText = ref('Проверяем авторизацию...');
 const supportTimer = ref(null);
+
+// reCAPTCHA
+const { initRecaptcha, executeAction, isReady: isRecaptchaReady } = useRecaptcha();
+const recaptchaInitialized = ref(false);
 
 // Различные тексты загрузки
 const loadingTexts = [
@@ -51,6 +63,17 @@ const tryManualLogin = () => {
 };
 
 onMounted(async () => {
+    // Инициализируем reCAPTCHA сначала, если включена
+    if (props.recaptcha?.enabled && props.recaptcha?.site_key) {
+        try {
+            loadingText.value = 'Инициализируем проверку безопасности...';
+            await initRecaptcha(props.recaptcha.site_key);
+            recaptchaInitialized.value = true;
+        } catch (error) {
+            console.error('Failed to initialize reCAPTCHA:', error);
+        }
+    }
+    
     // Устанавливаем таймер для показа поддержки через 15 секунд
     supportTimer.value = setTimeout(showSupportInfo, 15000);
     
@@ -65,6 +88,18 @@ onMounted(async () => {
     }, 3000);
     
     try {
+        // Выполняем reCAPTCHA проверку при загрузке, если включена
+        if (props.recaptcha?.enabled && recaptchaInitialized.value) {
+            loadingText.value = 'Проходим проверку безопасности...';
+            try {
+                await executeAction('login_page');
+            } catch (recaptchaError) {
+                console.error('reCAPTCHA check failed:', recaptchaError);
+                // Продолжаем даже если reCAPTCHA не сработала
+            }
+        }
+        
+        loadingText.value = 'Проверяем авторизацию...';
         await checkAuth();
     } catch (error) {
         console.error('Auth check failed:', error);

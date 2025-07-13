@@ -23,17 +23,20 @@ class DocumentController extends Controller
     protected DocumentJobService $documentJobService;
     protected WordDocumentService $wordDocumentService;
     protected TelegramNotificationService $telegramNotificationService;
+    protected \App\Services\RecaptchaService $recaptchaService;
 
     public function __construct(
         DocumentService $documentService,
         DocumentJobService $documentJobService,
         WordDocumentService $wordDocumentService,
-        TelegramNotificationService $telegramNotificationService
+        TelegramNotificationService $telegramNotificationService,
+        \App\Services\RecaptchaService $recaptchaService
     ) {
         $this->documentService = $documentService;
         $this->documentJobService = $documentJobService;
         $this->wordDocumentService = $wordDocumentService;
         $this->telegramNotificationService = $telegramNotificationService;
+        $this->recaptchaService = $recaptchaService;
     }
 
     /**
@@ -237,7 +240,30 @@ class DocumentController extends Controller
                 'topic' => ['required', 'string', 'min:10', 'max:255'],
                 'pages_num' => ['nullable', 'integer', 'min:3', 'max:25'],
                 'test' => ['nullable', 'boolean'], // Параметр для тестирования с фейковыми данными
+                'recaptcha_token' => ['nullable', 'string'], // Токен reCAPTCHA
             ]);
+
+            // Проверяем reCAPTCHA, если включена
+            if ($this->recaptchaService->isEnabled() && isset($validated['recaptcha_token'])) {
+                $recaptchaResult = $this->recaptchaService->verifyV3(
+                    $validated['recaptcha_token'],
+                    'document_create',
+                    0.5, // Минимальный скор
+                    $request->ip()
+                );
+
+                if (!$recaptchaResult['success']) {
+                    return response()->json([
+                        'message' => 'Проверка безопасности не пройдена. Попробуйте ещё раз.',
+                        'recaptcha_error' => $recaptchaResult['message'] ?? 'reCAPTCHA verification failed'
+                    ], 422);
+                }
+            } elseif ($this->recaptchaService->isEnabled()) {
+                return response()->json([
+                    'message' => 'Требуется подтверждение безопасности',
+                    'recaptcha_required' => true
+                ], 422);
+            }
 
             // Если передан параметр test, создаем с фейковыми данными из фабрики
             if ($request->boolean('test')) {

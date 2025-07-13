@@ -11,10 +11,14 @@ use Inertia\Inertia;
 class NewDocumentController extends Controller
 {
     protected DocumentLimitService $documentLimitService;
+    protected \App\Services\RecaptchaService $recaptchaService;
 
-    public function __construct(DocumentLimitService $documentLimitService)
-    {
+    public function __construct(
+        DocumentLimitService $documentLimitService,
+        \App\Services\RecaptchaService $recaptchaService
+    ) {
         $this->documentLimitService = $documentLimitService;
+        $this->recaptchaService = $recaptchaService;
     }
 
     public function __invoke(Request $request)
@@ -35,7 +39,11 @@ class NewDocumentController extends Controller
         // Если лимит позволяет, показываем форму создания
         return Inertia::render('documents/NewDocument', [
             'document_types' => DocumentType::all(),
-            'limit_info' => $limitCheck
+            'limit_info' => $limitCheck,
+            'recaptcha' => [
+                'site_key' => $this->recaptchaService->getSiteKey(),
+                'enabled' => $this->recaptchaService->isEnabled()
+            ]
         ]);
     }
 } 

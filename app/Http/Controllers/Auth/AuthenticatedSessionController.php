@@ -13,6 +13,13 @@ use Inertia\Response;
 
 class AuthenticatedSessionController extends Controller
 {
+    protected \App\Services\RecaptchaService $recaptchaService;
+
+    public function __construct(\App\Services\RecaptchaService $recaptchaService)
+    {
+        $this->recaptchaService = $recaptchaService;
+    }
+
     /**
      * Display the login view.
      */
@@ -21,6 +28,10 @@ class AuthenticatedSessionController extends Controller
         return Inertia::render('Auth/Login', [
             'canResetPassword' => Route::has('password.request'),
             'status' => session('status'),
+            'recaptcha' => [
+                'site_key' => $this->recaptchaService->getSiteKey(),
+                'enabled' => $this->recaptchaService->isEnabled()
+            ]
         ]);
     }
 

@@ -193,16 +193,25 @@
                                         </q-btn>
                                     </div>
                                     
-                                    <!-- Время генерации -->
-                                    <div class="time-estimate">
-                                        <q-icon name="schedule" class="time-icon" />
-                                        <span>Общее время генерации: 5-10 минут</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </q-form>
+                                                        <!-- Время генерации -->
+                    <div class="time-estimate">
+                        <q-icon name="schedule" class="time-icon" />
+                        <span>Общее время генерации: 5-10 минут</span>
+                    </div>
+
+                    <!-- reCAPTCHA бейдж -->
+                    <div v-if="recaptcha.enabled" class="recaptcha-badge">
+                        Эта страница защищена reCAPTCHA. Действуют 
+                        <a href="https://policies.google.com/privacy" target="_blank">Политика конфиденциальности</a> 
+                        и 
+                        <a href="https://policies.google.com/terms" target="_blank">Условия использования</a> 
+                        Google.
                     </div>
                 </div>
+            </div>
+        </q-form>
+    </div>
+</div>
             </div>
         </div>
     </page-layout>
@@ -216,12 +225,20 @@ import YandexMetrika from '@/components/shared/YandexMetrika.vue';
 import { Head } from '@inertiajs/vue3';
 import { apiClient, isLoading, useLaravelErrors } from '@/composables/api';
 import CustomInput from '@/components/shared/CustomInput.vue';
+import { useRecaptcha } from '@/composables/recaptcha';
 
 const props = defineProps({
     document_types: {
         type: Array,
         required: true,
         default: () => []
+    },
+    recaptcha: {
+        type: Object,
+        default: () => ({
+            site_key: null,
+            enabled: false
+        })
     }
 });
 
@@ -237,6 +254,9 @@ const mobileHintClosing = ref(false);
 const isMobile = ref(false);
 
 const { hasError, getError } = useLaravelErrors();
+
+// reCAPTCHA
+const { initRecaptcha, executeAction, isReady: isRecaptchaReady, getError: getRecaptchaError } = useRecaptcha();
 
 // Computed свойства
 const canSubmit = computed(() => {
@@ -338,6 +358,19 @@ const onSubmit = async () => {
             document_type_id: Number(form.value.document_type_id)
         };
 
+        // Добавляем reCAPTCHA токен, если включена
+        if (props.recaptcha.enabled && props.recaptcha.site_key) {
+            try {
+                const recaptchaToken = await executeAction('document_create');
+                data.recaptcha_token = recaptchaToken;
+            } catch (recaptchaError) {
+                console.error('reCAPTCHA error:', recaptchaError);
+                error.value = 'Ошибка проверки безопасности. Попробуйте обновить страницу.';
+                isLoading.value = false;
+                return;
+            }
+        }
+
         const response = await apiClient.post(route('documents.quick-create'), data);
         
         if (response && response.document && response.document.id) {
@@ -352,11 +385,17 @@ const onSubmit = async () => {
     } catch (err) {
         isLoading.value = false
         // console.error('Ошибка при создании документа:', err);  // Закомментировано для продакшена
-        $q.notify({
-            type: 'negative',
-            message: 'Произошла ошибка при создании документа',
-            position: 'top'
-        });
+        
+        // Проверяем специфические ошибки reCAPTCHA
+        if (err.response && err.response.data && err.response.data.recaptcha_error) {
+            error.value = 'Проверка безопасности не пройдена. Попробуйте ещё раз.';
+        } else {
+            $q.notify({
+                type: 'negative',
+                message: 'Произошла ошибка при создании документа',
+                position: 'top'
+            });
+        }
     }
 };
 
@@ -364,9 +403,18 @@ const getMobileHintText = () => {
     return getSubmitHint();
 };
 
-onMounted(() => {
+onMounted(async () => {
     checkMobile();
     window.addEventListener('resize', checkMobile);
+    
+    // Инициализируем reCAPTCHA, если включена
+    if (props.recaptcha.enabled && props.recaptcha.site_key) {
+        try {
+            await initRecaptcha(props.recaptcha.site_key);
+        } catch (error) {
+            console.error('Failed to initialize reCAPTCHA:', error);
+        }
+    }
 });
 
 onUnmounted(() => {
@@ -1095,6 +1143,24 @@ onUnmounted(() => {
 
 .main-text .segment-bar:hover {
     animation: pulse 0.6s ease-in-out;
+}
+
+/* reCAPTCHA бейдж */
+.recaptcha-badge {
+    font-size: 11px;
+    color: #9ca3af;
+    text-align: center;
+    line-height: 1.4;
+    margin-top: 8px;
+}
+
+.recaptcha-badge a {
+    color: #3b82f6;
+    text-decoration: none;
+}
+
+.recaptcha-badge a:hover {
+    text-decoration: underline;
 }
 
 /* Адаптивность для структуры документа */
