@@ -5,11 +5,15 @@ import { router } from '@inertiajs/vue3';
 import { useQuasar } from 'quasar';
 import PageLayout from '@/components/shared/PageLayout.vue';
 import { useTelegramMiniApp } from '@/composables/useTelegramMiniApp.js';
+import { useTelegramWebApp } from '@/composables/telegramWebApp.js';
 
 const $q = useQuasar();
 
 // Telegram Mini App
 const { isTelegramMiniApp, telegramData, showBackButton, hideBackButton } = useTelegramMiniApp();
+
+// Telegram WebApp для определения среды
+const { isTelegramWebApp } = useTelegramWebApp();
 
 // Определяем пропсы, которые могут приходить от контроллера
 const props = defineProps({
@@ -507,7 +511,13 @@ const processTopUp = async () => {
       showTopUpModal.value = false;
       
       // Переходим на страницу оплаты
-      window.location.href = paymentData.confirmation_url;
+      if (isTelegramWebApp()) {
+        // В Telegram Web App открываем в браузере
+        window.Telegram.WebApp.openLink(paymentData.confirmation_url);
+      } else {
+        // В обычном браузере переходим обычным способом
+        window.location.href = paymentData.confirmation_url;
+      }
     } else {
       console.error('Некорректный ответ платежного API:', paymentData);
       throw new Error(paymentData.error || 'Некорректный ответ от платежного API');

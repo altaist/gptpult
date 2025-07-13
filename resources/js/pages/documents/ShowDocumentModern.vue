@@ -325,6 +325,9 @@ const isPollingActive = ref(false); // Флаг активного отслеж�
 // Используем глобальное состояние уведомлений
 const { notifications, removeNotification } = useModernNotifications();
 
+// Используем Telegram WebApp для определения среды
+const { isTelegramWebApp } = useTelegramWebApp();
+
 const props = defineProps({
     document: {
         type: Object,

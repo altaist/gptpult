@@ -192,8 +192,12 @@
 import { computed, defineProps, defineEmits, ref, onMounted } from 'vue';
 import { apiClient } from '@/composables/api';
 import { useQuasar } from 'quasar';
+import { useTelegramWebApp } from '@/composables/telegramWebApp';
 
 const $q = useQuasar();
+
+// Telegram WebApp для определения среды
+const { isTelegramWebApp } = useTelegramWebApp();
 
 const props = defineProps({
     document: {
@@ -445,7 +449,13 @@ const handleSubscriptionPayment = async () => {
         if (paymentResponse.success && paymentResponse.confirmation_url) {
             console.log('Платеж создан успешно, URL:', paymentResponse.confirmation_url);
             // Перенаправляем на оплату ЮКасса
-            window.location.href = paymentResponse.confirmation_url;
+            if (isTelegramWebApp()) {
+                // В Telegram Web App открываем в браузере
+                window.Telegram.WebApp.openLink(paymentResponse.confirmation_url);
+            } else {
+                // В обычном браузере переходим обычным способом
+                window.location.href = paymentResponse.confirmation_url;
+            }
         } else {
             console.error('Некорректный ответ платежного API:', paymentResponse);
             throw new Error(paymentResponse.error || 'Ошибка при создании платежа');
