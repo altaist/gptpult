@@ -779,15 +779,42 @@ class TelegramBotService
     private function makeRequest(string $method, array $data = []): array
     {
         try {
-            $response = Http::timeout(10)->post("{$this->baseUrl}/{$method}", $data);
+            // Используем прямой cURL как fallback
+            $url = "{$this->baseUrl}/{$method}";
             
-            $result = $response->json();
+            $ch = curl_init();
+            curl_setopt_array($ch, [
+                CURLOPT_URL => $url,
+                CURLOPT_POST => true,
+                CURLOPT_POSTFIELDS => json_encode($data),
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_TIMEOUT => 30,
+                CURLOPT_CONNECTTIMEOUT => 5,
+                CURLOPT_HTTPHEADER => [
+                    'Content-Type: application/json',
+                    'User-Agent: Laravel/11.0'
+                ],
+                CURLOPT_SSL_VERIFYPEER => true,
+                CURLOPT_SSL_VERIFYHOST => 2,
+            ]);
             
-            if (!$response->successful() || !$result['ok']) {
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $error = curl_error($ch);
+            curl_close($ch);
+            
+            if ($response === false || !empty($error)) {
+                throw new \Exception("cURL error: {$error}");
+            }
+            
+            $result = json_decode($response, true);
+            
+            if ($httpCode !== 200 || !$result['ok']) {
                 Log::error('Telegram API error', [
                     'method' => $method,
                     'data' => $data,
-                    'response' => $result
+                    'response' => $result,
+                    'http_code' => $httpCode
                 ]);
             }
             
@@ -795,7 +822,9 @@ class TelegramBotService
         } catch (\Exception $e) {
             Log::error('Telegram API request failed', [
                 'method' => $method,
-                'error' => $e->getMessage()
+                'data' => $data,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
             
             return ['ok' => false, 'error' => $e->getMessage()];
