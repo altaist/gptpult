@@ -1,6 +1,7 @@
 <template>
     <page-layout :auto-auth="true">
         <Head title="Лимит создания документов" />
+        <YandexMetrika />
         
         <div class="limit-container">
             <div class="limit-card">
@@ -57,6 +58,7 @@
 import { computed } from 'vue';
 import { router } from '@inertiajs/vue3';
 import PageLayout from '@/components/shared/PageLayout.vue';
+import YandexMetrika from '@/components/shared/YandexMetrika.vue';
 import { Head } from '@inertiajs/vue3';
 
 const props = defineProps({

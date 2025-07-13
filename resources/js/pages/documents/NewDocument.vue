@@ -1,6 +1,7 @@
 <template>
     <page-layout :auto-auth="true">
         <Head title="Создание документа" />
+        <YandexMetrika />
         
         <div class="container">
             <!-- Мобильный заголовок и прогресс (показывается только на мобильных) -->
@@ -211,6 +212,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { router } from '@inertiajs/vue3';
 import PageLayout from '@/components/shared/PageLayout.vue';
+import YandexMetrika from '@/components/shared/YandexMetrika.vue';
 import { Head } from '@inertiajs/vue3';
 import { apiClient, isLoading, useLaravelErrors } from '@/composables/api';
 import CustomInput from '@/components/shared/CustomInput.vue';

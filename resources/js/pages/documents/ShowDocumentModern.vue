@@ -46,6 +46,7 @@
     </div>
 
     <Head :title="pageTitle" />
+    <YandexMetrika />
 
     <page-layout
         :is-sticky="true"
@@ -315,6 +316,7 @@ import DocumentHeader from '@/modules/gpt/components/DocumentHeader.vue';
 import DocumentActions from '@/modules/gpt/components/DocumentActions.vue';
 import { showModernNotification, useModernNotifications } from '@/utils/modernNotifications';
 import { useTelegramWebApp } from '@/composables/telegramWebApp';
+import YandexMetrika from '@/components/shared/YandexMetrika.vue';
 import { Head } from '@inertiajs/vue3';
 
 const $q = useQuasar();

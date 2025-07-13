@@ -4,6 +4,7 @@ import { Head } from '@inertiajs/vue3';
 import { router } from '@inertiajs/vue3';
 import { useQuasar } from 'quasar';
 import PageLayout from '@/components/shared/PageLayout.vue';
+import YandexMetrika from '@/components/shared/YandexMetrika.vue';
 import { useTelegramMiniApp } from '@/composables/useTelegramMiniApp.js';
 import { useTelegramWebApp } from '@/composables/telegramWebApp.js';
 
@@ -771,6 +772,7 @@ const authTelegram = async () => {
 
 <template>
     <Head title="Личный кабинет" />
+    <YandexMetrika />
 
     <page-layout :auto-auth="true">
         <div class="lk-container">

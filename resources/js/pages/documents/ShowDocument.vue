@@ -1,5 +1,6 @@
 <template>
     <Head :title="pageTitle" />
+    <YandexMetrika />
     <page-layout
         title="Документ"
         :is-sticky="true"
@@ -94,6 +95,7 @@
 import { defineProps, ref, computed, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import PageLayout from '@/components/shared/PageLayout.vue';
+import YandexMetrika from '@/components/shared/YandexMetrika.vue';
 import DocumentView from '@/modules/gpt/components/DocumentView.vue';
 import DocumentStatusPanel from '@/modules/gpt/components/DocumentStatusPanel.vue';
 import DocumentGenerationStatus from '@/modules/gpt/components/DocumentGenerationStatus.vue';
