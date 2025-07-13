@@ -165,6 +165,17 @@ Route::get('/payment/waiting-test', function () {
     ]);
 })->name('payment.waiting.test');
 
+// Временный роут для отладки (удалить после решения проблемы)
+Route::get('/debug/telegram-config', function () {
+    return response()->json([
+        'use_proxy' => config('services.telegram.use_proxy'),
+        'proxy_url' => config('services.telegram.proxy_url') ? 'configured' : 'not configured',
+        'bot_token' => config('services.telegram.bot_token') ? 'configured' : 'not configured',
+        'env_proxy' => env('TELEGRAM_USE_PROXY'),
+        'env_proxy_url' => env('TELEGRAM_PROXY_URL') ? 'configured' : 'not configured',
+    ]);
+})->name('debug.telegram.config');
+
 // Telegram бот роуты (веб-хук должен быть без auth middleware)
 Route::post('/telegram/webhook', [TelegramController::class, 'webhook'])->name('telegram.webhook');
 Route::get('/telegram/test-mode', [TelegramController::class, 'testMode'])->name('telegram.test-mode');
