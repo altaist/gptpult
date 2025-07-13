@@ -802,9 +802,21 @@ class TelegramBotService
             
             // Добавляем прокси если настроен
             if (config('services.telegram.use_proxy') && config('services.telegram.proxy_url')) {
-                $curlOptions[CURLOPT_PROXY] = config('services.telegram.proxy_url');
-                $curlOptions[CURLOPT_PROXYTYPE] = CURLPROXY_HTTP;
-                $curlOptions[CURLOPT_PROXYUSERPWD] = null; // Если нужна авторизация
+                $proxyUrl = config('services.telegram.proxy_url');
+                
+                // Парсим URL прокси для извлечения хоста и аутентификации
+                $parsedUrl = parse_url($proxyUrl);
+                
+                if ($parsedUrl) {
+                    $proxyHost = $parsedUrl['host'] . ':' . ($parsedUrl['port'] ?? 80);
+                    $curlOptions[CURLOPT_PROXY] = $proxyHost;
+                    $curlOptions[CURLOPT_PROXYTYPE] = CURLPROXY_HTTP;
+                    
+                    // Если есть аутентификация
+                    if (isset($parsedUrl['user']) && isset($parsedUrl['pass'])) {
+                        $curlOptions[CURLOPT_PROXYUSERPWD] = $parsedUrl['user'] . ':' . $parsedUrl['pass'];
+                    }
+                }
             }
             
             curl_setopt_array($ch, $curlOptions);
