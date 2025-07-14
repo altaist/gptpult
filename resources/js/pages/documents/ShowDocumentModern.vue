@@ -3132,17 +3132,15 @@ const showActionsModal = ref(false);
 
 /* Секция генерации для мобильных */
 .mobile-generate-section {
-    margin-top: 10px;
-    margin-bottom: 10px;
+    margin-top: 0;
+    margin-bottom: 0;
 }
 
 .mobile-generate-container {
     display: flex;
     justify-content: center;
-    padding: 20px;
+    padding: 0 20px;
     transition: all 0.3s ease;
-    max-width: 500px;
-    margin: 0 auto;
 }
 
 /* Нижние действия для мобильных */
@@ -3196,7 +3194,7 @@ const showActionsModal = ref(false);
 
 /* Секция генерации внизу документа */
 .bottom-generate-section {
-    margin-top: 32px;
+    margin-top: 0;
 }
 
 .bottom-generate-header {
@@ -3230,10 +3228,8 @@ const showActionsModal = ref(false);
 .bottom-generate-container {
     display: flex;
     justify-content: center;
-    padding: 24px;
+    padding: 0 24px;
     transition: all 0.3s ease;
-    max-width: 500px;
-    margin: 0 auto;
 }
 
 /* Стили для кнопки внизу */
@@ -3242,7 +3238,6 @@ const showActionsModal = ref(false);
     font-size: 18px;
     font-weight: 600;
     width: 100%;
-    max-width: 500px;
 }
 
 /* Модальное окно */
