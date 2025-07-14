@@ -968,11 +968,10 @@ const authTelegram = async () => {
                         v-else-if="shouldShowTelegramAuth"
                         @click="authTelegram"
                         :loading="telegramLoading"
-                        class="telegram-auth-btn"
+                        class="telegram-connect-simple"
                         unelevated
                         no-caps
                     >
-                        <q-icon name="fab fa-telegram" class="telegram-btn-icon" />
                         <span>Авторизоваться через Telegram</span>
                     </q-btn>
                     
