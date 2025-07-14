@@ -301,22 +301,6 @@
                         />
                     </div>
 
-                    <!-- Кнопка генерации для мобильных (когда нужна оплата) - НИЖНЯЯ -->
-                    <div v-if="canPay" class="mobile-generate-section">
-                        <div class="mobile-generate-container">
-                            <q-btn 
-                                class="generate-btn mobile-btn"
-                                unelevated
-                                rounded
-                                size="lg"
-                                no-caps
-                                @click="showActionsModal = true"
-                            >
-                                <q-icon name="auto_awesome" class="btn-icon" />
-                                <span>Сгенерировать</span>
-                            </q-btn>
-                        </div>
-                    </div>
                 </div>
             </template>
         </div>
