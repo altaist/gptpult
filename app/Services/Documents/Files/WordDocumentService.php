@@ -67,18 +67,23 @@ class WordDocumentService
             // Сохранение документа
             $filePath = $this->saveDocument($document);
 
+            // Определяем расширение и mime-type файла
+            $isTextFile = str_ends_with($filePath, '.txt');
+            $filename = $document->title . ($isTextFile ? '.txt' : '.docx');
+            $mimeType = $isTextFile ? 'text/plain' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+
             // Создание записи о файле
             $file = $this->filesService->createFileFromPath(
                 $filePath,
                 $document->user,
-                $document->title . '.docx',
-                $document->id,
-                'documents'
+                $filename,
+                $document->id
             );
             
-            \Illuminate\Support\Facades\Log::info('Word документ успешно сгенерирован', [
+            \Illuminate\Support\Facades\Log::info('Документ успешно сгенерирован', [
                 'document_id' => $document->id,
                 'file_id' => $file->id,
+                'file_type' => $isTextFile ? 'text' : 'word',
                 'file_size' => file_exists($filePath) ? filesize($filePath) : 0
             ]);
             
@@ -1568,7 +1573,58 @@ class WordDocumentService
                 'error_type' => get_class($e)
             ]);
             
-            throw new \Exception('Критическая ошибка при создании документа: ' . $e->getMessage());
+            // Если PhpWord полностью не работает, создаем текстовый файл как последний fallback
+            return $this->createTextFallbackDocument($document, $fullSavePath);
+        }
+    }
+
+    /**
+     * Создает простой текстовый файл как последний fallback
+     */
+    private function createTextFallbackDocument(Document $document, string $fullSavePath): string
+    {
+        try {
+            // Меняем расширение на .txt
+            $textFilePath = str_replace('.docx', '.txt', $fullSavePath);
+            
+            // Подготавливаем содержимое текстового файла
+            $title = mb_substr($document->title, 0, 100, 'UTF-8');
+            $title = preg_replace('/[^\p{L}\p{N}\s\-\.]/u', '', $title);
+            
+            $content = "=== " . $title . " ===\n\n";
+            $content .= "Документ создан с упрощенной структурой из-за технических ограничений.\n";
+            $content .= "Для получения полной версии документа обратитесь к администратору.\n\n";
+            $content .= "Дата создания: " . now()->format('d.m.Y H:i') . "\n";
+            $content .= "ID документа: " . $document->id . "\n";
+            
+            // Если есть содержимое документа, добавляем его
+            if (!empty($document->content)) {
+                $content .= "\n=== СОДЕРЖИМОЕ ===\n\n";
+                // Очищаем содержимое от HTML тегов и markdown
+                $cleanContent = strip_tags($document->content);
+                $cleanContent = preg_replace('/[^\p{L}\p{N}\s\-\.\,\!\?\:\;\(\)]/u', '', $cleanContent);
+                $content .= mb_substr($cleanContent, 0, 5000, 'UTF-8') . "\n";
+            }
+            
+            // Записываем файл
+            file_put_contents($textFilePath, $content);
+            
+            \Illuminate\Support\Facades\Log::warning('Создан текстовый fallback файл вместо Word документа', [
+                'document_id' => $document->id,
+                'file_path' => $textFilePath,
+                'file_size' => filesize($textFilePath)
+            ]);
+            
+            return $textFilePath;
+            
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Критическая ошибка: не удалось создать даже текстовый файл', [
+                'document_id' => $document->id,
+                'error' => $e->getMessage(),
+                'error_type' => get_class($e)
+            ]);
+            
+            throw new \Exception('Критическая ошибка при создании любого типа документа: ' . $e->getMessage());
         }
     }
 } 

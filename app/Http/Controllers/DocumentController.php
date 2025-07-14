@@ -372,23 +372,27 @@ class DocumentController extends Controller
         $this->authorize('view', $document);
 
         try {
-            // Проверяем, есть ли уже существующий файл документа
+            // Проверяем, есть ли уже существующий файл документа (Word или текстовый)
             $file = $document->files()
-                ->where('mime_type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+                ->whereIn('mime_type', [
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    'text/plain'
+                ])
                 ->where('created_at', '>', $document->updated_at) // Файл должен быть новее последнего обновления документа
                 ->orderBy('created_at', 'desc')
                 ->first();
 
             // Если файл существует и доступен, используем его
             if ($file && file_exists($file->getFullPath())) {
-                \Illuminate\Support\Facades\Log::info('Используется существующий Word файл', [
+                \Illuminate\Support\Facades\Log::info('Используется существующий файл документа', [
                     'document_id' => $document->id,
                     'file_id' => $file->id,
+                    'file_type' => $file->mime_type,
                     'file_path' => $file->getFullPath()
                 ]);
             } else {
                 // Создаем новый файл
-                \Illuminate\Support\Facades\Log::info('Создается новый Word файл', [
+                \Illuminate\Support\Facades\Log::info('Создается новый файл документа', [
                     'document_id' => $document->id,
                     'existing_file_found' => $file ? 'yes' : 'no',
                     'file_exists' => $file ? file_exists($file->getFullPath()) : 'no_file'
@@ -421,9 +425,15 @@ class DocumentController extends Controller
                 }
             }
 
+            // Определяем правильный Content-Type
+            $contentType = $file->mime_type;
+            if (str_ends_with($file->display_name, '.txt')) {
+                $contentType = 'text/plain; charset=utf-8';
+            }
+
             // Для обычного браузера - возвращаем файл для прямого скачивания
             return response()->download($file->getFullPath(), $file->display_name, [
-                'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                'Content-Type' => $contentType
             ]);
 
         } catch (\Exception $e) {
@@ -434,8 +444,11 @@ class DocumentController extends Controller
                 'trace' => $e->getTraceAsString()
             ]);
             
+            // Возвращаем более понятное сообщение пользователю
+            $userMessage = 'Не удалось создать документ из-за технических проблем. Попробуйте позже или обратитесь к администратору.';
+            
             return response()->json([
-                'message' => 'Ошибка при генерации документа: ' . $e->getMessage()
+                'message' => $userMessage
             ], 500);
         }
     }
