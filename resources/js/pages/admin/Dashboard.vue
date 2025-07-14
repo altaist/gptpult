@@ -66,6 +66,71 @@
                 </div>
             </div>
 
+            <!-- Статистика очередей -->
+            <div class="col-12" v-if="queueStats">
+                <q-card>
+                    <q-card-section>
+                        <div class="text-h6 q-mb-md">
+                            <q-icon name="settings_applications" class="q-mr-sm" />
+                            Статистика очередей
+                        </div>
+                        <div class="row q-gutter-md">
+                            <div class="col-md-3 col-sm-6 col-xs-12">
+                                <q-card class="bg-blue-6 text-white">
+                                    <q-card-section>
+                                        <div class="text-h6">
+                                            <q-icon name="queue" class="q-mr-sm" />
+                                            Очередь заданий
+                                        </div>
+                                        <div class="text-h4">{{ queueStats.pending_jobs }}</div>
+                                        <div class="text-caption">Ожидают выполнения</div>
+                                    </q-card-section>
+                                </q-card>
+                            </div>
+
+                            <div class="col-md-3 col-sm-6 col-xs-12">
+                                <q-card class="bg-red-6 text-white">
+                                    <q-card-section>
+                                        <div class="text-h6">
+                                            <q-icon name="error" class="q-mr-sm" />
+                                            Проваленные
+                                        </div>
+                                        <div class="text-h4">{{ queueStats.failed_jobs }}</div>
+                                        <div class="text-caption">Задач провалено</div>
+                                    </q-card-section>
+                                </q-card>
+                            </div>
+
+                            <div class="col-md-3 col-sm-6 col-xs-12">
+                                <q-card class="bg-orange-6 text-white">
+                                    <q-card-section>
+                                        <div class="text-h6">
+                                            <q-icon name="description" class="q-mr-sm" />
+                                            Документы в очереди
+                                        </div>
+                                        <div class="text-h4">{{ queueStats.document_queue_pending }}</div>
+                                        <div class="text-caption">Документов в обработке</div>
+                                    </q-card-section>
+                                </q-card>
+                            </div>
+
+                            <div class="col-md-3 col-sm-6 col-xs-12">
+                                <q-card class="bg-green-6 text-white">
+                                    <q-card-section>
+                                        <div class="text-h6">
+                                            <q-icon name="computer" class="q-mr-sm" />
+                                            Активные воркеры
+                                        </div>
+                                        <div class="text-h4">{{ workerStats.total || 0 }}</div>
+                                        <div class="text-caption">Воркеров запущено</div>
+                                    </q-card-section>
+                                </q-card>
+                            </div>
+                        </div>
+                    </q-card-section>
+                </q-card>
+            </div>
+
             <!-- Быстрые действия -->
             <div class="col-12">
                 <q-card>
@@ -91,6 +156,13 @@
                                 icon="person_add"
                                 label="Создать пользователя"
                                 @click="$inertia.visit(route('admin.users.create'))"
+                                no-caps
+                            />
+                            <q-btn
+                                color="accent"
+                                icon="settings_applications"
+                                label="Управление очередями"
+                                @click="$inertia.visit(route('admin.queue.index'))"
                                 no-caps
                             />
                         </div>
@@ -184,6 +256,14 @@ const props = defineProps({
     recentDocuments: {
         type: Array,
         default: () => []
+    },
+    queueStats: {
+        type: Object,
+        default: () => ({})
+    },
+    workerStats: {
+        type: Object,
+        default: () => ({})
     }
 })
 

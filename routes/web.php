@@ -345,4 +345,14 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::patch('documents/{document}/transfer', [App\Http\Controllers\AdminDocumentController::class, 'transferToUser'])->name('documents.transfer');
     Route::patch('documents/{id}/restore', [App\Http\Controllers\AdminDocumentController::class, 'restore'])->name('documents.restore');
     Route::delete('documents/{id}/force-delete', [App\Http\Controllers\AdminDocumentController::class, 'forceDelete'])->name('documents.force-delete');
+    
+    // Управление очередями
+    Route::get('queue', [App\Http\Controllers\AdminQueueController::class, 'index'])->name('queue.index');
+    Route::get('queue/dashboard-data', [App\Http\Controllers\AdminQueueController::class, 'getDashboardData'])->name('queue.dashboard-data');
+    Route::post('queue/start-worker', [App\Http\Controllers\AdminQueueController::class, 'startWorker'])->name('queue.start-worker');
+    Route::post('queue/stop-worker', [App\Http\Controllers\AdminQueueController::class, 'stopWorker'])->name('queue.stop-worker');
+    Route::post('queue/add-test-job', [App\Http\Controllers\AdminQueueController::class, 'addTestJob'])->name('queue.add-test-job');
+    Route::delete('queue/delete-job', [App\Http\Controllers\AdminQueueController::class, 'deleteJob'])->name('queue.delete-job');
+    Route::post('queue/retry-failed-job', [App\Http\Controllers\AdminQueueController::class, 'retryFailedJob'])->name('queue.retry-failed-job');
+    Route::delete('queue/clear-failed-jobs', [App\Http\Controllers\AdminQueueController::class, 'clearFailedJobs'])->name('queue.clear-failed-jobs');
 });
