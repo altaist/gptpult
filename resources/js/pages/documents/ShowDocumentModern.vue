@@ -3140,16 +3140,7 @@ const showActionsModal = ref(false);
     display: flex;
     justify-content: center;
     padding: 20px;
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-    border-radius: 20px;
-    border: 2px dashed #e2e8f0;
     transition: all 0.3s ease;
-}
-
-.mobile-generate-container:hover {
-    border-color: #667eea;
-    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-    transform: translateY(-2px);
 }
 
 /* Нижние действия для мобильных */
@@ -3238,16 +3229,7 @@ const showActionsModal = ref(false);
     display: flex;
     justify-content: center;
     padding: 24px;
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-    border-radius: 20px;
-    border: 2px dashed #e2e8f0;
     transition: all 0.3s ease;
-}
-
-.bottom-generate-container:hover {
-    border-color: #667eea;
-    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-    transform: translateY(-2px);
 }
 
 /* Стили для кнопки внизу */
