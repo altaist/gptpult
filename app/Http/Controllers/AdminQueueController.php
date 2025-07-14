@@ -357,12 +357,45 @@ class AdminQueueController extends Controller
      */
     public function getDocumentsForJob()
     {
-        $documents = Document::with(['user:id,name', 'documentType:id,title'])
-            ->orderBy('created_at', 'desc')
-            ->limit(50)
-            ->get(['id', 'title', 'status', 'user_id', 'document_type_id', 'created_at']);
+        try {
+            $documents = Document::with(['user:id,name', 'documentType:id,name'])
+                ->orderBy('created_at', 'desc')
+                ->limit(50)
+                ->get(['id', 'title', 'status', 'user_id', 'document_type_id', 'created_at']);
 
-        return response()->json($documents);
+            // Преобразуем данные для корректного отображения
+            $formattedDocuments = $documents->map(function ($document) {
+                return [
+                    'id' => $document->id,
+                    'title' => $document->title ?? 'Без названия',
+                    'status' => $document->status instanceof \App\Enums\DocumentStatus ? $document->status->value : $document->status,
+                    'user_id' => $document->user_id,
+                    'document_type_id' => $document->document_type_id,
+                    'created_at' => $document->created_at,
+                    'user' => $document->user ? [
+                        'id' => $document->user->id,
+                        'name' => $document->user->name
+                    ] : null,
+                    'document_type' => $document->documentType ? [
+                        'id' => $document->documentType->id,
+                        'name' => $document->documentType->name
+                    ] : null,
+                ];
+            });
+
+            return response()->json($formattedDocuments);
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Ошибка загрузки документов для job', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка загрузки документов: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

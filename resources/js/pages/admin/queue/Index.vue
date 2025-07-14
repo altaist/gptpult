@@ -879,20 +879,35 @@ const closeCreateJobDialog = () => {
 const loadDocuments = async () => {
     try {
         const response = await fetch(route('admin.queue.documents-for-job'))
-        const documents = await response.json()
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        
+        const data = await response.json()
+        
+        // Проверяем, что данные корректные
+        if (data.success === false) {
+            throw new Error(data.message || 'Неизвестная ошибка сервера')
+        }
+        
+        const documents = Array.isArray(data) ? data : []
         
         // Форматируем документы для отображения
         allDocuments.value = documents.map(doc => ({
             ...doc,
-            display_text: `#${doc.id} - ${doc.title} (${doc.user?.name || 'Без пользователя'})`
+            display_text: `#${doc.id} - ${doc.title || 'Без названия'} (${doc.user?.name || 'Без пользователя'})`
         }))
         
         availableDocuments.value = allDocuments.value
         
+        console.log('Документы успешно загружены:', documents.length)
+        
     } catch (error) {
+        console.error('Ошибка загрузки документов:', error)
         $q.notify({
             type: 'negative',
-            message: 'Ошибка загрузки документов'
+            message: `Ошибка загрузки документов: ${error.message}`
         })
     }
 }
