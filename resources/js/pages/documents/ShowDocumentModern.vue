@@ -3133,13 +3133,13 @@ const showActionsModal = ref(false);
 /* Секция генерации для мобильных */
 .mobile-generate-section {
     margin-top: 0;
-    margin-bottom: 0;
+    margin-bottom: 10px;
 }
 
 .mobile-generate-container {
     display: flex;
     justify-content: center;
-    padding: 0 20px;
+    padding: 0;
     transition: all 0.3s ease;
 }
 
@@ -3194,7 +3194,7 @@ const showActionsModal = ref(false);
 
 /* Секция генерации внизу документа */
 .bottom-generate-section {
-    margin-top: 0;
+    margin-top: 10px;
 }
 
 .bottom-generate-header {
@@ -3228,7 +3228,7 @@ const showActionsModal = ref(false);
 .bottom-generate-container {
     display: flex;
     justify-content: center;
-    padding: 0 24px;
+    padding: 0;
     transition: all 0.3s ease;
 }
 
