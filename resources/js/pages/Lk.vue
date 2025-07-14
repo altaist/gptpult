@@ -796,7 +796,7 @@ const authTelegram = async () => {
                             no-caps
                         >
                             <q-icon name="add" class="btn-icon" />
-                            Создать новый документ
+                            Создать работу
                         </q-btn>
                     </div>
 
@@ -1642,15 +1642,11 @@ const authTelegram = async () => {
     }
     
     .left-column {
-        position: static;
-        order: 0; /* Показываем первыми на мобильных */
-        flex-direction: row;
-        flex-wrap: wrap;
-        gap: 16px;
+        display: contents; /* Делаем детей прямыми детьми content-grid */
     }
     
     .right-column {
-        order: 1;
+        order: 2; /* Блок "Мои работы" после баланса, перед telegram */
         width: 100%;
     }
     
@@ -1670,31 +1666,32 @@ const authTelegram = async () => {
         right: 8px;
         z-index: 1000;
         width: auto;
-        order: 0;
+        order: 0; /* Не влияет из-за fixed */
     }
     
     .new-document-btn {
         width: 100%;
         padding: 16px 24px;
         font-size: 16px;
-        box-shadow: 0 8px 32px rgba(59, 130, 246, 0.4);
-        border: 2px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+        border-radius: 16px;
     }
     
-    /* Добавляем отступ снизу для контента, чтобы он не скрывался за кнопкой */
+    /* Убираем дополнительный отступ снизу */
     .lk-container {
-        padding-bottom: 100px;
+        padding-bottom: 40px;
     }
     
     .balance-card {
+        order: 1;
         width: calc(50% - 8px);
-        order: 2;
     }
     
     .telegram-connected-block,
-    .telegram-connect-simple {
+    .telegram-connect-simple,
+    .telegram-auth-btn {
+        order: 3; /* Telegram после "Мои работы" */
         width: calc(50% - 8px);
-        order: 3;
     }
     
     .telegram-connected-block {
@@ -1782,31 +1779,21 @@ const authTelegram = async () => {
 
 @media (max-width: 640px) {
     .lk-container {
-        padding: 12px 4px 90px 4px;
+        padding: 12px 4px 24px 4px;
         max-width: 100%;
-    }
-    
-    .header-section {
-        margin-bottom: 20px;
-    }
-    
-    .page-title {
-        font-size: 28px;
     }
     
     .content-grid {
         gap: 16px;
     }
     
-    .left-column {
-        gap: 12px;
-    }
-    
-    /* На малых экранах делаем все элементы во всю ширину */
+    /* Поскольку left-column display: contents, дети - siblings */
     .balance-card,
     .telegram-connected-block,
-    .telegram-connect-simple {
+    .telegram-connect-simple,
+    .telegram-auth-btn {
         width: 100%;
+        order: 3; /* Все блоки Telegram после "Мои работы" */
     }
     
     .balance-card,
@@ -1822,19 +1809,14 @@ const authTelegram = async () => {
         font-size: 15px;
     }
     
-    .card-title {
-        font-size: 18px;
+    .telegram-go-btn {
+        font-size: 13px;
+        padding: 10px 14px;
     }
     
-    .balance-amount {
-        font-size: 28px;
-        text-align: center;
-    }
-    
-    .document-icon {
-        width: 40px;
-        height: 40px;
-        font-size: 20px;
+    .telegram-connect-simple {
+        font-size: 13px;
+        padding: 10px 14px;
     }
     
     .document-item {
@@ -1848,20 +1830,34 @@ const authTelegram = async () => {
         font-size: 15px;
     }
     
+    .document-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+    }
+    
     .document-meta {
         gap: 8px;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .document-date {
+        font-size: 12px;
+    }
+    
+    .document-status {
+        font-size: 12px;
     }
     
     .new-document-section {
-        bottom: 24px;
-        left: 4px;
-        right: 4px;
+        margin-bottom: 16px;
     }
 }
 
 @media (max-width: 480px) {
     .lk-container {
-        padding: 8px 2px 85px 2px;
+        padding: 8px 2px 20px 2px;
         max-width: 100%;
     }
     
@@ -1879,6 +1875,14 @@ const authTelegram = async () => {
         border-radius: 12px;
         width: 100%;
         margin: 0;
+    }
+    
+    /* Устанавливаем order для всех блоков Telegram */
+    .telegram-connected-block,
+    .telegram-connect-simple,
+    .telegram-auth-btn {
+        order: 3 !important;
+        width: 100% !important;
     }
     
     .card-title {
@@ -1929,23 +1933,21 @@ const authTelegram = async () => {
     }
     
     .document-date {
-        font-size: 12px;
+        font-size: 11px;
     }
     
     .document-status {
-        font-size: 12px;
+        font-size: 11px;
     }
     
     .new-document-section {
-        bottom: 20px;
-        left: 2px;
-        right: 2px;
+        margin-bottom: 12px;
     }
 }
 
 @media (max-width: 360px) {
     .lk-container {
-        padding: 6px 1px 80px 1px;
+        padding: 6px 1px 16px 1px;
         max-width: 100%;
     }
     
@@ -1963,6 +1965,14 @@ const authTelegram = async () => {
         border-radius: 10px;
         width: 100%;
         margin: 0;
+    }
+    
+    /* Устанавливаем order для всех блоков Telegram */
+    .telegram-connected-block,
+    .telegram-connect-simple,
+    .telegram-auth-btn {
+        order: 3 !important;
+        width: 100% !important;
     }
     
     .new-document-btn {
@@ -2906,5 +2916,22 @@ body.tg-viewport .telegram-connect-simple {
     background: #1e8449;
     box-shadow: 0 6px 16px rgba(34, 153, 84, 0.4);
     transform: translateY(-1px);
+}
+
+/* ===================== */
+/* Финальная фиксация порядка на мобильных (≤768px) */
+/* ===================== */
+@media (max-width: 768px) {
+    .balance-card {
+        order: 1 !important;
+    }
+    .right-column {
+        order: 2 !important;
+    }
+    .telegram-connected-block,
+    .telegram-connect-simple,
+    .telegram-auth-btn {
+        order: 3 !important;
+    }
 }
 </style> 
