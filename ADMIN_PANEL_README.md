@@ -138,13 +138,36 @@ resources/js/pages/admin/
 
 ## Как назначить администратора
 
-Для назначения пользователя администратором выполните в базе данных:
+### Через команду artisan (рекомендуемый способ)
 
+**Назначить существующего пользователя администратором:**
+```bash
+php artisan admin:make-user user@example.com
+```
+
+**Создать нового администратора:**
+```bash
+php artisan admin:make-user admin@example.com --create
+```
+
+**Посмотреть список всех администраторов:**
+```bash
+php artisan admin:list
+```
+
+**Убрать права администратора:**
+```bash
+php artisan admin:remove-user user@example.com
+```
+
+### Альтернативные способы
+
+**Через SQL запрос:**
 ```sql
 UPDATE users SET role_id = 1 WHERE email = 'admin@example.com';
 ```
 
-Или через tinker:
+**Через tinker:**
 ```php
 php artisan tinker
 $user = User::where('email', 'admin@example.com')->first();
