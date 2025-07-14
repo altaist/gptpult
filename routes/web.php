@@ -355,4 +355,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::delete('queue/delete-job', [App\Http\Controllers\AdminQueueController::class, 'deleteJob'])->name('queue.delete-job');
     Route::post('queue/retry-failed-job', [App\Http\Controllers\AdminQueueController::class, 'retryFailedJob'])->name('queue.retry-failed-job');
     Route::delete('queue/clear-failed-jobs', [App\Http\Controllers\AdminQueueController::class, 'clearFailedJobs'])->name('queue.clear-failed-jobs');
+    Route::post('queue/create-document-job', [App\Http\Controllers\AdminQueueController::class, 'createDocumentJob'])->name('queue.create-document-job');
+    Route::post('queue/create-batch-job', [App\Http\Controllers\AdminQueueController::class, 'createBatchJob'])->name('queue.create-batch-job');
+    Route::get('queue/documents-for-job', [App\Http\Controllers\AdminQueueController::class, 'getDocumentsForJob'])->name('queue.documents-for-job');
+    Route::delete('queue/clear-all-queues', [App\Http\Controllers\AdminQueueController::class, 'clearAllQueues'])->name('queue.clear-all-queues');
+    Route::post('queue/stop-all-workers', [App\Http\Controllers\AdminQueueController::class, 'stopAllWorkers'])->name('queue.stop-all-workers');
+    Route::post('queue/restart-all-workers', [App\Http\Controllers\AdminQueueController::class, 'restartAllWorkers'])->name('queue.restart-all-workers');
 });

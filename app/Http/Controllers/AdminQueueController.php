@@ -10,7 +10,13 @@ use Illuminate\Support\Facades\Process;
 use Inertia\Inertia;
 use Carbon\Carbon;
 use App\Jobs\TestQueueJob;
+use App\Jobs\StartGenerateDocument;
+use App\Jobs\StartFullGenerateDocument;
+use App\Jobs\AsyncGenerateDocument;
+use App\Jobs\BatchGenerateDocuments;
 use App\Models\Document;
+use App\Models\User;
+use App\Models\DocumentType;
 use App\Services\Queue\WorkerManagementService;
 
 class AdminQueueController extends Controller
@@ -271,6 +277,180 @@ class AdminQueueController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка очистки проваленных задач: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Создать job для генерации документа
+     */
+    public function createDocumentJob(Request $request)
+    {
+        $validated = $request->validate([
+            'document_id' => 'required|exists:documents,id',
+            'job_type' => 'required|string|in:base_generation,full_generation,async_generation',
+            'queue' => 'required|string|in:default,document_creates',
+        ]);
+
+        try {
+            $document = Document::findOrFail($validated['document_id']);
+            
+            switch ($validated['job_type']) {
+                case 'base_generation':
+                    StartGenerateDocument::dispatch($document)->onQueue($validated['queue']);
+                    $message = "Job базовой генерации создан для документа {$document->id}";
+                    break;
+                    
+                case 'full_generation':
+                    StartFullGenerateDocument::dispatch($document)->onQueue($validated['queue']);
+                    $message = "Job полной генерации создан для документа {$document->id}";
+                    break;
+                    
+                case 'async_generation':
+                    AsyncGenerateDocument::dispatch($document)->onQueue($validated['queue']);
+                    $message = "Job асинхронной генерации создан для документа {$document->id}";
+                    break;
+            }
+            
+            return response()->json([
+                'success' => true,
+                'message' => $message
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка создания job: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Создать batch job для нескольких документов
+     */
+    public function createBatchJob(Request $request)
+    {
+        $validated = $request->validate([
+            'document_ids' => 'required|array',
+            'document_ids.*' => 'exists:documents,id',
+            'queue' => 'required|string|in:default,document_creates',
+        ]);
+
+        try {
+            BatchGenerateDocuments::dispatch($validated['document_ids'])->onQueue($validated['queue']);
+            
+            return response()->json([
+                'success' => true,
+                'message' => "Batch job создан для " . count($validated['document_ids']) . " документов"
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка создания batch job: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Получить список документов для создания job
+     */
+    public function getDocumentsForJob()
+    {
+        $documents = Document::with(['user:id,name', 'documentType:id,title'])
+            ->orderBy('created_at', 'desc')
+            ->limit(50)
+            ->get(['id', 'title', 'status', 'user_id', 'document_type_id', 'created_at']);
+
+        return response()->json($documents);
+    }
+
+    /**
+     * Очистить все очереди
+     */
+    public function clearAllQueues()
+    {
+        try {
+            $deletedJobs = DB::table('jobs')->delete();
+            $this->clearFailedJobs();
+            
+            return response()->json([
+                'success' => true,
+                'message' => "Удалено {$deletedJobs} заданий из всех очередей"
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка очистки очередей: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Остановить все воркеры
+     */
+    public function stopAllWorkers()
+    {
+        try {
+            $workers = $this->workerService->getRunningWorkers();
+            $results = [];
+            
+            foreach ($workers as $worker) {
+                $result = $this->workerService->stopWorker($worker['pid']);
+                $results[] = $result;
+            }
+            
+            $successful = count(array_filter($results, fn($r) => $r['success']));
+            
+            return response()->json([
+                'success' => $successful > 0,
+                'message' => "Остановлено {$successful} из " . count($workers) . " воркеров",
+                'details' => $results
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка остановки воркеров: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Перезапустить воркеры для всех очередей
+     */
+    public function restartAllWorkers()
+    {
+        try {
+            // Останавливаем все воркеры
+            $stopResult = $this->stopAllWorkers();
+            
+            // Ждем завершения
+            sleep(2);
+            
+            // Запускаем воркеры для основных очередей
+            $startResults = [];
+            
+            $queues = ['default', 'document_creates'];
+            foreach ($queues as $queue) {
+                $startResult = $this->workerService->startWorker($queue);
+                $startResults[] = $startResult;
+            }
+            
+            $successful = count(array_filter($startResults, fn($r) => $r['success']));
+            
+            return response()->json([
+                'success' => $successful > 0,
+                'message' => "Перезапущено воркеров для {$successful} очередей",
+                'stop_result' => $stopResult,
+                'start_results' => $startResults
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка перезапуска воркеров: ' . $e->getMessage()
             ], 500);
         }
     }

@@ -9,14 +9,23 @@
                 </div>
             </div>
             <div class="col-auto">
-                <q-btn
-                    color="primary"
-                    icon="refresh"
-                    label="Обновить"
-                    @click="refreshData"
-                    :loading="loading.refresh"
-                    no-caps
-                />
+                <q-btn-group>
+                    <q-btn
+                        color="primary"
+                        icon="refresh"
+                        label="Обновить"
+                        @click="refreshData"
+                        :loading="loading.refresh"
+                        no-caps
+                    />
+                    <q-btn
+                        color="secondary"
+                        icon="settings"
+                        label="Расширенное управление"
+                        @click="dialogs.advancedControls.show = true"
+                        no-caps
+                    />
+                </q-btn-group>
             </div>
         </div>
 
@@ -75,6 +84,14 @@
                                                     label="Тестовая задача"
                                                     @click="addTestJob(queue.name)"
                                                     :loading="loading.addTestJob[queue.name]"
+                                                    size="sm"
+                                                    no-caps
+                                                />
+                                                <q-btn
+                                                    color="secondary"
+                                                    icon="work"
+                                                    label="Создать Job"
+                                                    @click="showCreateJobDialog(queue.name)"
                                                     size="sm"
                                                     no-caps
                                                 />
@@ -291,11 +308,188 @@
                 </q-card-actions>
             </q-card>
         </q-dialog>
+
+        <!-- Диалог создания Job -->
+        <q-dialog v-model="dialogs.createJob.show" persistent>
+            <q-card style="min-width: 600px">
+                <q-card-section>
+                    <div class="text-h6">Создать Job</div>
+                </q-card-section>
+                
+                <q-card-section>
+                    <q-tabs v-model="dialogs.createJob.activeTab" class="text-grey" active-color="primary" indicator-color="primary" align="justify">
+                        <q-tab name="single" label="Одиночный Job" />
+                        <q-tab name="batch" label="Batch Job" />
+                    </q-tabs>
+
+                    <q-separator />
+
+                    <q-tab-panels v-model="dialogs.createJob.activeTab" animated>
+                        <!-- Одиночный Job -->
+                        <q-tab-panel name="single">
+                            <div class="q-gutter-md">
+                                <q-select
+                                    v-model="dialogs.createJob.single.document"
+                                    :options="availableDocuments"
+                                    option-label="display_text"
+                                    option-value="id"
+                                    label="Выберите документ"
+                                    outlined
+                                    clearable
+                                    use-input
+                                    @filter="filterDocuments"
+                                    @focus="loadDocuments"
+                                >
+                                    <template v-slot:no-option>
+                                        <q-item>
+                                            <q-item-section class="text-grey">
+                                                Документы не найдены
+                                            </q-item-section>
+                                        </q-item>
+                                    </template>
+                                </q-select>
+                                
+                                <q-select
+                                    v-model="dialogs.createJob.single.jobType"
+                                    :options="jobTypes"
+                                    label="Тип генерации"
+                                    outlined
+                                    emit-value
+                                    map-options
+                                />
+                                
+                                <q-select
+                                    v-model="dialogs.createJob.single.queue"
+                                    :options="queueOptions"
+                                    label="Очередь"
+                                    outlined
+                                    emit-value
+                                    map-options
+                                />
+                            </div>
+                        </q-tab-panel>
+
+                        <!-- Batch Job -->
+                        <q-tab-panel name="batch">
+                            <div class="q-gutter-md">
+                                <q-select
+                                    v-model="dialogs.createJob.batch.documents"
+                                    :options="availableDocuments"
+                                    option-label="display_text"
+                                    option-value="id"
+                                    label="Выберите документы"
+                                    outlined
+                                    multiple
+                                    clearable
+                                    use-input
+                                    use-chips
+                                    @filter="filterDocuments"
+                                    @focus="loadDocuments"
+                                >
+                                    <template v-slot:no-option>
+                                        <q-item>
+                                            <q-item-section class="text-grey">
+                                                Документы не найдены
+                                            </q-item-section>
+                                        </q-item>
+                                    </template>
+                                </q-select>
+                                
+                                <q-select
+                                    v-model="dialogs.createJob.batch.queue"
+                                    :options="queueOptions"
+                                    label="Очередь"
+                                    outlined
+                                    emit-value
+                                    map-options
+                                />
+                                
+                                <q-banner class="bg-blue-1">
+                                    <template v-slot:avatar>
+                                        <q-icon name="info" color="blue" />
+                                    </template>
+                                    Batch Job создаст асинхронные задачи генерации для всех выбранных документов
+                                </q-banner>
+                            </div>
+                        </q-tab-panel>
+                    </q-tab-panels>
+                </q-card-section>
+                
+                <q-card-actions align="right">
+                    <q-btn flat label="Отмена" @click="closeCreateJobDialog" />
+                    <q-btn 
+                        color="primary" 
+                        :label="dialogs.createJob.activeTab === 'single' ? 'Создать Job' : 'Создать Batch Job'"
+                        @click="createJob"
+                        :loading="loading.createJob"
+                        :disable="!canCreateJob"
+                    />
+                </q-card-actions>
+            </q-card>
+        </q-dialog>
+
+        <!-- Расширенная панель управления -->
+        <q-dialog v-model="dialogs.advancedControls.show">
+            <q-card style="min-width: 500px">
+                <q-card-section>
+                    <div class="text-h6">Расширенное управление очередями</div>
+                </q-card-section>
+                
+                <q-card-section>
+                    <div class="q-gutter-md">
+                        <q-btn-group spread>
+                            <q-btn
+                                color="warning"
+                                icon="pause"
+                                label="Приостановить все воркеры"
+                                @click="pauseAllWorkers"
+                                :loading="loading.pauseAllWorkers"
+                                no-caps
+                            />
+                            <q-btn
+                                color="positive"
+                                icon="play_arrow"
+                                label="Возобновить все воркеры"
+                                @click="resumeAllWorkers"
+                                :loading="loading.resumeAllWorkers"
+                                no-caps
+                            />
+                        </q-btn-group>
+                        
+                        <q-separator />
+                        
+                        <q-btn
+                            color="negative"
+                            icon="delete_sweep"
+                            label="Очистить всю очередь"
+                            @click="confirmClearAllJobs"
+                            :loading="loading.clearAllJobs"
+                            class="full-width"
+                            no-caps
+                        />
+                        
+                        <q-btn
+                            color="info"
+                            icon="refresh"
+                            label="Перезапустить все воркеры"
+                            @click="restartAllWorkers"
+                            :loading="loading.restartAllWorkers"
+                            class="full-width"
+                            no-caps
+                        />
+                    </div>
+                </q-card-section>
+                
+                <q-card-actions align="right">
+                    <q-btn flat label="Закрыть" @click="dialogs.advancedControls.show = false" />
+                </q-card-actions>
+            </q-card>
+        </q-dialog>
     </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useQuasar } from 'quasar'
 import { router } from '@inertiajs/vue3'
 import { usePage } from '@inertiajs/vue3'
@@ -326,6 +520,11 @@ const loading = reactive({
     deleteJob: {},
     retryFailedJob: {},
     clearFailedJobs: false,
+    createJob: false,
+    pauseAllWorkers: false,
+    resumeAllWorkers: false,
+    clearAllJobs: false,
+    restartAllWorkers: false,
 })
 
 // Диалоги
@@ -334,11 +533,44 @@ const dialogs = reactive({
         show: false,
         queue: '',
         timeout: 600,
+    },
+    createJob: {
+        show: false,
+        activeTab: 'single',
+        queue: '',
+        single: {
+            document: null,
+            jobType: 'base_generation',
+            queue: 'document_creates',
+        },
+        batch: {
+            documents: [],
+            queue: 'document_creates',
+        }
+    },
+    advancedControls: {
+        show: false,
     }
 })
 
 // Автообновление
 let refreshInterval = null
+
+// Данные для создания job
+const availableDocuments = ref([])
+const allDocuments = ref([])
+
+// Опции для селектов
+const jobTypes = [
+    { label: 'Базовая генерация', value: 'base_generation' },
+    { label: 'Полная генерация', value: 'full_generation' },
+    { label: 'Асинхронная генерация', value: 'async_generation' }
+]
+
+const queueOptions = [
+    { label: 'Очередь документов', value: 'document_creates' },
+    { label: 'Основная очередь', value: 'default' }
+]
 
 // Колонки для таблиц
 const workerColumns = [
@@ -370,6 +602,18 @@ const failedJobColumns = [
     { name: 'failed_at', label: 'Провалена', field: 'failed_at', align: 'center' },
     { name: 'actions', label: 'Действия', align: 'center' }
 ]
+
+// Вычисляемые свойства
+const canCreateJob = computed(() => {
+    if (dialogs.createJob.activeTab === 'single') {
+        return dialogs.createJob.single.document && 
+               dialogs.createJob.single.jobType && 
+               dialogs.createJob.single.queue
+    } else {
+        return dialogs.createJob.batch.documents.length > 0 && 
+               dialogs.createJob.batch.queue
+    }
+})
 
 // Методы
 const refreshData = async () => {
@@ -614,6 +858,263 @@ const clearFailedJobs = async () => {
         })
     } finally {
         loading.clearFailedJobs = false
+    }
+}
+
+// Методы для создания Job
+const showCreateJobDialog = (queue) => {
+    dialogs.createJob.queue = queue
+    dialogs.createJob.single.queue = queue
+    dialogs.createJob.batch.queue = queue
+    dialogs.createJob.show = true
+    loadDocuments()
+}
+
+const closeCreateJobDialog = () => {
+    dialogs.createJob.show = false
+    dialogs.createJob.single.document = null
+    dialogs.createJob.batch.documents = []
+}
+
+const loadDocuments = async () => {
+    try {
+        const response = await fetch(route('admin.queue.documents-for-job'))
+        const documents = await response.json()
+        
+        // Форматируем документы для отображения
+        allDocuments.value = documents.map(doc => ({
+            ...doc,
+            display_text: `#${doc.id} - ${doc.title} (${doc.user?.name || 'Без пользователя'})`
+        }))
+        
+        availableDocuments.value = allDocuments.value
+        
+    } catch (error) {
+        $q.notify({
+            type: 'negative',
+            message: 'Ошибка загрузки документов'
+        })
+    }
+}
+
+const filterDocuments = (val, update) => {
+    update(() => {
+        if (val === '') {
+            availableDocuments.value = allDocuments.value
+        } else {
+            const needle = val.toLowerCase()
+            availableDocuments.value = allDocuments.value.filter(
+                doc => doc.display_text.toLowerCase().indexOf(needle) > -1
+            )
+        }
+    })
+}
+
+const createJob = async () => {
+    loading.createJob = true
+    
+    try {
+        let endpoint, payload
+        
+        if (dialogs.createJob.activeTab === 'single') {
+            endpoint = route('admin.queue.create-document-job')
+            payload = {
+                document_id: dialogs.createJob.single.document.id,
+                job_type: dialogs.createJob.single.jobType,
+                queue: dialogs.createJob.single.queue,
+            }
+        } else {
+            endpoint = route('admin.queue.create-batch-job')
+            payload = {
+                document_ids: dialogs.createJob.batch.documents.map(doc => doc.id),
+                queue: dialogs.createJob.batch.queue,
+            }
+        }
+        
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': page.props.csrf_token,
+            },
+            body: JSON.stringify(payload)
+        })
+        
+        const data = await response.json()
+        
+        if (data.success) {
+            $q.notify({
+                type: 'positive',
+                message: data.message
+            })
+            closeCreateJobDialog()
+            refreshData()
+        } else {
+            $q.notify({
+                type: 'negative',
+                message: data.message
+            })
+        }
+        
+    } catch (error) {
+        $q.notify({
+            type: 'negative',
+            message: 'Ошибка создания job'
+        })
+    } finally {
+        loading.createJob = false
+    }
+}
+
+// Расширенные методы управления
+const pauseAllWorkers = async () => {
+    loading.pauseAllWorkers = true
+    try {
+        const response = await fetch(route('admin.queue.stop-all-workers'), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': page.props.csrf_token,
+            }
+        })
+        
+        const data = await response.json()
+        
+        if (data.success) {
+            $q.notify({
+                type: 'positive',
+                message: data.message
+            })
+            refreshData()
+        } else {
+            $q.notify({
+                type: 'negative',
+                message: data.message
+            })
+        }
+    } catch (error) {
+        $q.notify({
+            type: 'negative',
+            message: 'Ошибка остановки воркеров'
+        })
+    } finally {
+        loading.pauseAllWorkers = false
+    }
+}
+
+const resumeAllWorkers = async () => {
+    loading.resumeAllWorkers = true
+    try {
+        const response = await fetch(route('admin.queue.restart-all-workers'), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': page.props.csrf_token,
+            }
+        })
+        
+        const data = await response.json()
+        
+        if (data.success) {
+            $q.notify({
+                type: 'positive',
+                message: data.message
+            })
+            refreshData()
+        } else {
+            $q.notify({
+                type: 'negative',
+                message: data.message
+            })
+        }
+    } catch (error) {
+        $q.notify({
+            type: 'negative',
+            message: 'Ошибка перезапуска воркеров'
+        })
+    } finally {
+        loading.resumeAllWorkers = false
+    }
+}
+
+const confirmClearAllJobs = () => {
+    $q.dialog({
+        title: 'Подтверждение',
+        message: 'Вы уверены, что хотите очистить ВСЮ очередь? Это действие нельзя отменить.',
+        cancel: true,
+        persistent: true
+    }).onOk(() => {
+        clearAllJobs()
+    })
+}
+
+const clearAllJobs = async () => {
+    loading.clearAllJobs = true
+    try {
+        const response = await fetch(route('admin.queue.clear-all-queues'), {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': page.props.csrf_token,
+            }
+        })
+        
+        const data = await response.json()
+        
+        if (data.success) {
+            $q.notify({
+                type: 'positive',
+                message: data.message
+            })
+            refreshData()
+        } else {
+            $q.notify({
+                type: 'negative',
+                message: data.message
+            })
+        }
+    } catch (error) {
+        $q.notify({
+            type: 'negative',
+            message: 'Ошибка очистки очередей'
+        })
+    } finally {
+        loading.clearAllJobs = false
+    }
+}
+
+const restartAllWorkers = async () => {
+    loading.restartAllWorkers = true
+    try {
+        const response = await fetch(route('admin.queue.restart-all-workers'), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': page.props.csrf_token,
+            }
+        })
+        
+        const data = await response.json()
+        
+        if (data.success) {
+            $q.notify({
+                type: 'positive',
+                message: data.message
+            })
+            refreshData()
+        } else {
+            $q.notify({
+                type: 'negative',
+                message: data.message
+            })
+        }
+    } catch (error) {
+        $q.notify({
+            type: 'negative',
+            message: 'Ошибка перезапуска воркеров'
+        })
+    } finally {
+        loading.restartAllWorkers = false
     }
 }
 
