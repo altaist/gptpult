@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
         // Запускаем сидеры для справочных данных
         $this->call([
             DocumentTypeSeeder::class,
+            DocumentSeeder::class,
         ]);
 
         // Создаем администратора

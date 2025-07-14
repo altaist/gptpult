@@ -26,5 +26,43 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\HttpException $e, $request) {
+            if (!$request->expectsJson()) {
+                $status = $e->getStatusCode();
+                
+                // Определяем доступные страницы ошибок
+                $availableErrors = [403, 404, 419, 429, 500, 502, 503];
+                
+                if (in_array($status, $availableErrors)) {
+                    return app(\App\Http\Controllers\ErrorController::class)->showError(
+                        $request,
+                        $status
+                    );
+                }
+            }
+        });
+        
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\NotFoundHttpException $e, $request) {
+            if (!$request->expectsJson()) {
+                return app(\App\Http\Controllers\ErrorController::class)->error404($request);
+            }
+        });
+        
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException $e, $request) {
+            if (!$request->expectsJson()) {
+                return app(\App\Http\Controllers\ErrorController::class)->error403($request);
+            }
+        });
+        
+        $exceptions->render(function (\Illuminate\Session\TokenMismatchException $e, $request) {
+            if (!$request->expectsJson()) {
+                return app(\App\Http\Controllers\ErrorController::class)->error419($request);
+            }
+        });
+        
+        $exceptions->render(function (\Illuminate\Http\Exceptions\ThrottleRequestsException $e, $request) {
+            if (!$request->expectsJson()) {
+                return app(\App\Http\Controllers\ErrorController::class)->error429($request);
+            }
+        });
     })->create();

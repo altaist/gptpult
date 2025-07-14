@@ -198,6 +198,21 @@ Route::get('/debug/telegram-config', function () {
 
 // Telegram бот роуты (веб-хук должен быть без auth middleware)
 Route::post('/telegram/webhook', [TelegramController::class, 'webhook'])->name('telegram.webhook');
+
+// Роуты для страниц ошибок
+Route::get('/errors/403', [App\Http\Controllers\ErrorController::class, 'error403'])->name('errors.403');
+Route::get('/errors/404', [App\Http\Controllers\ErrorController::class, 'error404'])->name('errors.404');
+Route::get('/errors/419', [App\Http\Controllers\ErrorController::class, 'error419'])->name('errors.419');
+Route::get('/errors/429', [App\Http\Controllers\ErrorController::class, 'error429'])->name('errors.429');
+Route::get('/errors/500', [App\Http\Controllers\ErrorController::class, 'error500'])->name('errors.500');
+Route::get('/errors/502', [App\Http\Controllers\ErrorController::class, 'error502'])->name('errors.502');
+Route::get('/errors/503', [App\Http\Controllers\ErrorController::class, 'error503'])->name('errors.503');
+
+// Тестовые роуты для демонстрации ошибок (удалить в продакшене)
+Route::get('/test/403', function () { abort(403); })->name('test.403');
+Route::get('/test/404', function () { abort(404); })->name('test.404');
+Route::get('/test/419', function () { throw new \Illuminate\Session\TokenMismatchException(); })->name('test.419');
+Route::get('/test/500', function () { throw new \Exception('Тестовая ошибка сервера'); })->name('test.500');
 Route::get('/telegram/test-mode', [TelegramController::class, 'testMode'])->name('telegram.test-mode');
 
 // Временный роут для тестирования переноса документов (можно удалить позже)
