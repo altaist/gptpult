@@ -84,6 +84,77 @@ const remainingGenerations = computed(() => {
 onMounted(async () => {
   await loadTelegramStatus();
   
+  // Обрабатываем параметры оплаты из URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const paymentSuccess = urlParams.get('payment_success');
+  const paymentPending = urlParams.get('payment_pending');
+  const paymentError = urlParams.get('payment_error');
+  const paymentStatus = urlParams.get('payment_status');
+  
+  if (paymentSuccess) {
+      $q.notify({
+          type: 'positive',
+          message: 'Оплата прошла успешно! Средства зачислены на баланс.',
+          timeout: 5000,
+          position: 'top'
+      });
+      // Очищаем параметр из URL
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('payment_success');
+      window.history.replaceState({}, '', newUrl.toString());
+      
+      // Перезагружаем страницу для обновления баланса
+      setTimeout(() => {
+          window.location.reload();
+      }, 2000);
+  } else if (paymentPending) {
+      $q.notify({
+          type: 'info',
+          message: 'Платеж обрабатывается. Средства будут зачислены в течение нескольких минут.',
+          timeout: 5000,
+          position: 'top'
+      });
+      // Очищаем параметр из URL
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('payment_pending');
+      window.history.replaceState({}, '', newUrl.toString());
+  } else if (paymentError) {
+      const errorMessages = {
+          'order_not_found': 'Заказ не найден',
+          'access_denied': 'Нет доступа к заказу',
+          'payment_not_found': 'Информация о платеже не найдена',
+          'payment_id_not_found': 'ID платежа не найден',
+          'check_failed': 'Ошибка проверки платежа',
+          'critical_error': 'Произошла критическая ошибка'
+      };
+      
+      const errorMessage = errorMessages[paymentError] || 'Произошла ошибка при обработке платежа';
+      
+      $q.notify({
+          type: 'negative',
+          message: errorMessage,
+          timeout: 5000,
+          position: 'top'
+      });
+      
+      // Очищаем параметр из URL
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('payment_error');
+      window.history.replaceState({}, '', newUrl.toString());
+  } else if (paymentStatus) {
+      $q.notify({
+          type: 'warning',
+          message: `Платеж находится в статусе: ${paymentStatus}`,
+          timeout: 5000,
+          position: 'top'
+      });
+      
+      // Очищаем параметр из URL
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('payment_status');
+      window.history.replaceState({}, '', newUrl.toString());
+  }
+  
   // Если это Telegram Mini App, настраиваем интерфейс
   if (isTelegramMiniApp.value) {
     console.log('Running in Telegram Mini App mode');

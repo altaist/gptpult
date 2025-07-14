@@ -745,6 +745,72 @@ onMounted(() => {
     // Сохраняем ссылку на обработчик для удаления в onUnmounted
     window._typewriterBeforeUnloadHandler = handleBeforeUnload;
     
+    // Обрабатываем параметры оплаты из URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentSuccess = urlParams.get('payment_success');
+    const paymentPending = urlParams.get('payment_pending');
+    const paymentError = urlParams.get('payment_error');
+    const paymentStatus = urlParams.get('payment_status');
+    
+    if (paymentSuccess) {
+        showModernNotification({
+            type: 'positive',
+            title: 'Оплата прошла успешно!',
+            message: 'Средства зачислены на баланс. Можно приступать к генерации.',
+            icon: 'payment'
+        });
+        // Очищаем параметр из URL
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.delete('payment_success');
+        window.history.replaceState({}, '', newUrl.toString());
+    } else if (paymentPending) {
+        showModernNotification({
+            type: 'info',
+            title: 'Платеж обрабатывается',
+            message: 'Средства будут зачислены в течение нескольких минут.',
+            icon: 'hourglass_empty'
+        });
+        // Очищаем параметр из URL
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.delete('payment_pending');
+        window.history.replaceState({}, '', newUrl.toString());
+    } else if (paymentError) {
+        const errorMessages = {
+            'order_not_found': 'Заказ не найден',
+            'access_denied': 'Нет доступа к заказу',
+            'payment_not_found': 'Информация о платеже не найдена',
+            'payment_id_not_found': 'ID платежа не найден',
+            'check_failed': 'Ошибка проверки платежа',
+            'critical_error': 'Произошла критическая ошибка'
+        };
+        
+        const errorMessage = errorMessages[paymentError] || 'Произошла ошибка при обработке платежа';
+        
+        showModernNotification({
+            type: 'negative',
+            title: 'Ошибка оплаты',
+            message: errorMessage,
+            icon: 'error'
+        });
+        
+        // Очищаем параметр из URL
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.delete('payment_error');
+        window.history.replaceState({}, '', newUrl.toString());
+    } else if (paymentStatus) {
+        showModernNotification({
+            type: 'warning',
+            title: 'Статус платежа',
+            message: `Платеж находится в статусе: ${paymentStatus}`,
+            icon: 'info'
+        });
+        
+        // Очищаем параметр из URL
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.delete('payment_status');
+        window.history.replaceState({}, '', newUrl.toString());
+    }
+    
     // Сразу очищаем URL от потенциально опасных параметров
     const currentUrl = new URL(window.location.href);
     let urlChanged = false;

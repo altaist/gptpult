@@ -170,6 +170,10 @@ Route::post('/telegram/auth', [App\Http\Controllers\Auth\AutoAuthController::cla
 Route::get('/payment/complete/{orderId}', [PaymentController::class, 'handlePaymentComplete'])
     ->name('payment.complete');
 
+// Специальный маршрут для возврата с ЮКассы в Telegram WebApp
+Route::get('/payment/telegram/complete/{orderId}', [PaymentController::class, 'handleTelegramPaymentComplete'])
+    ->name('payment.telegram.complete');
+
 // Тестовая страница оплаты
 Route::get('/payment/test', [PaymentTestController::class, 'show'])->name('payment.test');
 
