@@ -925,33 +925,41 @@ const authTelegram = async () => {
 
                     <!-- Блок Telegram -->
                     <div v-if="telegramStatus.is_linked" class="telegram-connected-block">
-                        <!-- Кнопка перехода в Telegram -->
-                        <q-btn
-                            @click="openTelegramBot"
-                            class="telegram-go-btn"
-                            unelevated
-                            no-caps
-                        >
-                            <q-icon name="fab fa-telegram" class="telegram-go-icon" />
-                            <span>Перейти в Телеграм</span>
-                        </q-btn>
-                        
-                        <!-- Информация и кнопка отвязки -->
-                        <div class="telegram-info-row">
-                            <div class="telegram-status-info">
-                                <span class="telegram-username">@{{ telegramStatus.telegram_username || 'Связан' }}</span>
+                        <!-- Заголовок блока -->
+                        <div class="telegram-header">
+                            <div class="telegram-icon-wrapper">
+                                <q-icon name="fab fa-telegram" class="telegram-header-icon" />
                             </div>
-                            <q-btn
+                            <div class="telegram-title">
+                                <h3 class="telegram-service-name">Telegram</h3>
+                                <p class="telegram-service-desc">Быстрый доступ к боту</p>
+                            </div>
+                        </div>
+
+                        <!-- Информация о подключении -->
+                        <div class="telegram-connection-info">
+                            <div class="connection-status">
+                                <div class="status-indicator"></div>
+                                <span class="status-text">Подключен</span>
+                            </div>
+                            <div class="telegram-username">@{{ telegramStatus.telegram_username || 'Пользователь' }}</div>
+                        </div>
+
+                        <!-- Действия -->
+                        <div class="telegram-actions">
+                            <button @click="openTelegramBot" class="telegram-open-btn">
+                                <q-icon name="open_in_new" class="open-icon" />
+                                Открыть бот
+                            </button>
+                            <button 
                                 v-if="isDevelopment"
-                                color="negative"
-                                label="Отвязать"
-                                size="sm"
                                 @click="unlinkTelegram"
-                                :loading="telegramLoading"
-                                class="telegram-disconnect-btn"
-                                flat
-                                no-caps
-                            />
+                                :disabled="telegramLoading"
+                                class="telegram-unlink-btn"
+                            >
+                                <q-icon name="link_off" class="unlink-icon" />
+                                Отключить
+                            </button>
                         </div>
                     </div>
                     
@@ -1399,69 +1407,80 @@ const authTelegram = async () => {
     color: #3b82f6;
 }
 
-/* Информация о подключенном Telegram */
+/* Новый блок подключенного Telegram */
 .telegram-connected-block {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 2px solid #e2e8f0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    padding: 20px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    padding: 24px;
-    background: #ffffff;
-    border-radius: 20px;
-    border: 2px solid #e2e8f0;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    gap: 16px;
 }
 
-.telegram-go-btn {
-    width: 100%;
-    padding: 16px 24px;
-    border-radius: 16px;
-    background: #10b981;
-    color: white;
-    font-size: 16px;
-    font-weight: 700;
-    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+/* Заголовок блока */
+.telegram-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.telegram-icon-wrapper {
+    width: 40px;
+    height: 40px;
+    background: #5271ff;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 20px;
-    min-height: 56px;
-    border: none;
-    cursor: pointer;
-}
-
-.telegram-go-btn:hover {
-    background: #059669;
-}
-
-.telegram-go-icon {
-    font-size: 22px;
     flex-shrink: 0;
-    margin-right: 0;
 }
 
-.telegram-info-row {
+.telegram-header-icon {
+    font-size: 20px;
+    color: white;
+}
+
+.telegram-title {
+    flex: 1;
+}
+
+.telegram-service-name {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
+    line-height: 1.2;
+}
+
+.telegram-service-desc {
+    margin: 2px 0 0 0;
+    font-size: 13px;
+    color: #64748b;
+    line-height: 1.2;
+}
+
+/* Информация о подключении */
+.telegram-connection-info {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 20px;
     padding: 12px 16px;
-    background: rgba(16, 185, 129, 0.05);
-    border-radius: 12px;
-    border: 1px solid rgba(16, 185, 129, 0.1);
+    background: #f8fafc;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
 }
 
-.telegram-status-info {
-    flex: 1;
-    font-size: 15px;
-    color: #64748b;
-    font-weight: 500;
+.connection-status {
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
-.telegram-status-info::before {
-    content: '';
+.status-indicator {
     width: 8px;
     height: 8px;
     background: #10b981;
@@ -1469,25 +1488,76 @@ const authTelegram = async () => {
     box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
 }
 
+.status-text {
+    font-size: 14px;
+    color: #64748b;
+    font-weight: 500;
+}
+
 .telegram-username {
-    font-weight: 700;
-    color: #10b981;
-    font-size: 15px;
-}
-
-.telegram-disconnect-btn {
-    border-radius: 10px;
+    font-size: 14px;
     font-weight: 600;
-    padding: 10px 16px;
-    color: #ef4444;
-    background: rgba(239, 68, 68, 0.1);
-    border: 1px solid rgba(239, 68, 68, 0.2);
-    font-size: 13px;
-    min-height: 36px;
+    color: #1e293b;
 }
 
-.telegram-disconnect-btn:hover {
+/* Действия */
+.telegram-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.telegram-open-btn {
+    flex: 1;
+    padding: 12px 16px;
+    background: #10b981;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+}
+
+.telegram-open-btn:hover {
+    background: #059669;
+}
+
+.open-icon {
+    font-size: 16px;
+}
+
+.telegram-unlink-btn {
+    padding: 12px 16px;
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+}
+
+.telegram-unlink-btn:hover {
     background: rgba(239, 68, 68, 0.15);
+}
+
+.telegram-unlink-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.unlink-icon {
+    font-size: 16px;
 }
 
 .telegram-connect-simple {
@@ -1905,16 +1975,64 @@ const authTelegram = async () => {
         font-size: 15px;
     }
     
-    .telegram-go-btn {
-        font-size: 14px;
-        padding: 12px 18px;
-        min-height: 44px;
-        border-radius: 12px;
-        gap: 16px;
+    .telegram-connected-block {
+        padding: 16px;
+        border-radius: 14px;
+        gap: 12px;
     }
 
-    .telegram-go-icon {
+    .telegram-header {
+        gap: 10px;
+        padding-bottom: 10px;
+    }
+
+    .telegram-icon-wrapper {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+    }
+
+    .telegram-header-icon {
         font-size: 18px;
+    }
+
+    .telegram-service-name {
+        font-size: 15px;
+    }
+
+    .telegram-service-desc {
+        font-size: 12px;
+    }
+
+    .telegram-connection-info {
+        padding: 10px 14px;
+        border-radius: 8px;
+    }
+
+    .telegram-username {
+        font-size: 13px;
+    }
+
+    .telegram-actions {
+        gap: 10px;
+        flex-direction: column;
+    }
+
+    .telegram-open-btn {
+        padding: 10px 14px;
+        font-size: 13px;
+        min-height: 40px;
+        border-radius: 8px;
+    }
+
+    .telegram-unlink-btn {
+        padding: 10px 14px;
+        font-size: 13px;
+        min-height: 40px;
+        border-radius: 8px;
+        align-self: center;
+        width: auto;
+        min-width: 120px;
     }
     
     .telegram-connect-simple {
@@ -2023,16 +2141,57 @@ const authTelegram = async () => {
         font-size: 14px;
     }
     
-    .telegram-go-btn {
-        font-size: 13px;
-        padding: 10px 16px;
-        min-height: 40px;
-        border-radius: 10px;
-        gap: 12px;
+    .telegram-connected-block {
+        padding: 14px;
+        border-radius: 12px;
+        gap: 10px;
     }
 
-    .telegram-go-icon {
+    .telegram-header {
+        gap: 8px;
+        padding-bottom: 8px;
+    }
+
+    .telegram-icon-wrapper {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+    }
+
+    .telegram-header-icon {
         font-size: 16px;
+    }
+
+    .telegram-service-name {
+        font-size: 14px;
+    }
+
+    .telegram-service-desc {
+        font-size: 11px;
+    }
+
+    .telegram-connection-info {
+        padding: 8px 12px;
+        border-radius: 6px;
+    }
+
+    .telegram-username {
+        font-size: 12px;
+    }
+
+    .telegram-open-btn {
+        padding: 8px 12px;
+        font-size: 12px;
+        min-height: 36px;
+        border-radius: 6px;
+    }
+
+    .telegram-unlink-btn {
+        padding: 8px 12px;
+        font-size: 12px;
+        min-height: 36px;
+        border-radius: 6px;
+        min-width: 100px;
     }
     
     .telegram-connect-simple {
@@ -2127,16 +2286,57 @@ const authTelegram = async () => {
         width: 100% !important;
     }
 
-    .telegram-go-btn {
-        font-size: 12px;
-        padding: 8px 14px;
-        min-height: 36px;
-        border-radius: 8px;
-        gap: 10px;
+    .telegram-connected-block {
+        padding: 12px;
+        border-radius: 10px;
+        gap: 8px;
     }
 
-    .telegram-go-icon {
+    .telegram-header {
+        gap: 6px;
+        padding-bottom: 6px;
+    }
+
+    .telegram-icon-wrapper {
+        width: 28px;
+        height: 28px;
+        border-radius: 4px;
+    }
+
+    .telegram-header-icon {
         font-size: 14px;
+    }
+
+    .telegram-service-name {
+        font-size: 13px;
+    }
+
+    .telegram-service-desc {
+        font-size: 10px;
+    }
+
+    .telegram-connection-info {
+        padding: 6px 10px;
+        border-radius: 4px;
+    }
+
+    .telegram-username {
+        font-size: 11px;
+    }
+
+    .telegram-open-btn {
+        padding: 6px 10px;
+        font-size: 11px;
+        min-height: 32px;
+        border-radius: 4px;
+    }
+
+    .telegram-unlink-btn {
+        padding: 6px 10px;
+        font-size: 11px;
+        min-height: 32px;
+        border-radius: 4px;
+        min-width: 80px;
     }
     
     .telegram-connect-simple {
