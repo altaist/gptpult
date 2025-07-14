@@ -23,6 +23,11 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class => \App\Http\Middleware\VerifyCsrfToken::class,
         ]);
 
+        // Регистрируем алиасы middleware
+        $middleware->alias([
+            'admin' => \App\Http\Middleware\AdminRole::class,
+        ]);
+
         //
     })
     ->withExceptions(function (Exceptions $exceptions) {

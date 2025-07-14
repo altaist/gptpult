@@ -15,6 +15,12 @@ class DocumentPolicy
      */
     public function view(User $user, Document $document): bool
     {
+        // Администраторы могут просматривать все документы
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        // Обычные пользователи могут просматривать только свои документы
         return $user->id === $document->user_id;
     }
 
@@ -23,6 +29,12 @@ class DocumentPolicy
      */
     public function update(User $user, Document $document): bool
     {
+        // Администраторы могут обновлять все документы
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        // Обычные пользователи могут обновлять только свои документы
         return $user->id === $document->user_id;
     }
 
@@ -31,6 +43,12 @@ class DocumentPolicy
      */
     public function delete(User $user, Document $document): bool
     {
+        // Администраторы могут удалять все документы
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        // Обычные пользователи могут удалять только свои документы
         return $user->id === $document->user_id;
     }
 } 

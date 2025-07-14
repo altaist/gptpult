@@ -15,6 +15,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\YookassaWebhookController;
 use App\Http\Controllers\TelegramController;
 use App\Http\Controllers\TelegramLinkController;
+use Illuminate\Support\Facades\Auth;
 
 Route::get('/', function () {
     return view('v5');
@@ -328,3 +329,20 @@ Route::get('/test/full-flow', function () {
 })->name('test.full-flow');
 
 require __DIR__.'/auth.php';
+
+
+// Админские роуты
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    // Главная страница админки
+    Route::get('/', [App\Http\Controllers\AdminController::class, 'index'])->name('dashboard');
+    
+    // Управление пользователями
+    Route::resource('users', App\Http\Controllers\AdminUserController::class);
+    
+    // Управление документами
+    Route::resource('documents', App\Http\Controllers\AdminDocumentController::class);
+    Route::patch('documents/{document}/status', [App\Http\Controllers\AdminDocumentController::class, 'updateStatus'])->name('documents.update-status');
+    Route::patch('documents/{document}/transfer', [App\Http\Controllers\AdminDocumentController::class, 'transferToUser'])->name('documents.transfer');
+    Route::patch('documents/{id}/restore', [App\Http\Controllers\AdminDocumentController::class, 'restore'])->name('documents.restore');
+    Route::delete('documents/{id}/force-delete', [App\Http\Controllers\AdminDocumentController::class, 'forceDelete'])->name('documents.force-delete');
+});

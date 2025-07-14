@@ -24,6 +24,17 @@
                         <span class="support-text">Поддержка</span>
                     </button>
                     
+                    <!-- Кнопка админки (только для администраторов) -->
+                    <button 
+                        v-if="isAdmin" 
+                        class="admin-btn" 
+                        @click="openAdmin" 
+                        title="Панель администратора"
+                    >
+                        <i class="fas fa-cog"></i>
+                        <span class="admin-text">Админка</span>
+                    </button>
+                    
                     <!-- Кнопка выхода (только для авторизованных пользователей) -->
                     <button 
                         v-if="showLogoutButton" 
@@ -100,6 +111,11 @@ const showLogoutButton = computed(() => {
     return shouldShowLogoutButtonWithData(props.documentsCount, props.balance);
 });
 
+// Проверяем является ли пользователь администратором
+const isAdmin = computed(() => {
+    return isAuthenticated.value && user.value?.role_id === 1;
+});
+
 const onLogoClick = () => {
     window.location.href = '/';
 };
@@ -124,6 +140,11 @@ const onRightBtnClick = () => {
 const openSupport = () => {
     // Открытие поддержки
     window.open('https://t.me/gptpult_help', '_blank');
+};
+
+const openAdmin = () => {
+    // Открытие админ-панели
+    window.location.href = '/admin';
 };
 
 // Обработчик выхода из системы
@@ -284,6 +305,36 @@ img {
     font-weight: 500;
 }
 
+.admin-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 12px;
+    background: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.admin-btn:hover {
+    background: rgba(245, 158, 11, 0.2);
+    color: #d97706;
+    transform: scale(1.02);
+}
+
+.admin-btn i {
+    font-size: 16px;
+}
+
+.admin-text {
+    font-size: 14px;
+    font-weight: 500;
+}
+
 .main-action-btn {
     border-radius: 12px;
 }
@@ -335,6 +386,34 @@ img {
     }
     
     .logout-text {
+        display: none;
+    }
+    
+    .admin-btn {
+        display: flex;
+        align-items: center;
+        background: #f59e0b;
+        border: none;
+        border-radius: 8px;
+        color: white;
+        font-size: 12px;
+        font-weight: 500;
+        padding: 8px 12px;
+        gap: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .admin-btn:hover {
+        background: #d97706;
+        transform: translateY(-1px);
+    }
+    
+    .admin-btn i {
+        font-size: 14px;
+    }
+    
+    .admin-text {
         display: none;
     }
     
@@ -390,6 +469,33 @@ img {
     
     .logout-text {
         display: none;
+    }
+    
+    .admin-btn {
+        padding: 6px 10px;
+        gap: 4px;
+    }
+    
+    .admin-btn i {
+        font-size: 16px;
+    }
+    
+    .admin-text {
+        display: none;
+    }
+}
+
+@media (min-width: 768px) {
+    .support-text {
+        display: block;
+    }
+    
+    .logout-text {
+        display: block;
+    }
+    
+    .admin-text {
+        display: block;
     }
 }
 </style>
