@@ -3141,6 +3141,8 @@ const showActionsModal = ref(false);
     justify-content: center;
     padding: 20px;
     transition: all 0.3s ease;
+    max-width: 500px;
+    margin: 0 auto;
 }
 
 /* Нижние действия для мобильных */
@@ -3230,6 +3232,8 @@ const showActionsModal = ref(false);
     justify-content: center;
     padding: 24px;
     transition: all 0.3s ease;
+    max-width: 500px;
+    margin: 0 auto;
 }
 
 /* Стили для кнопки внизу */
@@ -3237,7 +3241,8 @@ const showActionsModal = ref(false);
     padding: 16px 32px;
     font-size: 18px;
     font-weight: 600;
-    min-width: 200px;
+    width: 100%;
+    max-width: 500px;
 }
 
 /* Модальное окно */
