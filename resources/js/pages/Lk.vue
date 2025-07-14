@@ -977,8 +977,7 @@ const authTelegram = async () => {
                         unelevated
                         no-caps
                     >
-                        <q-icon name="fab fa-telegram" class="telegram-btn-icon" />
-                        <span>Подключить Telegram</span>
+                    <span>Подключить Telegram</span>
                     </q-btn>
                 </div>
 
@@ -1404,104 +1403,119 @@ const authTelegram = async () => {
 .telegram-connected-block {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    padding: 20px;
-    background: #f0f9ff;
-    border-radius: 12px;
-    border: 1px solid #bae6fd;
+    gap: 20px;
+    padding: 24px;
+    background: #ffffff;
+    border-radius: 20px;
+    border: 2px solid #e2e8f0;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
 }
 
 .telegram-go-btn {
     width: 100%;
-    padding: 14px 20px;
-    border-radius: 10px;
-    background: #0088cc;
+    padding: 16px 24px;
+    border-radius: 16px;
+    background: #10b981;
     color: white;
-    font-size: 15px;
-    font-weight: 600;
-    box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3);
-    transition: all 0.2s ease;
+    font-size: 16px;
+    font-weight: 700;
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 14px;
-    min-height: 48px;
+    gap: 20px;
+    min-height: 56px;
+    border: none;
+    cursor: pointer;
 }
 
 .telegram-go-btn:hover {
-    background: #006699;
-    box-shadow: 0 6px 16px rgba(0, 136, 204, 0.4);
-    transform: translateY(-1px);
+    background: #059669;
 }
 
 .telegram-go-icon {
-    font-size: 18px;
+    font-size: 22px;
     flex-shrink: 0;
-    margin-right: 8px;
+    margin-right: 0;
 }
 
 .telegram-info-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
-    padding: 0 4px;
+    gap: 20px;
+    padding: 12px 16px;
+    background: rgba(16, 185, 129, 0.05);
+    border-radius: 12px;
+    border: 1px solid rgba(16, 185, 129, 0.1);
 }
 
 .telegram-status-info {
     flex: 1;
-    font-size: 14px;
+    font-size: 15px;
     color: #64748b;
     font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.telegram-status-info::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    background: #10b981;
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
 }
 
 .telegram-username {
-    font-weight: 600;
-    color: #0f172a;
-    font-size: 14px;
+    font-weight: 700;
+    color: #10b981;
+    font-size: 15px;
 }
 
 .telegram-disconnect-btn {
-    border-radius: 8px;
-    font-weight: 500;
-    padding: 8px 14px;
+    border-radius: 10px;
+    font-weight: 600;
+    padding: 10px 16px;
     color: #ef4444;
-    transition: all 0.2s ease;
-    font-size: 12px;
-    min-height: 32px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    font-size: 13px;
+    min-height: 36px;
 }
 
 .telegram-disconnect-btn:hover {
-    background: #fef2f2;
+    background: rgba(239, 68, 68, 0.15);
 }
 
 .telegram-connect-simple {
     width: 100%;
-    padding: 16px 24px;
-    border-radius: 12px;
-    background: #0088cc;
+    padding: 18px 28px;
+    border-radius: 18px;
+    background: #5271ff;
     color: white;
-    font-size: 16px;
-    font-weight: 600;
-    box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3);
-    transition: all 0.2s ease;
+    font-size: 17px;
+    font-weight: 700;
+    box-shadow: 0 6px 20px rgba(82, 113, 255, 0.3);
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 16px;
-    min-height: 52px;
+    gap: 20px;
+    min-height: 60px;
+    border: none;
+    cursor: pointer;
 }
 
 .telegram-connect-simple:hover {
-    background: #006699;
-    box-shadow: 0 6px 16px rgba(0, 136, 204, 0.4);
-    transform: translateY(-1px);
+    background: #3b82f6;
 }
 
 .telegram-btn-icon {
-    font-size: 20px;
+    font-size: 24px;
     flex-shrink: 0;
-    margin-right: 10px;
+    margin-right: 0;
 }
 
 /* Пустое состояние */
@@ -1771,15 +1785,24 @@ const authTelegram = async () => {
     }
     
     .telegram-go-btn {
-        padding: 12px 16px;
-        font-size: 14px;
-        min-height: 44px;
-    }
-    
-    .telegram-connect-simple {
         padding: 14px 20px;
         font-size: 15px;
         min-height: 48px;
+        border-radius: 14px;
+    }
+    
+    .telegram-connect-simple {
+        padding: 16px 24px;
+        font-size: 16px;
+        min-height: 52px;
+        border-radius: 16px;
+    }
+
+    .telegram-auth-btn {
+        padding: 16px 24px;
+        font-size: 16px;
+        min-height: 52px;
+        border-radius: 16px;
     }
     
     .new-document-btn {
@@ -1824,7 +1847,9 @@ const authTelegram = async () => {
     .telegram-connected-block {
         flex-direction: column;
         align-items: flex-start;
-        gap: 8px;
+        gap: 16px;
+        padding: 20px;
+        border-radius: 16px;
     }
     
     .document-item {
@@ -1881,13 +1906,41 @@ const authTelegram = async () => {
     }
     
     .telegram-go-btn {
-        font-size: 13px;
-        padding: 10px 14px;
+        font-size: 14px;
+        padding: 12px 18px;
+        min-height: 44px;
+        border-radius: 12px;
+        gap: 16px;
+    }
+
+    .telegram-go-icon {
+        font-size: 18px;
     }
     
     .telegram-connect-simple {
-        font-size: 13px;
-        padding: 10px 14px;
+        font-size: 14px;
+        padding: 12px 18px;
+        min-height: 44px;
+        border-radius: 12px;
+        gap: 16px;
+    }
+
+    .telegram-auth-btn {
+        font-size: 14px;
+        padding: 12px 18px;
+        min-height: 44px;
+        border-radius: 12px;
+        gap: 16px;
+    }
+
+    .telegram-btn-icon {
+        font-size: 20px;
+    }
+
+    .telegram-connected-block {
+        padding: 16px;
+        border-radius: 14px;
+        gap: 12px;
     }
     
     .document-item {
@@ -1972,12 +2025,40 @@ const authTelegram = async () => {
     
     .telegram-go-btn {
         font-size: 13px;
-        padding: 10px 14px;
+        padding: 10px 16px;
+        min-height: 40px;
+        border-radius: 10px;
+        gap: 12px;
+    }
+
+    .telegram-go-icon {
+        font-size: 16px;
     }
     
     .telegram-connect-simple {
         font-size: 13px;
-        padding: 10px 14px;
+        padding: 10px 16px;
+        min-height: 40px;
+        border-radius: 10px;
+        gap: 12px;
+    }
+
+    .telegram-auth-btn {
+        font-size: 13px;
+        padding: 10px 16px;
+        min-height: 40px;
+        border-radius: 10px;
+        gap: 12px;
+    }
+
+    .telegram-btn-icon {
+        font-size: 18px;
+    }
+
+    .telegram-connected-block {
+        padding: 14px;
+        border-radius: 12px;
+        gap: 10px;
     }
     
     .document-item {
@@ -2044,6 +2125,44 @@ const authTelegram = async () => {
     .telegram-auth-btn {
         order: 3 !important;
         width: 100% !important;
+    }
+
+    .telegram-go-btn {
+        font-size: 12px;
+        padding: 8px 14px;
+        min-height: 36px;
+        border-radius: 8px;
+        gap: 10px;
+    }
+
+    .telegram-go-icon {
+        font-size: 14px;
+    }
+    
+    .telegram-connect-simple {
+        font-size: 12px;
+        padding: 8px 14px;
+        min-height: 36px;
+        border-radius: 8px;
+        gap: 10px;
+    }
+
+    .telegram-auth-btn {
+        font-size: 12px;
+        padding: 8px 14px;
+        min-height: 36px;
+        border-radius: 8px;
+        gap: 10px;
+    }
+
+    .telegram-btn-icon {
+        font-size: 16px;
+    }
+
+    .telegram-connected-block {
+        padding: 12px;
+        border-radius: 10px;
+        gap: 8px;
     }
     
     .new-document-btn {
@@ -2968,25 +3087,24 @@ body.tg-viewport .telegram-connect-simple {
 /* Кнопка авторизации через Telegram */
 .telegram-auth-btn {
     width: 100%;
-    padding: 16px 24px;
-    border-radius: 12px;
-    background: #229954;
+    padding: 18px 28px;
+    border-radius: 18px;
+    background: #10b981;
     color: white;
-    font-size: 16px;
-    font-weight: 600;
-    box-shadow: 0 4px 12px rgba(34, 153, 84, 0.3);
-    transition: all 0.2s ease;
+    font-size: 17px;
+    font-weight: 700;
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 16px;
-    min-height: 52px;
+    gap: 20px;
+    min-height: 60px;
+    border: none;
+    cursor: pointer;
 }
 
 .telegram-auth-btn:hover {
-    background: #1e8449;
-    box-shadow: 0 6px 16px rgba(34, 153, 84, 0.4);
-    transform: translateY(-1px);
+    background: #059669;
 }
 
 /* ===================== */
