@@ -67,23 +67,18 @@ class WordDocumentService
             // Сохранение документа
             $filePath = $this->saveDocument($document);
 
-            // Определяем расширение и mime-type файла
-            $isTextFile = str_ends_with($filePath, '.txt');
-            $filename = $document->title . ($isTextFile ? '.txt' : '.docx');
-            $mimeType = $isTextFile ? 'text/plain' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-
             // Создание записи о файле
             $file = $this->filesService->createFileFromPath(
                 $filePath,
                 $document->user,
-                $filename,
-                $document->id
+                $document->title . '.docx',
+                $document->id,
+                'documents'
             );
             
-            \Illuminate\Support\Facades\Log::info('Документ успешно сгенерирован', [
+            \Illuminate\Support\Facades\Log::info('Word документ успешно сгенерирован', [
                 'document_id' => $document->id,
                 'file_id' => $file->id,
-                'file_type' => $isTextFile ? 'text' : 'word',
                 'file_size' => file_exists($filePath) ? filesize($filePath) : 0
             ]);
             
@@ -1238,15 +1233,31 @@ class WordDocumentService
         
         $fullSavePath = storage_path('app/public/' . $fullPath);
         
+        // Убираем существующий файл, если он есть (для предотвращения конфликтов)
+        if (file_exists($fullSavePath)) {
+            @unlink($fullSavePath);
+        }
+        
         try {
             // Сохраняем документ с правильными настройками
             $objWriter = IOFactory::createWriter($this->phpWord, 'Word2007');
+            
+            // Очищаем память перед сохранением для предотвращения ошибок
+            if (function_exists('gc_collect_cycles')) {
+                gc_collect_cycles();
+            }
+            
             $objWriter->save($fullSavePath);
+            
+            // Проверяем, что файл действительно создан и читается
+            if (!file_exists($fullSavePath) || filesize($fullSavePath) < 1000) {
+                throw new \Exception('Созданный файл поврежден или слишком мал');
+            }
             
             \Illuminate\Support\Facades\Log::info('Word документ успешно сохранен', [
                 'document_id' => $document->id,
                 'file_path' => $fullSavePath,
-                'file_size' => file_exists($fullSavePath) ? filesize($fullSavePath) : 0
+                'file_size' => filesize($fullSavePath)
             ]);
             
         } catch (\Exception $e) {
@@ -1258,12 +1269,19 @@ class WordDocumentService
                 'trace' => $e->getTraceAsString()
             ]);
             
+            // Удаляем поврежденный файл, если он был создан
+            if (file_exists($fullSavePath)) {
+                @unlink($fullSavePath);
+            }
+            
             // Если это ошибка XML парсинга или ZIP архива, попробуем создать упрощенную версию
             if (strpos($e->getMessage(), 'SAXParseException') !== false || 
                 strpos($e->getMessage(), 'fastparser') !== false ||
                 strpos($e->getMessage(), 'WriterFilter') !== false ||
                 strpos($e->getMessage(), 'Could not close zip file') !== false ||
-                strpos($e->getMessage(), 'zip file') !== false) {
+                strpos($e->getMessage(), 'zip file') !== false ||
+                strpos($e->getMessage(), 'ZipArchive') !== false ||
+                strpos($e->getMessage(), 'поврежден или слишком мал') !== false) {
                 
                 \Illuminate\Support\Facades\Log::warning('Обнаружена ошибка XML парсинга или ZIP архива, создаем упрощенную версию документа', [
                     'document_id' => $document->id,
@@ -1285,6 +1303,11 @@ class WordDocumentService
     private function createSimplifiedDocument(Document $document, string $fullSavePath): string
     {
         try {
+            // Удаляем поврежденный файл, если он существует
+            if (file_exists($fullSavePath)) {
+                @unlink($fullSavePath);
+            }
+            
             // Создаем новый простой документ
             $phpWord = new PhpWord();
             $phpWord->getSettings()->setThemeFontLang(new \PhpOffice\PhpWord\Style\Language('ru-RU'));
@@ -1303,91 +1326,86 @@ class WordDocumentService
             if (!empty($title)) {
                 $section->addText(
                     $title,
-                    ['bold' => true, 'size' => 16, 'name' => 'Times New Roman'],
-                    ['alignment' => Jc::CENTER, 'spaceAfter' => 300]
+                    ['bold' => true, 'size' => 16, 'name' => 'Arial'],
+                    'Normal'
                 );
             }
             
-            // Добавляем основной контент простым способом
-            $contentData = $document->content['topics'] ?? [];
+            $section->addTextBreak(2);
             
-            if (!empty($contentData) && is_array($contentData)) {
-                foreach ($contentData as $index => $topic) {
-                    if (!is_array($topic)) continue;
-                    
-                    $chapterNumber = $index + 1;
-                    $chapterTitle = $this->safeSanitizeText($topic['title'] ?? '');
-                    
-                    // Заголовок главы
-                    if (!empty($chapterTitle)) {
-                        $section->addText(
-                            "{$chapterNumber}. {$chapterTitle}",
-                            ['bold' => true, 'size' => 14, 'name' => 'Times New Roman'],
-                            'Normal'
-                        );
-                        $section->addTextBreak(1);
-                    }
-                    
-                    // Подглавы
-                    if (!empty($topic['subtopics']) && is_array($topic['subtopics'])) {
-                        foreach ($topic['subtopics'] as $subIndex => $subtopic) {
-                            if (!is_array($subtopic)) continue;
-                            
-                            $subNumber = $subIndex + 1;
-                            $subtopicTitle = $this->safeSanitizeText($subtopic['title'] ?? '');
-                            
-                            if (!empty($subtopicTitle)) {
-                                $section->addText(
-                                    "{$chapterNumber}.{$subNumber}. {$subtopicTitle}",
-                                    ['bold' => true, 'size' => 12, 'name' => 'Times New Roman'],
-                                    'Normal'
-                                );
-                                $section->addTextBreak(1);
-                            }
-                            
-                            // Содержимое подглавы
-                            if (isset($subtopic['content']) && !empty($subtopic['content'])) {
-                                $content = $this->safeSanitizeText($subtopic['content']);
-                                
-                                if (!empty($content)) {
-                                    // Улучшенное разделение на абзацы с поддержкой переходов на новую строку
-                                    $paragraphs = $this->splitTextIntoParagraphsSimple($content);
-                                    foreach ($paragraphs as $paragraph) {
-                                        $paragraph = trim($paragraph);
-                                        if (!empty($paragraph) && strlen($paragraph) > 3) {
-                                            $section->addText(
-                                                $paragraph,
-                                                ['size' => 12, 'name' => 'Times New Roman'],
-                                                'Normal'
-                                            );
-                                            $section->addTextBreak(1);
-                                        }
-                                    }
-                                }
-                            }
-                            
-                            $section->addTextBreak(1);
-                        }
-                    }
-                    
-                    $section->addTextBreak(2);
-                }
-            } else {
-                // Если нет контента, добавляем заглушку
+            // Добавляем уведомление
+            $section->addText(
+                'Документ создан с упрощенной структурой из-за технических ограничений при обработке исходного содержимого.',
+                ['size' => 12, 'name' => 'Arial'],
+                'Normal'
+            );
+            
+            $section->addTextBreak(1);
+            
+            // Пытаемся добавить основное содержимое безопасно
+            $structure = $document->structure ?? [];
+            
+            // Добавляем цели, если есть
+            if (!empty($structure['objectives'])) {
                 $section->addText(
-                    'Содержимое документа будет добавлено после завершения генерации.',
-                    ['size' => 12, 'italic' => true, 'name' => 'Times New Roman'],
-                    'Normal'
+                    'Цели работы:',
+                    ['bold' => true, 'size' => 14, 'name' => 'Arial']
                 );
+                
+                foreach (array_slice($structure['objectives'], 0, 5) as $index => $objective) {
+                    $cleanObjective = $this->safeSanitizeText($objective);
+                    if (!empty($cleanObjective)) {
+                        $section->addText(
+                            ($index + 1) . '. ' . $cleanObjective,
+                            ['size' => 12, 'name' => 'Arial']
+                        );
+                    }
+                }
+                $section->addTextBreak(1);
+            }
+            
+            // Добавляем структуру содержания, если есть
+            if (!empty($structure['contents'])) {
+                $section->addText(
+                    'Структура работы:',
+                    ['bold' => true, 'size' => 14, 'name' => 'Arial']
+                );
+                
+                foreach (array_slice($structure['contents'], 0, 10) as $index => $content) {
+                    $cleanTitle = $this->safeSanitizeText($content['title'] ?? '');
+                    if (!empty($cleanTitle)) {
+                        $section->addText(
+                            ($index + 1) . '. ' . $cleanTitle,
+                            ['size' => 12, 'name' => 'Arial']
+                        );
+                    }
+                }
+                $section->addTextBreak(1);
+            }
+            
+            $section->addText(
+                'Для получения полной версии документа обратитесь к администратору или попробуйте скачать документ позже.',
+                ['size' => 12, 'italic' => true, 'name' => 'Arial']
+            );
+            
+            // Очищаем память перед сохранением
+            if (function_exists('gc_collect_cycles')) {
+                gc_collect_cycles();
             }
             
             // Сохраняем упрощенный документ
             $objWriter = IOFactory::createWriter($phpWord, 'Word2007');
             $objWriter->save($fullSavePath);
             
+            // Проверяем результат
+            if (!file_exists($fullSavePath) || filesize($fullSavePath) < 500) {
+                throw new \Exception('Упрощенный документ не был создан корректно');
+            }
+            
             \Illuminate\Support\Facades\Log::info('Упрощенный Word документ успешно создан', [
                 'document_id' => $document->id,
-                'file_path' => $fullSavePath
+                'file_path' => $fullSavePath,
+                'file_size' => filesize($fullSavePath)
             ]);
             
             return $fullSavePath;
@@ -1398,6 +1416,11 @@ class WordDocumentService
                 'error' => $e->getMessage(),
                 'error_type' => get_class($e)
             ]);
+            
+            // Удаляем поврежденный файл
+            if (file_exists($fullSavePath)) {
+                @unlink($fullSavePath);
+            }
             
             // Если и упрощенный документ не удается создать, создаем минимальный документ
             return $this->createMinimalDocument($document, $fullSavePath);
@@ -1529,39 +1552,73 @@ class WordDocumentService
     private function createMinimalDocument(Document $document, string $fullSavePath): string
     {
         try {
+            // Удаляем любые существующие файлы
+            if (file_exists($fullSavePath)) {
+                @unlink($fullSavePath);
+            }
+            
             // Создаем самый простой документ без сложных элементов
             $phpWord = new PhpWord();
             $section = $phpWord->addSection();
             
-            // Добавляем только заголовок документа
+            // Добавляем только заголовок документа (максимально безопасно)
             $title = mb_substr($document->title, 0, 100, 'UTF-8'); // Ограничиваем длину
-            $title = preg_replace('/[^\p{L}\p{N}\s\-\.]/u', '', $title); // Убираем все кроме букв, цифр, пробелов, дефисов и точек
+            $title = preg_replace('/[^\p{L}\p{N}\s\-\.\,\!\?]/u', '', $title); // Убираем проблемные символы
             
             if (!empty($title)) {
-                $section->addText($title, ['bold' => true, 'size' => 14]);
+                $section->addText($title, ['bold' => true, 'size' => 14, 'name' => 'Arial']);
+            } else {
+                $section->addText('Документ без названия', ['bold' => true, 'size' => 14, 'name' => 'Arial']);
             }
             
             $section->addTextBreak(2);
             
             // Добавляем простое сообщение
             $section->addText(
-                'Документ создан с упрощенной структурой из-за технических ограничений.',
-                ['size' => 12]
+                'Документ создан с минимальной структурой из-за технических ограничений.',
+                ['size' => 12, 'name' => 'Arial']
             );
             
             $section->addTextBreak(1);
             $section->addText(
                 'Для получения полной версии документа обратитесь к администратору.',
-                ['size' => 12, 'italic' => true]
+                ['size' => 12, 'italic' => true, 'name' => 'Arial']
             );
+            
+            // Очищаем память перед сохранением
+            if (function_exists('gc_collect_cycles')) {
+                gc_collect_cycles();
+            }
+            
+            // Создаем уникальное имя файла на случай конфликтов
+            $attemptCounter = 0;
+            $originalPath = $fullSavePath;
+            
+            while (file_exists($fullSavePath) && $attemptCounter < 5) {
+                $attemptCounter++;
+                $pathInfo = pathinfo($originalPath);
+                $fullSavePath = $pathInfo['dirname'] . '/' . $pathInfo['filename'] . '_' . $attemptCounter . '.' . $pathInfo['extension'];
+            }
             
             // Сохраняем минимальный документ
             $objWriter = IOFactory::createWriter($phpWord, 'Word2007');
             $objWriter->save($fullSavePath);
             
+            // Проверяем что файл создан успешно
+            if (!file_exists($fullSavePath)) {
+                throw new \Exception('Файл не был создан');
+            }
+            
+            $fileSize = filesize($fullSavePath);
+            if ($fileSize < 300) {
+                throw new \Exception('Созданный файл слишком мал: ' . $fileSize . ' байт');
+            }
+            
             \Illuminate\Support\Facades\Log::info('Минимальный Word документ создан', [
                 'document_id' => $document->id,
-                'file_path' => $fullSavePath
+                'file_path' => $fullSavePath,
+                'file_size' => $fileSize,
+                'attempts' => $attemptCounter + 1
             ]);
             
             return $fullSavePath;
@@ -1570,61 +1627,41 @@ class WordDocumentService
             \Illuminate\Support\Facades\Log::error('Критическая ошибка: не удалось создать даже минимальный документ', [
                 'document_id' => $document->id,
                 'error' => $e->getMessage(),
-                'error_type' => get_class($e)
+                'error_type' => get_class($e),
+                'file_path' => $fullSavePath ?? 'unknown'
             ]);
             
-            // Если PhpWord полностью не работает, создаем текстовый файл как последний fallback
-            return $this->createTextFallbackDocument($document, $fullSavePath);
-        }
-    }
-
-    /**
-     * Создает простой текстовый файл как последний fallback
-     */
-    private function createTextFallbackDocument(Document $document, string $fullSavePath): string
-    {
-        try {
-            // Меняем расширение на .txt
-            $textFilePath = str_replace('.docx', '.txt', $fullSavePath);
-            
-            // Подготавливаем содержимое текстового файла
-            $title = mb_substr($document->title, 0, 100, 'UTF-8');
-            $title = preg_replace('/[^\p{L}\p{N}\s\-\.]/u', '', $title);
-            
-            $content = "=== " . $title . " ===\n\n";
-            $content .= "Документ создан с упрощенной структурой из-за технических ограничений.\n";
-            $content .= "Для получения полной версии документа обратитесь к администратору.\n\n";
-            $content .= "Дата создания: " . now()->format('d.m.Y H:i') . "\n";
-            $content .= "ID документа: " . $document->id . "\n";
-            
-            // Если есть содержимое документа, добавляем его
-            if (!empty($document->content)) {
-                $content .= "\n=== СОДЕРЖИМОЕ ===\n\n";
-                // Очищаем содержимое от HTML тегов и markdown
-                $cleanContent = strip_tags($document->content);
-                $cleanContent = preg_replace('/[^\p{L}\p{N}\s\-\.\,\!\?\:\;\(\)]/u', '', $cleanContent);
-                $content .= mb_substr($cleanContent, 0, 5000, 'UTF-8') . "\n";
+            // Удаляем поврежденный файл
+            if (isset($fullSavePath) && file_exists($fullSavePath)) {
+                @unlink($fullSavePath);
             }
             
-            // Записываем файл
-            file_put_contents($textFilePath, $content);
+            // Последняя попытка создать текстовый файл с информацией об ошибке
+            try {
+                $errorFilePath = str_replace('.docx', '_error.txt', $originalPath ?? $fullSavePath);
+                file_put_contents($errorFilePath, 
+                    "Ошибка при создании документа:\n" .
+                    "ID документа: " . $document->id . "\n" .
+                    "Заголовок: " . $document->title . "\n" .
+                    "Ошибка: " . $e->getMessage() . "\n" .
+                    "Время: " . date('Y-m-d H:i:s')
+                );
+                
+                \Illuminate\Support\Facades\Log::info('Создан файл с информацией об ошибке', [
+                    'document_id' => $document->id,
+                    'error_file' => $errorFilePath
+                ]);
+                
+                return $errorFilePath;
+            } catch (\Exception $txtException) {
+                // Если даже текстовый файл не удается создать
+                \Illuminate\Support\Facades\Log::error('Не удалось создать даже файл с ошибкой', [
+                    'document_id' => $document->id,
+                    'txt_error' => $txtException->getMessage()
+                ]);
+            }
             
-            \Illuminate\Support\Facades\Log::warning('Создан текстовый fallback файл вместо Word документа', [
-                'document_id' => $document->id,
-                'file_path' => $textFilePath,
-                'file_size' => filesize($textFilePath)
-            ]);
-            
-            return $textFilePath;
-            
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Критическая ошибка: не удалось создать даже текстовый файл', [
-                'document_id' => $document->id,
-                'error' => $e->getMessage(),
-                'error_type' => get_class($e)
-            ]);
-            
-            throw new \Exception('Критическая ошибка при создании любого типа документа: ' . $e->getMessage());
+            throw new \Exception('Критическая ошибка при создании документа: ' . $e->getMessage());
         }
     }
 } 
