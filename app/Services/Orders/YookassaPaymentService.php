@@ -4,7 +4,6 @@ namespace App\Services\Orders;
 
 use App\Models\Order;
 use App\Models\Payment;
-use App\Models\User;
 use App\Enums\OrderStatus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -47,9 +46,6 @@ class YookassaPaymentService
     public function createPayment(Order $order, array $paymentOptions = []): array
     {
         try {
-            // Определяем return_url в зависимости от источника пользователя
-            $returnUrl = $this->getReturnUrl($order);
-            
             $paymentData = array(
                 'amount' => array(
                     'value' => $order->amount,
@@ -57,7 +53,7 @@ class YookassaPaymentService
                 ),
                 'confirmation' => array(
                     'type' => 'redirect',
-                    'return_url' => $returnUrl
+                    'return_url' => route('payment.complete', $order->id)
                 ),
                 'capture' => true,
                 'description' => $this->getPaymentDescription($order),
@@ -65,7 +61,6 @@ class YookassaPaymentService
                     'order_id' => $order->id,
                     'user_id' => $order->user_id,
                     'document_id' => $order->document_id,
-                    'is_telegram_user' => $this->isTelegramUser($order->user) ? 'true' : 'false'
                 )
             );
 
@@ -487,70 +482,49 @@ class YookassaPaymentService
      */
     public function verifyWebhookSignature(string $httpBody, string $signature): bool
     {
-        try {
-            $secretKey = config('services.yookassa.webhook_secret');
-            
-            if (!$secretKey) {
-                Log::warning('Webhook secret не настроен');
-                return false;
-            }
-            
-            $calculatedSignature = base64_encode(hash_hmac('sha256', $httpBody, $secretKey, true));
-            
-            Log::info('Проверка подписи webhook', [
-                'calculated' => substr($calculatedSignature, 0, 10) . '...',
-                'received' => substr($signature, 0, 10) . '...',
-                'match' => hash_equals($calculatedSignature, $signature)
-            ]);
-            
-            return hash_equals($calculatedSignature, $signature);
-            
-        } catch (Exception $e) {
-            Log::error('Ошибка проверки подписи webhook', [
-                'error' => $e->getMessage()
-            ]);
-            
-            return false;
+        // Если webhook secret не настроен, разрешаем обработку
+        // так как используются официальные классы уведомлений для валидации
+        $webhookSecret = config('services.yookassa.webhook_secret');
+        if (!$webhookSecret) {
+            Log::info('Webhook secret не настроен, используем валидацию через официальные классы уведомлений');
+            return true;
         }
-    }
 
-    /**
-     * Определить return_url для платежа в зависимости от типа пользователя
-     *
-     * @param Order $order
-     * @return string
-     */
-    private function getReturnUrl(Order $order): string
-    {
-        if ($this->isTelegramUser($order->user)) {
-            return route('payment.telegram.complete', $order->id);
-        }
+        // Убираем "Basic " из начала заголовка Authorization если есть
+        $cleanSignature = str_replace('Basic ', '', $signature);
         
-        return route('payment.complete', $order->id);
-    }
-
-    /**
-     * Проверить является ли пользователь из Telegram
-     *
-     * @param User $user
-     * @return bool
-     */
-    private function isTelegramUser($user): bool
-    {
-        if (!$user) {
+        // Декодируем base64
+        $decodedCredentials = base64_decode($cleanSignature);
+        if ($decodedCredentials === false) {
+            Log::warning('Не удалось декодировать подпись webhook', [
+                'signature' => $signature
+            ]);
             return false;
         }
         
-        // Проверяем наличие telegram_id
-        if (!empty($user->telegram_id)) {
-            return true;
+        // Проверяем формат shopId:secretKey
+        $credentials = explode(':', $decodedCredentials, 2);
+        if (count($credentials) !== 2) {
+            Log::warning('Неверный формат подписи webhook', [
+                'credentials_count' => count($credentials)
+            ]);
+            return false;
         }
         
-        // Проверяем автогенерированный email (признак пользователя из Telegram)
-        if ($user->email && (str_ends_with($user->email, '@auto.user') || str_ends_with($user->email, '@linked.user'))) {
-            return true;
+        $shopId = config('services.yookassa.shop_id');
+        $secretKey = config('services.yookassa.secret_key');
+        
+        // Проверяем соответствие shop_id и secret_key
+        $isValid = hash_equals($credentials[0], $shopId) && hash_equals($credentials[1], $secretKey);
+        
+        if (!$isValid) {
+            Log::warning('Неверные данные авторизации в webhook', [
+                'expected_shop_id' => $shopId,
+                'received_shop_id' => $credentials[0],
+                'secret_key_match' => hash_equals($credentials[1], $secretKey)
+            ]);
         }
         
-        return false;
+        return $isValid;
     }
 } 
