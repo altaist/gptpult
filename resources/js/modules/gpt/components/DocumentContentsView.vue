@@ -8,7 +8,7 @@
                     <div v-if="isCompleted" class="locked-indicator">
                         <q-icon name="lock" class="lock-icon" />
                         <q-tooltip class="locked-tooltip">
-                            Документ завершен. Редактирование содержания недоступно.
+                            Работа готова. Редактирование содержания недоступно.
                         </q-tooltip>
                     </div>
                 </div>
@@ -25,6 +25,20 @@
             
             <div class="section-content">
                 <div class="contents-list">
+                    <!-- Титульник -->
+                    <div class="content-block">
+                        <div class="content-item main-item">
+                            <span class="item-number">1</span>
+                            <span class="item-title">Титульный лист</span>
+                        </div>
+                    </div>
+                    <!-- Оглавление -->
+                    <div class="content-block">
+                        <div class="content-item main-item">
+                            <span class="item-number">2</span>
+                            <span class="item-title">Оглавление</span>
+                        </div>
+                    </div>
                     
                     <!-- Основные разделы -->
                     <div v-for="(topic, index) in contents" :key="index" class="content-block">
